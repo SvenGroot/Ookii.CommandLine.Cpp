@@ -124,8 +124,8 @@ There are three ways the name of a command is determined when you call `add_comm
     manager.add_command<my_command>("name");
     ```
 
-2. If the name argument is omitted or an empty string, the compiler looks static method called
-   `name()` on the shell command class, and if so, calls it to get the name.
+2. If the name argument is omitted or an empty string, the compiler looks for a static method called
+   `name()` on the shell command class, and if found, calls it to get the name.
 3. If no such method exists, the type name (without the namespace prefix) is used as the name.
 
 The description is determined in a similar way:
@@ -137,8 +137,8 @@ The description is determined in a similar way:
     manager.add_command<my_command>("name", "The description of the command.");
     ```
 
-2. If the description argument is omitted or an empty string, the compiler looks static method
-   called `description()` on the shell command class, and if so, calls it to get the description.
+2. If the description argument is omitted or an empty string, the compiler looks for a static method
+   called `description()` on the shell command class, and if found, calls it to get the description.
 3. If no such method exists, the description will be empty.
 
 Here is an example of a class that uses the static methods to set its name and description:

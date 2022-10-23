@@ -50,7 +50,7 @@ If there are any lines of comments after the annotations, these specify the desc
 item. They will be concatenated into a single line, though if you have a blank line this will be
 preserved in the output.
 
-For example, the following creates an argument named "ArgumentName" whole value will be stored in
+For example, the following creates an argument named "ArgumentName" whose value will be stored in
 the `arg` field. The argument is required, positional, and has a description:
 
 ```c++
@@ -199,7 +199,7 @@ Value          | Description                                                    
 ---------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|----------------------------------------------------------------
 **None**       | Field names are used as-is, without changing them. This is the default.                                                                                                                                                                                      |
 **PascalCase** | Field names are transformed to PascalCase. This removes all underscores, and the first character and every character after an underscore is changed to uppercase. The case of other characters is not changed.                                               | `some_name`, `_some_name`, `_someName` => SomeName
-**CamelCase**  | Field names are transformed to camcelCase. Similar to PascalCase, but the first character will not be uppercase.                                                                                                                                             | `some_name`, `_some_name`, `_SomeName`=> someName
+**CamelCase**  | Field names are transformed to camelCase. Similar to PascalCase, but the first character will not be uppercase.                                                                                                                                             | `some_name`, `_some_name`, `_SomeName`=> someName
 **SnakeCase**  | Field names are transformed to snake_case. This removes leading and trailing underscores, changes all characters to lower-case, and reduces consecutive underscores to a single underscore. An underscore is inserted before previously capitalized letters. | `some_name`, `_some__name`, `_someName` => some_name
 **DashCase**   | Field names are transformed to dash-case. Similar to SnakeCase, but uses a dash instead of an underscore.                                                                                                                                                    | `some_name`, `_some__name`, `_someName` => some-name
 **Trim**       | Removes leading and trailing underscores, but leaves the rest of the name alone.                                                                                                                                                                             | `some_name`, `_some_name` => some_name; `_someName` => someName
