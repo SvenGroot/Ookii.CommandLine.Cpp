@@ -105,7 +105,7 @@ process {
     if ($Path) {
         $inputs = Get-Item -Path $Path
     } else {
-        $inputs = Get-Item -Path $LiteralPath
+        $inputs = Get-Item -LiteralPath $LiteralPath
     }
 
     foreach ($file in $inputs)
