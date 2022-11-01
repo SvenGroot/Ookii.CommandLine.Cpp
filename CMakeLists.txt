@@ -19,6 +19,7 @@ option(OOKIICL_INSTALL "Generate and install OOKIICL interface library." ${OOKII
 option(OOKIICL_TEST "Build Ookii.CommandLine.Cpp tests." ${OOKIICL_STANDALONE_PROJECT})
 option(OOKIICL_SAMPLES "Build Ookii.CommandLine.Cpp samples." ${OOKIICL_STANDALONE_PROJECT})
 option(OOKIICL_DOCS "Build Ookii.CommandLine.Cpp documentation." ${OOKIICL_STANDALONE_PROJECT})
+option(OOKIICL_PACKAGE "Build Ookii.Command.Cpp NuGet package." ${OOKIICL_STANDALONE_PROJECT})
 option(OOKIICL_BROKEN_STD_RANGES "Disable tests that don't compile on certain versions of Clang." OFF)
 
 if (OOKIICL_BROKEN_STD_RANGES)
@@ -78,4 +79,14 @@ endif()
 
 if (OOKIICL_DOCS)
     add_subdirectory("docs")
+endif()
+
+if (OOKIICL_PACKAGE AND POWERSHELL_PATH)
+    find_program(NUGET_PATH NAMES NuGet NO_PACKAGE_ROOT_PATH NO_CMAKE_PATH NO_CMAKE_ENVIRONMENT_PATH NO_CMAKE_SYSTEM_PATH NO_CMAKE_FIND_ROOT_PATH)
+    if (NUGET_PATH)
+        message("-- Found NuGet at ${NUGET_PATH}")
+        add_subdirectory("nuget")
+    else()
+        message(WARNING "-- NuGet was not found, so the NuGet package will not be built.")
+    endif()
 endif()

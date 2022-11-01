@@ -1,8 +1,9 @@
-# Ookii.CommandLine for C++
+# Ookii.CommandLine for C++ [![NuGet](https://img.shields.io/nuget/v/Ookii.CommandLine.Cpp)](https://www.nuget.org/packages/Ookii.CommandLine.Cpp/)
 
 Ookii.CommandLine for C++ is a header-only library that enables comprehensive command line argument
-parsing for C++ applications. It allows you to easily define required, optional, positional and
-named arguments, parse the command line, and generate usage help which can be shown to the user.
+parsing for C++ applications. It allows you to easily define strongly-typed required, optional, positional and
+named arguments, parse the command line, and generate usage help which can be shown to the user. It
+is cross-platform and has been tested with several compilers (see [requiremens](#requirements)).
 
 Ookii.CommandLine for C++ is a port of [Ookii.CommandLine for .Net](https://github.com/SvenGroot/ookii.commandline),
 providing the same argument parsing semantics, but using an API that is suitable for C++. It has
@@ -11,7 +12,7 @@ feature parity with Ookii.CommandLine for .Net 2.4, with the exception of dictio
 ## Overview
 
 Ookii.CommandLine is a library that helps you to parse command line arguments for your applications.
-It allows you to easily define a set of accepted arguments, and then parse the command line supplied
+It allows you to easily define a set of accepted arguments and their types, and then parse the command line supplied
 to your application for those arguments, converting the value of those arguments from a string to
 their specified type. In addition, it allows you to generate usage help from the arguments that you
 defined, which you can display to the user.
@@ -22,7 +23,7 @@ primarily towards console applications that are invoked from the command line, t
 parsing functionality is usable in any application that needs to process command line arguments.
 
 To define a set of command line arguments, first you create variables that will hold their values.
-Then, you use the ookii::parser_builder class to construct an ookii::command_line_parser to parse
+Then, you use the `ookii::parser_builder` class to construct an `ookii::command_line_parser` to parse
 those arguments, specifying things such as the argument names, whether or not an argument is
 required, and descriptions used to customize the usage help, among other options.
 
@@ -106,10 +107,12 @@ Ookii.CommandLine for C++ requires the following:
 Ookii.CommandLine for C++ should support any operating system (tested on Windows and Linux). If you
 want to make sure your platform is supported, you can [run the tests](#building-and-running-tests-and-samples).
 
-To use Ookii.CommandLine in your project, the easiest way is to use [CMake](#cmake-usage). You
-can also clone this repository to get the header files and add the "include" folder to your
-include path. Since Ookii.CommandLine is entirely implemented in the headers, there are no linking
-requirements.
+To use Ookii.CommandLine in your project, the easiest way is to use [CMake](#cmake-usage). If you
+use Visual Studio, you can also use the [NuGet package](https://www.nuget.org/packages/Ookii.CommandLine.Cpp).
+
+Alternatively, you can  clone this repository to get the header files and add the "include" folder
+to your include path. Since Ookii.CommandLine is entirely implemented in the headers, there are no
+linking requirements.
 
 Although Ookii.CommandLine is split out into several header files, you typically want to include
 the following:

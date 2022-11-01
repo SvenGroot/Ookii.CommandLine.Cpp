@@ -15,6 +15,8 @@ Both of these scripts generate code that creates a `parser_builder` and adds arg
 doesn't offer any features that manually writing code doesn't, it's just a more convenient way to do
 it.
 
+For information on how to generate these files as part of your build process, [see here](#including-the-scripts-in-your-build-process).
+
 ## Argument attributes
 
 To generate an argument parser, you must create a struct or class that contains your arguments.
@@ -367,3 +369,121 @@ limitations apply:
 
 If you need any of this functionality to be added, please file an issue, or even better, submit
 a pull request.
+
+## Including the scripts in your build process
+
+### CMake
+
+If you use CMake, you can use a custom command to invoke the PowerShell scripts as part of the code
+generation process. For example, you can use the following:
+
+```cmake
+find_program(POWERSHELL_PATH NAMES pwsh NO_PACKAGE_ROOT_PATH NO_CMAKE_PATH NO_CMAKE_ENVIRONMENT_PATH NO_CMAKE_SYSTEM_PATH NO_CMAKE_FIND_ROOT_PATH)
+
+set(GENERATED_DIR "${CMAKE_BINARY_DIR}/generated")
+set(GENERATED_OUTPUT "${OOKII_GENERATED_DIR}/parser_generated.cpp")
+set(GENERATED_INPUT "${CMAKE_CURRENT_LIST_DIR}/arguments.h")
+
+make_directory("${GENERATED_DIR}")
+
+add_custom_command(
+    OUTPUT ${GENERATED_OUTPUT}
+    COMMAND ${POWERSHELL_PATH} -ExecutionPolicy Bypass "${FETCHCONTENT_BASE_DIR}/ookiicl-src/scripts/New-Parser.ps1" -Path "${GENERATED_INPUT}" -OutputPath "${GENERATED_OUTPUT}" -NameTransform PascalCase
+    DEPENDS ${GENERATED_INPUT}
+    VERBATIM
+)
+```
+
+This assumes you used `FetchContent` to add Ookii.CommandLine to your library, otherwise you may
+need to adjust the path to the scripts.
+
+Also see the [generated parser sample](../samples/generated_parser/CMakeLists.txt) and the
+[generated shell command sample](../samples/generated_shell_commands/CMakeLists.txt) for working
+examples of how to do this.
+
+### Visual Studio
+
+If you use a Visual Studio project and are using the [NuGet package](https://www.nuget.org/packages/Ookii.CommandLine.Cpp)
+to add Ookii.CommandLine to your project, the scripts are included in the package.
+
+First, you can of course use the pre-build command or a custom build step to invoke the scripts.
+The scripts are located in the `packages\Ookii.CommandLine.Cpp.1.0.0\tools` folder under your
+solution root directory. The downside of this is that you would have to change the path if the
+package version number changes.
+
+Alternatively, the NuGet package includes MSBuild targets that make this easier. These targets are
+disabled by default, but can be used by defining specific items. To do this, you have to manually
+edit the .vcxproj file for your project; I don't believe there's a way to do this through the
+Visual Studio UI.
+
+To enable the use of `New-Parser.ps1`, add the following to your .vcxproj file, _before_ the
+Ookii.CommandLine.Cpp.targets file is imported:
+
+```xml
+<ItemGroup>
+  <OokiiParserInput Include="arguments.h" />
+</ItemGroup>
+```
+
+Doing this will automatically generate a command line parser for the specified header file, and
+include the generated file in the build. By default, the file is called "ookii.parser.generated.cpp"
+and will be placed in the intermediate output directory of your project (e.g. "x64\Debug"), but
+this can be overridden with the `OokiiParserOutput` property.
+
+You can process multiple header files by using wild cards, or by using multiple `OokiiParserInput`
+items.
+
+You can use the following MSBuild properties to further customize the behavior:
+
+Property                       | Meaning
+-------------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------
+`OokiiParserEntryPoint`        | Passes the `-EntryPoint` argument to the script with the specified value.
+`OokiiParserNameTransform`     | Passes the `-NameTransfom` argument to the script with the specified value.
+`OokiiParserAdditionalHeaders` | Passes the `-AdditionalHeaders` argument to the script with the specified value. For multiple headers, separate them with commas.
+`OokiiParserOutput`            | Overrides the path of the generated output file.
+`OokiiPwshPath`                | Overrides the path to the pwsh.exe executable used to invoke the scripts.
+`CharacterSet`                 | If the value is "Unicode", passes the `-WideChar` argument to the script. This property is set by Visual Studio based on the target character set for your project.
+
+For example, the following processes the file "arguments.h", applying the PascalCase transform and
+generating main function that invokes "ookii_main":
+
+```xml
+<ItemGroup>
+  <OokiiParserInput Include="arguments.h" />
+</ItemGroup>
+<PropertyGroup>
+  <OokiiParserNameTransform>PascalCase</OokiiParserNameTransform>
+  <OokiiParserEntryPoint>ookii_main</OokiiParserEntryPoint>
+</PropertyGroup>
+```
+
+To invoke `New-ShellCommand.ps1`, specify the `OokiiCommandInput` item instead of `OokiiParserInput`.
+The properties you can set for this script are `OokiiCommandNameTransform`, `OokiiCommandAdditionalHeaders`,
+`OokiiCommandOutput`, `OokiiPwshPath` and `CharacterSet`, analogous to the above. In addition,
+set the `OokiiCommandGenerateMain` property to `true` to pass the `-GenerateMain` argument to the
+script.
+
+For example, the following generates shell commands from two headers:
+
+```xml
+<ItemGroup>
+  <OokiiCommandInput Include="read_command.h" />
+  <OokiiCommandInput Include="write_command.h" />
+</ItemGroup>
+<PropertyGroup>
+  <OokiiCommandNameTransform>PascalCase</OokiiCommandNameTransform>
+  <OokiiCommandGenerateMain>true</OokiiCommandGenerateMain>
+</PropertyGroup>
+```
+
+Dependencies are set up for the MSBuild targets, so the files will only be regenerated if the input
+header(s) changed, or if you rebuild the project.
+
+Again, make sure you place these definitions _before_ the line to import Ookii.CommandLine.Cpp.targets.
+That line is generated by Visual Studio if you're using NuGet and will look something like this:
+
+```xml
+  <ImportGroup Label="ExtensionTargets">
+    <Import Project="..\packages\Ookii.CommandLine.Cpp.1.0.0\build\native\Ookii.CommandLine.Cpp.targets" Condition="Exists('..\packages\Ookii.CommandLine.Cpp.1.0.0\build\native\Ookii.CommandLine.Cpp.targets')" />
+  </ImportGroup>
+```

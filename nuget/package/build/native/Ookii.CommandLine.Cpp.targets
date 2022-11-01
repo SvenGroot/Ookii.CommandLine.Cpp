@@ -1,0 +1,45 @@
+<?xml version="1.0"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemDefinitionGroup>
+    <ClCompile>
+      <AdditionalIncludeDirectories>$(MSBuildThisFileDirectory)..\..\include\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ClCompile>
+  </ItemDefinitionGroup>
+  <PropertyGroup>
+    <OokiiParserOutput Condition="'$(OokiiParserOutput)'==''">$(IntDirFullPath)ookii.parser.generated.cpp</OokiiParserOutput>
+    <OokiiParserWideCharArg Condition="'$(CharacterSet)'=='Unicode'">-WideChar</OokiiParserWideCharArg>
+    <OokiiParserEntryPointArg Condition="'$(OokiiParserEntryPoint)'!=''">-EntryPoint $(OokiiParserEntryPoint)</OokiiParserEntryPointArg>
+    <OokiiParserNameTransformArg Condition="'$(OokiiParserNameTransform)'!=''">-NameTransform $(OokiiParserNameTransform)</OokiiParserNameTransformArg>
+    <OokiiParserAdditionalHeadersArg Condition="'$(OokiiParserAdditionalHeaders)'!=''">-AdditionalHeaders $(OokiiParserAdditionalHeaders)</OokiiParserAdditionalHeadersArg>
+    <OokiiPwshPath Condition="'$(OokiiPwshPath)'==''">pwsh</OokiiPwshPath>
+  </PropertyGroup>
+  <Target Name="OokiiGenerateParser" BeforeTargets="ClCompile" Inputs="@(OokiiParserInput)" Outputs="$(OokiiParserOutput)" Condition="'@(OokiiParserInput)'!=''">
+    <Message Text="Generating $(OokiiParserOutput)"/>
+    <Exec Command="&quot;$(OokiiPwshPath)&quot; -ExecutionPolicy Bypass -Command &quot;&amp;{ &amp;'$(MSBuildThisFileDirectory)..\..\tools\New-Parser.ps1' ('@(OokiiParserInput)' -split ';') '$(OokiiParserOutput)' $(OokiiParserWideCharArg) $(OokiiParserEntryPointArg) $(OokiiParserNameTransformArg) $(OokiiParserAdditionalHeadersArg) }&quot;" />
+    <ItemGroup>
+      <ClCompile Remove="$(OokiiParserOutput)" />
+      <ClCompile Include="$(OokiiParserOutput)" />
+    </ItemGroup>
+  </Target>
+  <Target Name="OokiiCleanParser" AfterTargets="CoreClean" Condition="'@(OokiiParserInput)'!=''">
+    <Delete Files="$(OokiiParserOutput)" />
+  </Target>
+  <PropertyGroup>
+    <OokiiCommandOutput Condition="'$(OokiiCommandOutput)'==''">$(IntDirFullPath)ookii.command.generated.cpp</OokiiCommandOutput>
+    <OokiiCommandWideCharArg Condition="'$(CharacterSet)'=='Unicode'">-WideChar</OokiiCommandWideCharArg>
+    <OokiiCommandGenerateMainArg Condition="'$(OokiiCommandGenerateMain)'=='true'">-GenerateMain</OokiiCommandGenerateMainArg>
+    <OokiiCommandAdditionalHeadersArg Condition="'$(OokiiCommandAdditionalHeaders)'!=''">-AdditionalHeaders $(OokiiCommandAdditionalHeaders)</OokiiCommandAdditionalHeadersArg>
+    <OokiiCommandNameTransformArg Condition="'$(OokiiCommandNameTransform)'!=''">-NameTransform $(OokiiCommandNameTransform)</OokiiCommandNameTransformArg>
+  </PropertyGroup>
+  <Target Name="OokiiGenerateCommand" BeforeTargets="ClCompile" Inputs="@(OokiiCommandInput)" Outputs="$(OokiiCommandOutput)" Condition="'@(OokiiCommandInput)'!=''">
+    <Message Text="Generating $(OokiiCommandOutput)"/>
+    <Exec Command="&quot;$(OokiiPwshPath)&quot; -ExecutionPolicy Bypass -Command &quot;&amp;{ &amp;'$(MSBuildThisFileDirectory)..\..\tools\New-ShellCommand.ps1' ('@(OokiiCommandInput)' -split ';') '$(OokiiCommandOutput)' $(OokiiCommandWideCharArg) $(OokiiCommandGenerateMainArg) $(OokiiCommandNameTransformArg) $(OokiiCommandAdditionalHeadersArg) }&quot;" />
+    <ItemGroup>
+      <ClCompile Remove="$(OokiiCommandOutput)" />
+      <ClCompile Include="$(OokiiCommandOutput)" />
+    </ItemGroup>
+  </Target>
+  <Target Name="OokiiCleanCommand" AfterTargets="CoreClean" Condition="'@(OokiiCommandInput)'!=''">
+    <Delete Files="$(OokiiCommandOutput)" />
+  </Target>
+</Project>

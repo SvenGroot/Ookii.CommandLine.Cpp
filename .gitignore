@@ -35,7 +35,7 @@
 .vs
 .vscode
 out
-build
+/build
 scripts/tests/output
 
 # Temp files
