@@ -218,7 +218,7 @@ By using the script's `-EntryPoint` argument, you can specify a function name th
 the entry point for your application. The script will then generate a `main()` function for you,
 which parses the arguments and invokes the specified function, passing it the arguments struct. This
 function should take the form `int entry_point(arguments args)`. Make sure to declare this function
-in the header you pass as input as well, so it's available when the generate file is compiled.
+in the header you pass as input as well, so it's available when the generated file is compiled.
 
 The `-WideChar` argument can be used on Windows to generate code that uses wide characters (`wchar_t`)
 for the arguments. Make sure to define `_UNICODE` if you use `<ookii/command_line_generated.h>` so
@@ -381,7 +381,7 @@ generation process. For example, you can use the following:
 find_program(POWERSHELL_PATH NAMES pwsh NO_PACKAGE_ROOT_PATH NO_CMAKE_PATH NO_CMAKE_ENVIRONMENT_PATH NO_CMAKE_SYSTEM_PATH NO_CMAKE_FIND_ROOT_PATH)
 
 set(GENERATED_DIR "${CMAKE_BINARY_DIR}/generated")
-set(GENERATED_OUTPUT "${OOKII_GENERATED_DIR}/parser_generated.cpp")
+set(GENERATED_OUTPUT "${GENERATED_DIR}/parser_generated.cpp")
 set(GENERATED_INPUT "${CMAKE_CURRENT_LIST_DIR}/arguments.h")
 
 make_directory("${GENERATED_DIR}")
