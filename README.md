@@ -3,7 +3,7 @@
 Ookii.CommandLine for C++ is a header-only library that enables comprehensive command line argument
 parsing for C++ applications. It allows you to easily define strongly-typed required, optional, positional and
 named arguments, parse the command line, and generate usage help which can be shown to the user. It
-is cross-platform and has been tested with several compilers (see [requiremens](#requirements)).
+is cross-platform and has been tested with several compilers (see [requirements](#requirements)).
 
 Ookii.CommandLine for C++ is a port of [Ookii.CommandLine for .Net](https://github.com/SvenGroot/ookii.commandline),
 providing the same argument parsing semantics, but using an API that is suitable for C++. It has
