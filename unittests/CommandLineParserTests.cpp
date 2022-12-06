@@ -472,19 +472,29 @@ public:
         std::vector<tstring> multiArg;
         std::optional<bool> optionalSwitchArg;
 
-        auto parser = basic_parser_builder<tchar_t>{TEXT("TestCommand")}.add_argument(stringArg, TEXT("StringArg")).positional().required().description(TEXT("String argument description."))
+        auto parser = basic_parser_builder<tchar_t>{TEXT("TestCommand")}.description(TEXT("Application description."))
+            .add_argument(stringArg, TEXT("StringArg")).positional().required().description(TEXT("String argument description."))
             .add_argument(intArg, TEXT("IntArg")).required() // No description so it doesn't show up in the detailed help.
             .add_argument(floatArg, TEXT("FloatArg")).description(TEXT("Float argument description that is really quite long and probably needs to be wrapped.")).value_description(TEXT("number")).default_value(10.0f)
             .add_argument(switchArg, TEXT("SwitchArg")).description(TEXT("Switch argument description.\nWith a new line.")).alias(TEXT("s"))
             .add_argument(optionalSwitchArg, TEXT("OptionalSwitchArg")).description(TEXT("Optional switch argument."))
             .add_multi_value_argument(multiArg, TEXT("MultiArg")).description(TEXT("Multi-value argument description.")).alias(TEXT("multi")).alias(TEXT("m"))
             .build();
+        
+        {
+            //std::basic_ostringstream<tchar_t> stream;
+            //tline_wrapping_stream wrapStream{stream, 40};
+            //parser.write_usage(basic_usage_options<tchar_t>{wrapStream});
+            //VERIFY_EQUAL(c_usageExpected, stream.str());
+        }
 
-        basic_usage_options<tchar_t> options;
-        std::basic_ostringstream<tchar_t> stream;
-        tline_wrapping_stream wrapStream{stream, 40};
-        parser.write_usage(basic_usage_options<tchar_t>{wrapStream});
-        VERIFY_EQUAL(c_usageExpected, stream.str());
+        {
+            std::basic_ostringstream<tchar_t> stream;
+            tline_wrapping_stream wrapStream{stream, 40};
+            basic_usage_writer<tchar_t> writer{wrapStream};
+            writer.write_parser_usage(parser);
+            VERIFY_EQUAL(c_usageExpected, stream.str());
+        }
     }
 
     TEST_METHOD(TestWindowsOptionPrefix)

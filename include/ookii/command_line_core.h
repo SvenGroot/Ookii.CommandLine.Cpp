@@ -11,6 +11,7 @@
 #include <iterator>
 #include <map>
 #include "command_line_argument.h"
+#include "usage_writer.h"
 #include "parse_result.h"
 #include "owned_or_borrowed_ptr.h"
 
@@ -207,7 +208,7 @@ namespace ookii
         //! This value is set by basic_parser_builder::description().
         const string_type &description() const noexcept
         {
-            return _storage.command_name;
+            return _storage.description;
         }
 
         //! \brief Indicates whether argument names and values can be separated by white space.
