@@ -7,6 +7,7 @@
 
 #include "string_helper.h"
 #include "line_wrapping_stream.h"
+#include "scope_helper.h"
 
 namespace ookii
 {
@@ -27,9 +28,11 @@ namespace ookii
         //! \brief Provides default values for the fields of basic_usage_writer.
         struct defaults
         {
-            //! \brief Default value for basic_usage_options::syntax_indent.
+            //! \brief Default value for basic_usage_writer::name_separator.
+            static constexpr auto name_separator = literal_cast<CharType>(", ");
+            //! \brief Default value for basic_usage_writer::syntax_indent.
             static constexpr size_t syntax_indent = 3;
-            //! \brief Default value for basic_usage_options::argument_description_indent.
+            //! \brief Default value for basic_usage_writer::argument_description_indent.
             static constexpr size_t argument_description_indent = 8;
         };
 
@@ -53,7 +56,6 @@ namespace ookii
               output{*_owned_output},
               error{*_owned_error}
         {
-
         }
 
         //! \brief Initializes a new instance of the basic_usage_writer class with the specified stream.
@@ -124,9 +126,24 @@ namespace ookii
 
         bool blank_line_after_syntax{true};
 
-        virtual void write_parser_usage(const parser_type &parser)
+        bool blank_line_after_description{true};
+
+        string_type name_separator{defaults::name_separator.data()};
+
+        virtual void write_parser_usage(const parser_type &parser, const std::locale &loc = {})
         {
+            auto old_output_loc = output.imbue(loc);
+            details::scope_exit output_reset{[this, old_output_loc] { output.imbue(old_output_loc); }};
+            details::scope_exit error_reset;
+            if (std::addressof(output) != std::addressof(error))
+            {
+                auto old_error_loc = error.imbue(loc);
+                error_reset.reset([this, old_error_loc] { error.imbue(old_error_loc); });
+            }
+
             _parser = &parser;
+            details::scope_exit parser_reset{[this] { _parser = nullptr; }};
+            
             write_parser_usage_core();
         }
 
@@ -140,6 +157,7 @@ namespace ookii
             }
 
             write_parser_usage_syntax();
+            write_argument_descriptions();
         }
 
         virtual void write_application_description(string_view_type description)
@@ -255,9 +273,7 @@ namespace ookii
 
         virtual void write_value_description(string_view_type value_description)
         {
-            output << '<';
-            output << value_description;
-            output << '>';
+            output << '<' << value_description << '>';
         }
 
         virtual void write_multi_value_suffix()
@@ -265,7 +281,152 @@ namespace ookii
             output << "...";
         }
 
-        const parser_type &parser()
+        virtual void write_argument_descriptions()
+        {
+            output << set_indent(argument_description_indent);
+            bool first = true;
+            parser().for_each_argument_in_usage_order([this, &first](const auto &arg)
+                {
+                    // Exclude arguments without descriptions.
+                    if (arg.description().empty())
+                    {
+                        return true;
+                    }
+
+                    if (first)
+                    {
+                        write_argument_description_list_header();
+                        first = false;
+                    }
+
+                    write_argument_description(arg);
+
+                    return true;
+                });
+        }
+
+        virtual void write_argument_description_list_header()
+        {
+            // Intentionally blank.
+        }
+
+        virtual void write_argument_description(const argument_type &arg)
+        {
+            write_argument_description_header(arg);
+            write_argument_description_body(arg);
+
+            if (blank_line_after_description)
+            {
+                output << std::endl;
+            }
+        }
+
+        virtual void write_argument_description_header(const argument_type &arg)
+        {
+            output << reset_indent;
+            write_spacing(argument_description_indent / 2);
+            auto prefix = parser().prefixes()[0];
+            write_argument_name_for_description(arg.name(), prefix);
+            output << ' ';
+            if (arg.is_switch())
+            {
+                write_switch_value_description(arg.value_description());
+            }
+            else
+            {
+                write_value_description_for_description(arg.value_description());
+            }
+
+            if (include_aliases_in_description)
+            {
+                write_aliases(arg.aliases(), prefix);
+            }
+
+            output << std::endl;
+        }
+
+        virtual void write_argument_description_body(const argument_type &arg)
+        {
+            if (!arg.description().empty())
+            {
+                write_argument_description(arg.description());
+            }
+
+            if (include_default_value_in_description && arg.has_default_value())
+            {
+                write_default_value(arg);
+            }
+
+            output << std::endl;
+        }
+
+        virtual void write_argument_name_for_description(string_view_type name, string_view_type prefix)
+        {
+            output << prefix << name;
+        }
+
+        virtual void write_value_description_for_description(string_view_type value_description)
+        {
+            output << '<' << value_description << '>';
+        }
+
+        virtual void write_switch_value_description(string_view_type value_description)
+        {
+            output << c_optionalStart;
+            write_value_description_for_description(value_description);
+            output << c_optionalEnd;
+        }
+
+        virtual void write_aliases(const std::vector<string_type> &aliases, string_view_type prefix)
+        {
+            bool first = true;
+            for (const auto &alias : aliases)
+            {
+                if (first)
+                {
+                    output << " (";
+                    first = false;
+                }
+                else
+                {
+                    output << name_separator;
+                }
+
+                write_alias(alias, prefix);
+            }
+
+            if (!first)
+            {
+                output << ")";
+            }
+        }
+
+        virtual void write_alias(string_view_type alias, string_view_type prefix)
+        {
+            write_argument_name_for_description(alias, prefix);
+        }
+
+        virtual void write_argument_description(string_view_type description)
+        {
+            output << description;
+        }
+
+        virtual void write_default_value(const argument_type &arg)
+        {
+            output << " Default value: ";
+            arg.write_default_value(output);
+            output << '.';
+        }
+
+        virtual void write_spacing(int count)
+        {
+            for (int i = 0; i < count; ++i)
+            {
+                output << ' ';
+            }
+        }
+
+        const parser_type &parser() const
         {
             return *_parser;
         }

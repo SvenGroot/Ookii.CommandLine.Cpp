@@ -82,6 +82,7 @@ namespace ookii
         using string_view_type = std::basic_string_view<CharType, Traits>;
         //! \brief The concrete type of `std::basic_usage_options` used.
         using usage_options_type = basic_usage_options<CharType, Traits, Alloc>;
+        using stream_type = std::basic_ostream<CharType, Traits>;
 
         command_line_argument_base(const command_line_argument_base &) = delete;
 
@@ -256,6 +257,10 @@ namespace ookii
         //! The default value for an argument can be specified using basic_parser_builder::argument_builder::default_value().
         virtual string_type format_default_value(const usage_options_type &options, const std::locale &loc = {}) const = 0;
 
+        virtual stream_type &write_default_value(stream_type &stream) const = 0;
+
+        virtual bool has_default_value() const noexcept = 0;
+
     protected:
         //! \brief Used to indicate that the argument has a value.
         //!
@@ -390,6 +395,21 @@ namespace ookii
             return this->format_default_value_helper(_storage.default_value, options, loc);
         }
 
+        typename base_type::stream_type &write_default_value(typename base_type::stream_type &stream) const override
+        {
+            if (_storage.default_value)
+            {
+                stream << *_storage.default_value;
+            }
+
+            return stream;
+        }
+
+        bool has_default_value() const noexcept override
+        {
+            return _storage.default_value.has_value();
+        }
+
     private:
         template<typename T2 = T>
         std::enable_if_t<details::is_switch<T2>::value, bool> set_switch_value_core()
@@ -517,6 +537,21 @@ namespace ookii
         string_type format_default_value(const usage_options_type &options, const std::locale &loc = {}) const override
         {
             return this->format_default_value_helper(_storage.default_value, options, loc);
+        }
+
+        typename base_type::stream_type &write_default_value(typename base_type::stream_type &stream) const override
+        {
+            if (_storage.default_value)
+            {
+                stream << *_storage.default_value;
+            }
+
+            return stream;
+        }
+
+        bool has_default_value() const noexcept override
+        {
+            return _storage.default_value.has_value();
         }
 
     private:

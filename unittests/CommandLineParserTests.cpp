@@ -719,7 +719,9 @@ private:
         VERIFY_EQUAL(expected_arg, result.error_arg_name);
     }
 
-    static constexpr tstring_view c_usageExpected = TEXT(R"(Usage: TestCommand [-StringArg] <string>
+    static constexpr tstring_view c_usageExpected = TEXT(R"(Application description.
+
+Usage: TestCommand [-StringArg] <string>
    -IntArg <int> [-FloatArg <number>]
    [-MultiArg <string>...]
    [-OptionalSwitchArg] [-SwitchArg]

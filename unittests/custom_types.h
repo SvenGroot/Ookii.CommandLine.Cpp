@@ -45,6 +45,11 @@ struct OOKII_FMT_NS formatter<point, ookii::tchar_t> : public OOKII_FMT_NS forma
     }
 };
 
+inline std::basic_ostream<ookii::tchar_t> &operator<<(std::basic_ostream<ookii::tchar_t> &stream, point value)
+{
+    stream << value.x << TEXT(",") << value.y;
+    return stream;
+}
 
 // Custom argument type that specializes lexical_convert.
 enum class animal
@@ -96,5 +101,21 @@ struct OOKII_FMT_NS formatter<animal, ookii::tchar_t> : public OOKII_FMT_NS form
         return OOKII_FMT_NS formatter<ookii::tstring_view, ookii::tchar_t>::format(string_value, ctx);
     }
 };
+
+inline std::basic_ostream<ookii::tchar_t> &operator<<(std::basic_ostream<ookii::tchar_t> &stream, animal value)
+{
+    ookii::tstring_view string_value;
+    if (static_cast<int>(value) < 0 || static_cast<int>(value) >= static_cast<int>(std::size(animal_strings)))
+    {
+        string_value = TEXT("invalid");
+    }
+    else
+    {
+        string_value = animal_strings[static_cast<size_t>(value)];
+    }
+
+    stream << string_value;
+    return stream;
+}
 
 #endif
