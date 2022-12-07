@@ -93,16 +93,11 @@ in Ookii.CommandLine).
 
 Ookii.CommandLine for C++ requires the following:
 
-- A compiler supporting C++20 (tested with Visual C++ 2022, g++ 11, and Clang 14[^1]).
+- A compiler supporting C++20 (tested with Visual C++ 2022, g++ 11, and Clang 14).
 - A standard C++ library supporting the \<format> header, or;
   - [libfmt](https://github.com/fmtlib/fmt) if \<format> is not available.
 - [`line_wrapping_ostream`](docs/LineWrappingStream.md), used to generate usage help, relies on
   `dynamic_cast` and will require RTTI to be enabled to function correctly.
-
-[^1]: With the tested versions of Clang, you cannot call the `command_line_parser::arguments()`
-      method or the `shell_command_manager::commands()` method, or the build will fail. This is
-      due to broken support for the \<ranges> library. This should not affect most users of
-      Ookii.CommandLine.
 
 Ookii.CommandLine for C++ should support any operating system (tested on Windows and Linux). If you
 want to make sure your platform is supported, you can [run the tests](#building-and-running-tests-and-samples).
@@ -144,13 +139,10 @@ cmake ..
 cmake --build .
 ```
 
-> Certain tests are known to be broken on tested versions of Clang, and will cause the build to fail.
-> Use `cmake .. -DOOKIICL_BROKEN_STD_RANGES=1` to disable these tests.
-
 There are three scripts provided to aid building on Linux: `scripts/build.sh`, which builds using
-your default compiler; `scripts/build_clang.sh`, which forces the use of Clang and also adds the
-`-DOOKIICL_BROKEN_STD_RANGES=1` parameter; and `scripts/build_docs.sh`, which builds the documentation
-(requires [doxygen](https://doxygen.nl/) and [dot](https://graphviz.org/)).
+your default compiler; `scripts/build_clang.sh`, which forces the use of Clang; and
+`scripts/build_docs.sh`, which builds the documentation (requires [doxygen](https://doxygen.nl/) and
+[dot](https://graphviz.org/)).
 
 ### Running tests
 

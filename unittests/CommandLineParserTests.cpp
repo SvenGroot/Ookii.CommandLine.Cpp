@@ -11,7 +11,6 @@ public:
     TEST_CLASS(CommandLineParserTests);
 
     // This test must be disabled on clang because std::ranges seem to be broken on it.
-#ifndef OOKII_BROKEN_STD_RANGES
     TEST_METHOD(TestEnumerateArguments)
     {
         tstring arg1;
@@ -39,7 +38,6 @@ public:
             ++index;
         }
     }
-#endif
 
     TEST_METHOD(TestNamed)
     {

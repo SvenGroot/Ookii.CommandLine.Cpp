@@ -2,7 +2,7 @@
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 mkdir -p $DIR/../out/clang
 pushd $DIR/../out/clang
-CC=/usr/bin/clang CXX=/usr/bin/clang++ cmake ../.. -DOOKIICL_BROKEN_STD_RANGES=1
+CC=/usr/bin/clang-15 CXX=/usr/bin/clang++-15 cmake ../..
 cmake --build . --parallel 8
 
 if [ "$1" == "test" ]; then

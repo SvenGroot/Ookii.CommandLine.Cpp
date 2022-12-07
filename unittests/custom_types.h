@@ -7,7 +7,6 @@
 #include <string>
 #include <optional>
 #include <ookii/string_helper.h>
-#include <ranges>
 #include "unicode.h"
 
 // Custom argument type that uses a stream extractor for conversion.
@@ -70,7 +69,7 @@ struct ookii::lexical_convert<animal, ookii::tchar_t>
 {
     static std::optional<animal> from_string(ookii::tstring_view value, const std::locale &loc)
     {
-        auto it = std::ranges::find_if(animal_strings, [&](auto item)
+        auto it = std::find_if(std::begin(animal_strings), std::end(animal_strings), [&](auto item)
             {
                 return string_equal_case_insensitive(item, value, loc);
             });

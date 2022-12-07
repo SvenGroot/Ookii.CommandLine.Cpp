@@ -20,10 +20,10 @@ option(OOKIICL_TEST "Build Ookii.CommandLine.Cpp tests." ${OOKIICL_STANDALONE_PR
 option(OOKIICL_SAMPLES "Build Ookii.CommandLine.Cpp samples." ${OOKIICL_STANDALONE_PROJECT})
 option(OOKIICL_DOCS "Build Ookii.CommandLine.Cpp documentation." ${OOKIICL_STANDALONE_PROJECT})
 option(OOKIICL_PACKAGE "Build Ookii.Command.Cpp NuGet package." ${OOKIICL_STANDALONE_PROJECT})
-option(OOKIICL_BROKEN_STD_RANGES "Disable tests that don't compile on certain versions of Clang." OFF)
+option(OOKIICL_FORCE_LIBFMT "Force the use of libfmt even if the <format> header is available." OFF)
 
-if (OOKIICL_BROKEN_STD_RANGES)
-    add_compile_definitions(OOKII_BROKEN_STD_RANGES)
+if (OOKIICL_FORCE_LIBFMT)
+    add_compile_definitions(OOKII_FORCE_LIBFMT)
 endif()
 
 # Add a header only library, and add an alias so clients can use Ookii.CommandLine::OOKIICL regardless

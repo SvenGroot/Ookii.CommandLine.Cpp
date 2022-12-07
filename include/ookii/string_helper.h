@@ -11,7 +11,6 @@
 #include <array>
 #include <string>
 #include <string_view>
-#include <ranges>
 #include <algorithm>
 
 namespace ookii
@@ -50,11 +49,11 @@ namespace ookii
             using std::end;
             if (_case_sensitive)
             {
-                return std::ranges::lexicographical_compare(left, right, std::less<>{});
+                return std::lexicographical_compare(begin(left), end(left), begin(right), end(right), std::less<>{});
             }
             else
             {
-                return std::ranges::lexicographical_compare(left, right, [this](auto left, auto right) 
+                return std::lexicographical_compare(begin(left), end(left), begin(right), end(right), [this](auto left, auto right) 
                     {
                         return std::toupper(left, _locale) < std::toupper(right, _locale); 
                     });
@@ -76,7 +75,7 @@ namespace ookii
     template<typename CharType, typename Traits>
     bool string_equal_case_insensitive(std::basic_string_view<CharType, Traits> string1, std::basic_string_view<CharType, Traits> string2, const std::locale &locale = {})
     {
-        return std::ranges::equal(string1, string2, [&locale](auto left, auto right) 
+        return std::equal(string1.begin(), string1.end(), string2.begin(), string2.end(), [&locale](auto left, auto right) 
             {
                 return std::toupper(left, locale) == std::toupper(right, locale); 
             });
@@ -98,7 +97,7 @@ namespace ookii
     constexpr const std::array<CharType, Length> literal_cast(const char (&value)[Length])
     {
         std::array<CharType, Length> result{};
-        std::ranges::copy(value, result.begin());
+        std::copy(std::begin(value), std::end(value), result.begin());
         return result;
     }
 
@@ -124,7 +123,7 @@ namespace ookii
             std::basic_string<CharType, Traits, Alloc> result;
             auto &facet = std::use_facet<std::ctype<CharType>>(loc);
             result.reserve(value.length());
-            std::ranges::transform(value, std::back_inserter(result), [&facet](auto c)
+            std::transform(value.begin(), value.end(), std::back_inserter(result), [&facet](auto c)
                 {
                     return facet.widen(c);
                 });

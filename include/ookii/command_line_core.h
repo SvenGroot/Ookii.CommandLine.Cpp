@@ -14,6 +14,7 @@
 #include "usage_writer.h"
 #include "parse_result.h"
 #include "owned_or_borrowed_ptr.h"
+#include "range_helper.h"
 
 //! \brief Namespace containing the core Ookii.CommandLine.Cpp types.
 //!
@@ -260,15 +261,17 @@ namespace ookii
         //! The arguments will be returned in alphabetical order.
         auto arguments() const
         {
-            return _arguments | std::views::filter([](const auto &a)
+            return details::range_filter<const argument_base_type&, typename std::map<string_type, owned_or_borrowed_ptr<argument_base_type>, string_less>::const_iterator>{_arguments.begin(), _arguments.end(),
+                [](const auto &a) -> auto&
+                {
+                    return *a.second;
+                },
+                [](const auto &a)
                 {
                     // Borrowed pointers are aliases and shouldn't be returned here.
                     return a.second.is_owned();
-                })
-                | std::views::transform([](const auto &a) -> auto&
-                {
-                    return *a.second;
-                });
+                }
+            };
         }
 
         //! \brief Gets the number of positional arguments.

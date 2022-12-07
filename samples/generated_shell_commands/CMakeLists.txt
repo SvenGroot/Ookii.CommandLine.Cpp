@@ -30,7 +30,9 @@ else()
   target_compile_options(generated_shell_command PRIVATE -Wall -Wextra -Wpedantic)
 
   # link libfmt if <format> is not supported.
-  check_include_file_cxx("format" HAVE_FORMAT)
+  if(NOT OOKIICL_FORCE_LIBFMT)
+    check_include_file_cxx("format" HAVE_FORMAT)
+  endif()
   if(NOT HAVE_FORMAT)
     find_package(fmt)
     target_link_libraries(generated_shell_command PRIVATE fmt::fmt)

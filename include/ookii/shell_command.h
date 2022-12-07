@@ -254,7 +254,15 @@ namespace ookii
         //! \warning Calling this function may cause build errors on certain versions of clang.
         auto commands() const noexcept
         {
-            return _commands | std::views::values;
+            return details::range_filter<const info_type &, typename std::map<string_type, info_type, string_less>::const_iterator>{
+                _commands.begin(),
+                _commands.end(),
+                [](const auto &a) -> auto&
+                {
+                    return a.second;
+                },
+                {}
+            };
         }
 
         //! \brief Gets information about a shell command by name.

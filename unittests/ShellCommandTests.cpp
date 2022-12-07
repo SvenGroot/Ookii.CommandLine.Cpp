@@ -70,7 +70,6 @@ public:
             .add_command<Command3>(TEXT("LastCommand"), TEXT("Foo"));
 
         // This test must be disabled on clang because std::ranges seem to be broken on it.
-#ifndef OOKII_BROKEN_STD_RANGES
         size_t index = 0;
         for (const auto &command : manager.commands())
         {
@@ -95,7 +94,6 @@ public:
 
             ++index;
         }
-#endif
 
         auto command = manager.get_command(TEXT("Command1"));
         VERIFY_NOT_NULL(command);
