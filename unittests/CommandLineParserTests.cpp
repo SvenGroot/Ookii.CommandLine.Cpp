@@ -478,20 +478,11 @@ public:
             .add_multi_value_argument(multiArg, TEXT("MultiArg")).description(TEXT("Multi-value argument description.")).alias(TEXT("multi")).alias(TEXT("m"))
             .build();
         
-        {
-            //std::basic_ostringstream<tchar_t> stream;
-            //tline_wrapping_stream wrapStream{stream, 40};
-            //parser.write_usage(basic_usage_options<tchar_t>{wrapStream});
-            //VERIFY_EQUAL(c_usageExpected, stream.str());
-        }
-
-        {
-            std::basic_ostringstream<tchar_t> stream;
-            tline_wrapping_stream wrapStream{stream, 40};
-            basic_usage_writer<tchar_t> writer{wrapStream};
-            writer.write_parser_usage(parser);
-            VERIFY_EQUAL(c_usageExpected, stream.str());
-        }
+        std::basic_ostringstream<tchar_t> stream;
+        tline_wrapping_stream wrapStream{stream, 40};
+        basic_usage_writer<tchar_t> usage{wrapStream};
+        parser.write_usage(&usage);
+        VERIFY_EQUAL(c_usageExpected, stream.str());
     }
 
     TEST_METHOD(TestWindowsOptionPrefix)

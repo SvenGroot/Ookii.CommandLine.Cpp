@@ -4,7 +4,7 @@
 #include "../input/arguments.h"
 #include "../input/arguments2.h"
     
-std::optional<my_arguments> my_arguments::parse(int argc, const char *const argv[], const ookii::basic_usage_options<char> &options)
+std::optional<my_arguments> my_arguments::parse(int argc, const char *const argv[], ookii::basic_usage_writer<char> *options)
 {
     auto name = "name";
     my_arguments args{};
@@ -25,7 +25,7 @@ std::optional<my_arguments> my_arguments::parse(int argc, const char *const argv
     return {};
 }
 
-std::optional<other_arguments> other_arguments::parse(int argc, const char *const argv[], const ookii::basic_usage_options<char> &options)
+std::optional<other_arguments> other_arguments::parse(int argc, const char *const argv[], ookii::basic_usage_writer<char> *options)
 {
     std::basic_string<char> name;
     if (argc > 0) { name = std::filesystem::path{argv[0]}.filename().string(); }
@@ -47,7 +47,7 @@ std::optional<other_arguments> other_arguments::parse(int argc, const char *cons
     return {};
 }
 
-std::optional<third_arguments> third_arguments::parse(int argc, const char *const argv[], const ookii::basic_usage_options<char> &options)
+std::optional<third_arguments> third_arguments::parse(int argc, const char *const argv[], ookii::basic_usage_writer<char> *options)
 {
     std::basic_string<char> name;
     if (argc > 0) { name = std::filesystem::path{argv[0]}.filename().string(); }

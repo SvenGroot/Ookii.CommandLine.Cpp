@@ -117,7 +117,7 @@ process {
         $headers += "#include `"$fileName`""
         foreach ($info in (Convert-Arguments $contents)) {
             $infoCount += 1
-            $result += "std::optional<$($info.TypeName)> $($info.TypeName)::parse(int argc, const $charType *const argv[], const ookii::basic_usage_options<$chartype> &options)
+            $result += "std::optional<$($info.TypeName)> $($info.TypeName)::parse(int argc, const $charType *const argv[], ookii::basic_usage_writer<$chartype> *options)
 {
 $($info.GenerateParser($stringPrefix, $charType, $NameTransform) -join [System.Environment]::NewLine)
 }

@@ -10,7 +10,6 @@
 
 #include <functional>
 #include "command_line_switch.h"
-#include "usage_options.h"
 
 namespace ookii
 {
@@ -80,8 +79,6 @@ namespace ookii
         using string_type = typename storage_type::string_type;
         //! \brief The concrete type of `std::basic_string_view` used.
         using string_view_type = std::basic_string_view<CharType, Traits>;
-        //! \brief The concrete type of `std::basic_usage_options` used.
-        using usage_options_type = basic_usage_options<CharType, Traits, Alloc>;
         using stream_type = std::basic_ostream<CharType, Traits>;
 
         command_line_argument_base(const command_line_argument_base &) = delete;
@@ -255,8 +252,6 @@ namespace ookii
         //! With the default options, this will return a string like "Default value: value".
         //! 
         //! The default value for an argument can be specified using basic_parser_builder::argument_builder::default_value().
-        virtual string_type format_default_value(const usage_options_type &options, const std::locale &loc = {}) const = 0;
-
         virtual stream_type &write_default_value(stream_type &stream) const = 0;
 
         virtual bool has_default_value() const noexcept = 0;
@@ -280,22 +275,6 @@ namespace ookii
         command_line_argument_base(storage_type &&storage)
             : _storage{std::move(storage)}
         {
-        }
-
-        //! \brief Helper function for derived classes to implement format_default_value().
-        //! \tparam T The type of the argument.
-        //! \param value The argument's default value.
-        //! \param options The usage options specifying the default value format string.
-        //! \param loc The locale used to format the value.
-        //! \return The formatted default value, or an empty string if the argument doesn't have
-        //!         a default value or the options indicate to exclude it.
-        template<typename T>
-        static string_type format_default_value_helper(const std::optional<T> &value, const usage_options_type &options, const std::locale &loc = {})
-        {
-            if (options.include_default_value_in_description && value)
-                return format::ncformat(loc, options.default_value_format, *value);
-            else
-                return {};
         }
 
     private:
@@ -332,8 +311,6 @@ namespace ookii
         using string_view_type = typename base_type::string_view_type;
         //! \copydoc base_type::storage_type
         using typed_storage_type = details::typed_argument_storage<value_type, element_type, CharType, Traits>;
-        //! \brief The concrete type of `std::basic_usage_options` used.
-        using usage_options_type = typename base_type::usage_options_type;
 
         //! \brief Initializes a new instance of the command_line_argument class.
         //! \param storage Storage containing the argument's information.
@@ -389,12 +366,7 @@ namespace ookii
             }
         }
 
-        //! \copydoc base_type::format_default_value()
-        string_type format_default_value(const usage_options_type &options, const std::locale &loc = {}) const override
-        {
-            return this->format_default_value_helper(_storage.default_value, options, loc);
-        }
-
+        //! \copydoc base_type::write_default_value()
         typename base_type::stream_type &write_default_value(typename base_type::stream_type &stream) const override
         {
             if (_storage.default_value)
@@ -405,6 +377,7 @@ namespace ookii
             return stream;
         }
 
+        //! \copydoc base_type::has_default_value()
         bool has_default_value() const noexcept override
         {
             return _storage.default_value.has_value();
@@ -452,8 +425,6 @@ namespace ookii
         using string_view_type = typename base_type::string_view_type;
         //! \copydoc base_type::storage_type
         using typed_storage_type = details::typed_argument_storage<T, element_type, CharType, Traits>;
-        //! \brief The concrete type of `std::basic_usage_options` used.
-        using usage_options_type = typename base_type::usage_options_type;
 
         //! \brief Initializes a new instance of the multi_value_command_line_argument class.
         //! \param storage Storage containing the argument's information.
@@ -533,12 +504,7 @@ namespace ookii
             }
         }
 
-        //! \copydoc base_type::format_default_value()
-        string_type format_default_value(const usage_options_type &options, const std::locale &loc = {}) const override
-        {
-            return this->format_default_value_helper(_storage.default_value, options, loc);
-        }
-
+        //! \copydoc base_type::write_default_value()
         typename base_type::stream_type &write_default_value(typename base_type::stream_type &stream) const override
         {
             if (_storage.default_value)
@@ -549,6 +515,7 @@ namespace ookii
             return stream;
         }
 
+        //! \copydoc base_type::has_default_value()
         bool has_default_value() const noexcept override
         {
             return _storage.default_value.has_value();

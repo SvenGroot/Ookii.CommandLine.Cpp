@@ -74,8 +74,8 @@ namespace ookii
     //! can be shown to the user in case an argument parsing error happens or help is requested.
     //! 
     //! To parse arguments, call one of the overloads of the parse() method. Those overloads taking
-    //! a basic_usage_options will handle any errors and print the error as well as usage information
-    //! to the console. Most commonly, the overload you'll want to use is parse(int argc, const CharType *const argv[], const usage_options_type &options).
+    //! a basic_usage_writer will handle any errors and print the error as well as usage information
+    //! to the console. Most commonly, the overload you'll want to use is parse(int argc, const CharType *const argv[], usage_writer_type *usage).
     //! 
     //! Two typedefs for common character types are provided:
     //! 
@@ -101,8 +101,8 @@ namespace ookii
         using string_view_type = std::basic_string_view<CharType, Traits>;
         //! \brief The specialized type of parse_result used.
         using result_type = parse_result<CharType, Traits, Alloc>;
-        //! \brief The specialized type of basic_usage_options used.
-        using usage_options_type = basic_usage_options<CharType, Traits, Alloc>;
+        //! \brief The specialized type of basic_usage_writer used.
+        using usage_writer_type = basic_usage_writer<CharType, Traits, Alloc>;
         //! \brief The specialized type of parser parameter storage used. For internal use.
         using storage_type = details::parser_storage<CharType, Traits, Alloc>;
         //! \brief The callback function type for on_parsed().
@@ -387,15 +387,15 @@ namespace ookii
         //!         forward_iterator.
         //! \param begin An iterator pointing to the first argument.
         //! \param end An iterator pointing to directly after the last argument.
-        //! \param options Options that indicate where errors and usage help are writting in the
-        //!        case of an error, and how they are formatted. Use `{}` to specify default options.
+        //! \param usage The basic_usage_writer used for writing errors and usage help in the
+        //!        case of an error. Use `{}` to specify a default usage writer.
         //! 
         //! \return A parse_result that indicates whether the operation was successful.
         template<typename Iterator>
-        result_type parse(Iterator begin, Iterator end, const usage_options_type &options)
+        result_type parse(Iterator begin, Iterator end, usage_writer_type *usage)
         {
             auto result = parse(begin, end);
-            handle_error(result, options);
+            handle_error(result, usage);
             return result;
         }
 
@@ -425,15 +425,15 @@ namespace ookii
         //! \tparam Range The type of the range. This type must define global begin() and end()
         //!         functions.
         //! \param range A range containing the arguments.
-        //! \param options Options that indicate where errors and usage help are writting in the
-        //!        case of an error, and how they are formatted. Use `{}` to specify default options.
+        //! \param usage The basic_usage_writer used for writing errors and usage help in the
+        //!        case of an error. Use `{}` to specify a default usage writer.
         //! 
         //! \return A parse_result that indicates whether the operation was successful.
         template<typename Range>
-        result_type parse(Range range, const usage_options_type &options)
+        result_type parse(Range range, usage_writer_type *usage)
         {
             auto result = parse(range);
-            handle_error(result, options);
+            handle_error(result, usage);
             return result;
         }
 
@@ -460,15 +460,15 @@ namespace ookii
         //! \tparam T The type of the elements in the initializer list. This must be a string type
         //!         that can be converted to std::basic_string<CharType, Traits, Alloc>.
         //! \param args The arguments.
-        //! \param options Options that indicate where errors and usage help are writting in the
-        //!        case of an error, and how they are formatted. Use `{}` to specify default options.
+        //! \param usage The basic_usage_writer used for writing errors and usage help in the
+        //!        case of an error. Use `{}` to specify a default usage writer.
         //! 
         //! \return A parse_result that indicates whether the operation was successful.
         template<typename T>
-        result_type parse(std::initializer_list<T> args, const usage_options_type &options)
+        result_type parse(std::initializer_list<T> args, usage_writer_type *usage)
         {
             auto result = parse(args);
-            handle_error(result, options);
+            handle_error(result, usage);
             return result;
         }
 
@@ -497,32 +497,33 @@ namespace ookii
         //! 
         //! \param argc The number of arguments.
         //! \param argv An array containing the arguments.
-        //! \param options Options that indicate where errors and usage help are writting in the
-        //!        case of an error, and how they are formatted. Use `{}` to specify default options.
+        //! \param usage The basic_usage_writer used for writing errors and usage help in the
+        //!        case of an error. Use `{}` to specify a default usage writer.
         //! 
         //! \return A parse_result that indicates whether the operation was successful.
-        result_type parse(int argc, const CharType *const argv[], const usage_options_type &options)
+        result_type parse(int argc, const CharType *const argv[], usage_writer_type *usage)
         {
             auto result = parse(argc, argv);
-            handle_error(result, options);
+            handle_error(result, usage);
             return result;
         }
 
         //! \brief Writes usage help for this parser's arguments.
         //!
-        //! \param options The basic_usage_options used to format the usage help.
+        //! \param usage The basic_usage_writer used for creating the usage help.
         //! 
-        //! Usage will be written to basic_usage_options::output. In the default basic_usage_options,
+        //! Usage will be written to basic_usage_writer::output. In the default basic_usage_writer,
         //! this is a basic_line_wrapping_ostream for the standard output stream.
-        void write_usage(const usage_options_type &options = {})
+        void write_usage(usage_writer_type *usage = nullptr)
         {
-            if (!_storage.description.empty())
+            if (usage == nullptr)
             {
-                options.output << _storage.description << std::endl << std::endl;
+                usage_writer_type{}.write_parser_usage(*this);
             }
-
-            write_usage_syntax(options);
-            write_usage_descriptions(options);
+            else
+            {
+                usage->write_parser_usage(*this);
+            }
         }
 
         //! \brief Invokes the specified function on each argument in the order they are shown in
@@ -592,7 +593,7 @@ namespace ookii
         }
 
     private:
-        void handle_error(const result_type &result, const usage_options_type &options)
+        void handle_error(const result_type &result, usage_writer_type *usage)
         {
             if (!result)
             {
@@ -600,10 +601,17 @@ namespace ookii
                 // that case.
                 if (result.error != parse_error::parsing_cancelled)
                 {
-                    options.error << result.get_error_message(options.error.rdbuf()->getloc()) << std::endl << std::endl;
+                    if (usage == nullptr)
+                    {
+                        usage_writer_type{}.error << result.get_error_message(locale()) << std::endl << std::endl;
+                    }
+                    else
+                    {
+                        usage->error << result.get_error_message(locale()) << std::endl << std::endl;
+                    }
                 }
 
-                write_usage(options);
+                write_usage(usage);
             }
         }
 
@@ -696,77 +704,6 @@ namespace ookii
             }
 
             return {parse_error::none};
-        }
-
-        void write_usage_syntax(const usage_options_type &options = {})
-        {
-            auto &stream = options.output;
-            stream << reset_indent << set_indent(options.syntax_indent);
-            stream << format::ncformat(_storage.locale, options.usage_prefix_format, _storage.command_name);
-            for_each_argument_in_usage_order([this, &options, &stream](const auto &arg)
-                {
-                    auto syntax = _storage.prefixes[0] + arg.name();
-                    if (arg.position())
-                        syntax = format::ncformat(_storage.locale, options.optional_argument_format, syntax);
-
-                    if (!arg.is_switch())
-                    {
-                        CharType separator = (_storage.allow_white_space_separator && options.use_white_space_value_separator) ? ' ' : _storage.argument_value_separator;
-                        auto value = format::ncformat(_storage.locale, options.value_description_format, arg.value_description());
-                        syntax += separator + value;
-                    }
-
-                    if (arg.is_multi_value())
-                        syntax += options.multi_value_suffix;
-
-                    if (!arg.is_required())
-                        syntax = format::ncformat(_storage.locale, options.optional_argument_format, syntax);
-
-                    stream << ' ' << syntax;
-                    return true;
-                });
-
-            stream << std::endl << std::endl;
-        }
-
-        void write_usage_descriptions(const usage_options_type &options = {})
-        {
-            auto &stream = options.output;
-            stream << reset_indent << set_indent(options.argument_description_indent);
-            for_each_argument_in_usage_order([this, &options, &stream](const auto &arg)
-                {
-                    if (arg.description().empty())
-                        return true;
-
-                    auto value_description = format::ncformat(_storage.locale, options.value_description_format, arg.value_description());
-                    if (arg.is_switch())
-                        value_description = format::ncformat(_storage.locale, options.optional_argument_format, value_description);
-
-                    auto default_value = arg.format_default_value(options, _storage.locale);
-
-                    string_type aliases;
-                    if (options.include_aliases_in_description && !arg.aliases().empty())
-                    {
-                        bool first = true;
-                        for (const auto &alias : arg.aliases())
-                        {
-                            if (first)
-                                first = false;
-                            else
-                                aliases += options.alias_separator;
-
-                            aliases += _storage.prefixes[0] + alias;
-                        }
-
-                        aliases = format::ncformat(_storage.locale, options.alias_format, aliases);
-                    }
-
-                    stream << reset_indent << format::ncformat(_storage.locale, options.argument_description_format,
-                        _storage.prefixes[0], arg.name(), value_description, aliases, arg.description(), default_value)
-                        << std::endl;
-
-                    return true;
-                });
         }
 
         storage_type _storage;

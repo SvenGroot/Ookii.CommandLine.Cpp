@@ -127,11 +127,8 @@ public:
 
         tstringstream stream;
         tline_wrapping_stream wrap_stream{stream, 40};
-        // manager.write_usage(basic_shell_command_usage_options<tchar_t>{wrap_stream});
-        // VERIFY_EQUAL(c_usageExpected, stream.str());
-
-        basic_usage_writer<tchar_t> writer{wrap_stream};
-        writer.write_command_list_usage(manager);
+        basic_usage_writer<tchar_t> usage{wrap_stream};
+        manager.write_usage(&usage);
         VERIFY_EQUAL(c_usageExpected, stream.str());
     }
 
@@ -144,8 +141,8 @@ public:
 
         tstringstream output;
         tstringstream error;
-        basic_shell_command_usage_options<tchar_t> options{output, error};
-        auto command = manager.create_command({ TEXT("AnotherCommand"), TEXT("-Value"), TEXT("42") }, options);
+        basic_usage_writer<tchar_t> options{output, error};
+        auto command = manager.create_command({ TEXT("AnotherCommand"), TEXT("-Value"), TEXT("42") }, &options);
         VERIFY_NOT_NULL(command);
         auto actual = dynamic_cast<Command2*>(command.get());
         VERIFY_NOT_NULL(actual);
@@ -153,7 +150,7 @@ public:
         VERIFY_EQUAL(TEXT(""), output.str());
         VERIFY_EQUAL(TEXT(""), error.str());
 
-        command = manager.create_command({ TEXT("AnotherCommand") }, options);
+        command = manager.create_command({ TEXT("AnotherCommand") }, &options);
         VERIFY_NULL(command);
         VERIFY_EQUAL(c_commandUsageExpected, output.str());
         VERIFY_EQUAL(c_commandErrorExpected, error.str());
@@ -168,8 +165,8 @@ public:
 
         tstringstream output;
         tstringstream error;
-        basic_shell_command_usage_options<tchar_t> options{output, error};
-        auto result = manager.run_command({ TEXT("AnotherCommand"), TEXT("-Value"), TEXT("42") }, options);
+        basic_usage_writer<tchar_t> options{output, error};
+        auto result = manager.run_command({ TEXT("AnotherCommand"), TEXT("-Value"), TEXT("42") }, &options);
         VERIFY_EQUAL(42, result);
     }
 

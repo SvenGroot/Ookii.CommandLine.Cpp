@@ -1,6 +1,6 @@
 #include "common.h"
 #define OOKII_PRESERVE_APPLICATION_NAME
-#include <ookii/command_line_builder.h>
+#include <ookii/command_line.h>
 #include "framework.h"
 using namespace std;
 using namespace ookii;

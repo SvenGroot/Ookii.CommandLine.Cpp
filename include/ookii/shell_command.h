@@ -7,7 +7,6 @@
 #pragma once
 
 #include "command_line_builder.h"
-#include "shell_command_usage_options.h"
 
 namespace ookii
 {
@@ -199,8 +198,8 @@ namespace ookii
         using builder_type = typename info_type::builder_type;
         //! \brief The concrete type of basic_shell_command used.
         using command_type = typename info_type::command_type;
-        //! \brief The concrete type of basic_shell_command_usage_options used.
-        using usage_options_type = basic_shell_command_usage_options<CharType, Traits, Alloc>;
+        //! \brief The concrete type of basic_usage_writer used.
+        using usage_writer_type = basic_usage_writer<CharType, Traits, Alloc>;
         //! \brief The concrete type of output stream used.
         using stream_type = std::basic_ostream<CharType, Traits>;
 
@@ -270,6 +269,11 @@ namespace ookii
             return _application_name;
         }
 
+        const std::locale &locale() const noexcept
+        {
+            return _locale;
+        }
+
         //! \brief Gets information about a shell command by name.
         //! \param name The name of the shell command.
         //! \return An instance of shell_command_info describing the command, or `nullptr` if there
@@ -295,23 +299,23 @@ namespace ookii
         //! \param name The name of the shell command.
         //! \param begin An iterator to the first argument.
         //! \param end An iterator after the last argument.
-        //! \param options A basic_shell_command_usage_options instance that will be used to format errors
+        //! \param usage A basic_usage_writer instance that will be used to format errors
         //!        and usage help.
         //! \returns An instance of the shell command type, or `nullptr` if the an error occurred.
         template<typename Iterator>
-        std::unique_ptr<command_type> create_command(const string_type &name, Iterator begin, Iterator end, const usage_options_type &options = {}) const
+        std::unique_ptr<command_type> create_command(const string_type &name, Iterator begin, Iterator end, usage_writer_type *usage = nullptr) const
         {
             auto info = get_command(name);
             if (info == nullptr)
             {
-                write_usage(options);
+                write_usage(usage);
                 return {};
             }
 
             auto builder = create_parser_builder(*info);
             auto command = info->create(builder);
             auto parser = builder.build();
-            if (!parser.parse(begin, end, options))
+            if (!parser.parse(begin, end, usage))
                 return {};
 
             return command;
@@ -328,16 +332,16 @@ namespace ookii
         //! \tparam Range The type of a range containing the arguments.
         //! \param name The name of the shell command.
         //! \param range A range containing the arguments.
-        //! \param options A basic_shell_command_usage_options instance that will be used to format errors
+        //! \param usage A basic_usage_writer instance that will be used to format errors
         //!        and usage help.
         //! \returns An instance of the shell command type, or `nullptr` if the an error occurred.
         template<typename Range>
-        std::unique_ptr<command_type> create_command(const string_type &name, Range range, const usage_options_type &options = {}) const
+        std::unique_ptr<command_type> create_command(const string_type &name, Range range, usage_writer_type *usage = nullptr) const
         {
             // For ADL
             using std::begin;
             using std::end;
-            return create_command(name, begin(range), end(range), options);
+            return create_command(name, begin(range), end(range), usage);
         }
 
         //! \brief Creates an instance of the specified command, parsing the specified arguments.
@@ -352,13 +356,13 @@ namespace ookii
         //!         that can be converted to std::basic_string<CharType, Traits, Alloc>.
         //! \param name The name of the shell command.
         //! \param args An initializer list containing the arguments.
-        //! \param options A basic_shell_command_usage_options instance that will be used to format errors
+        //! \param usage A basic_usage_writer instance that will be used to format errors
         //!        and usage help.
         //! \returns An instance of the shell command type, or `nullptr` if the an error occurred.
         template<typename T>
-        std::unique_ptr<command_type> create_command(const string_type &name, std::initializer_list<T> args, const usage_options_type &options = {}) const
+        std::unique_ptr<command_type> create_command(const string_type &name, std::initializer_list<T> args, usage_writer_type *usage = nullptr) const
         {
-            return create_command(name, args.begin(), args.end(), options);
+            return create_command(name, args.begin(), args.end(), usage);
         }
 
         //! \brief Creates an instance of a command based on the specified arguments.
@@ -373,20 +377,20 @@ namespace ookii
         //! \tparam Iterator The type of iterator for the arguments.
         //! \param begin An iterator to the first argument.
         //! \param end An iterator after the last argument.
-        //! \param options A basic_shell_command_usage_options instance that will be used to format errors
+        //! \param usage A basic_usage_writer instance that will be used to format errors
         //!        and usage help.
         //! \returns An instance of the shell command type, or `nullptr` if the an error occurred.
         template<typename Iterator>
-        std::unique_ptr<command_type> create_command(Iterator begin, Iterator end, const usage_options_type &options = {}) const
+        std::unique_ptr<command_type> create_command(Iterator begin, Iterator end, usage_writer_type *usage = nullptr) const
         {
             if (begin == end)
             {
-                write_usage(options);
+                write_usage(usage);
                 return {};
             }
 
             auto &name = *begin;
-            return create_command(name, ++begin, end, options);
+            return create_command(name, ++begin, end, usage);
         }
 
         //! \brief Creates an instance of a command based on the specified arguments.
@@ -400,16 +404,16 @@ namespace ookii
         //! 
         //! \tparam Range The type of a range containing the arguments.
         //! \param range A range containing the arguments.
-        //! \param options A basic_shell_command_usage_options instance that will be used to format errors
+        //! \param usage A basic_usage_writer instance that will be used to format errors
         //!        and usage help.
         //! \returns An instance of the shell command type, or `nullptr` if the an error occurred.
         template<typename Range>
-        std::unique_ptr<command_type> create_command(Range range, const usage_options_type &options = {}) const
+        std::unique_ptr<command_type> create_command(Range range, usage_writer_type *usage = nullptr) const
         {
             // For ADL
             using std::begin;
             using std::end;
-            return create_command(begin(range), end(range), options);
+            return create_command(begin(range), end(range), usage);
         }
 
         //! \brief Creates an instance of a command based on the specified arguments.
@@ -424,13 +428,13 @@ namespace ookii
         //! \tparam T The type of the elements in the initializer list. This must be a string type
         //!         that can be converted to std::basic_string<CharType, Traits, Alloc>.
         //! \param args An initializer list containing the arguments.
-        //! \param options A basic_shell_command_usage_options instance that will be used to format errors
+        //! \param usage A basic_usage_writer instance that will be used to format errors
         //!        and usage help.
         //! \returns An instance of the shell command type, or `nullptr` if the an error occurred.
         template<typename T>
-        std::unique_ptr<command_type> create_command(std::initializer_list<T> args, const usage_options_type &options = {}) const
+        std::unique_ptr<command_type> create_command(std::initializer_list<T> args, usage_writer_type *usage = nullptr) const
         {
-            return create_command(args.begin(), args.end(), options);
+            return create_command(args.begin(), args.end(), usage);
         }
 
         //! \brief Creates an instance of a command based on the specified arguments.
@@ -444,18 +448,18 @@ namespace ookii
         //! 
         //! \param argc The number of arguments.
         //! \param argv The arguments..
-        //! \param options A basic_shell_command_usage_options instance that will be used to format errors
+        //! \param usage A basic_usage_writer instance that will be used to format errors
         //!        and usage help.
         //! \returns An instance of the shell command type, or `nullptr` if the an error occurred.
-        std::unique_ptr<command_type> create_command(int argc, const CharType *const argv[], const usage_options_type &options = {}) const
+        std::unique_ptr<command_type> create_command(int argc, const CharType *const argv[], usage_writer_type *usage = nullptr) const
         {
             if (argc < 2)
             {
-                write_usage(options);
+                write_usage(usage);
                 return {};
             }
 
-            return create_command(argv + 1, argv + argc, options);
+            return create_command(argv + 1, argv + argc, usage);
         }
 
         //! \brief Creates an instance of the specified command, parsing the specified arguments,
@@ -471,14 +475,14 @@ namespace ookii
         //! \param name The name of the shell command.
         //! \param begin An iterator to the first argument.
         //! \param end An iterator after the last argument.
-        //! \param options A basic_shell_command_usage_options instance that will be used to format errors
+        //! \param usage A basic_usage_writer instance that will be used to format errors
         //!        and usage help.
         //! \returns The exit code of the command, or error_return_code if the command could not
         //!          be created.
         template<typename Iterator>
-        int run_command(const string_type &name, Iterator begin, Iterator end, const usage_options_type &options = {}) const
+        int run_command(const string_type &name, Iterator begin, Iterator end, usage_writer_type *usage = nullptr) const
         {
-            auto command = create_command(name, begin, end, options);
+            auto command = create_command(name, begin, end, usage);
             if (!command)
                 return error_return_code;
 
@@ -497,17 +501,17 @@ namespace ookii
         //! \tparam Range The type of a range containing the arguments.
         //! \param name The name of the shell command.
         //! \param range A range containing the arguments.
-        //! \param options A basic_shell_command_usage_options instance that will be used to format errors
+        //! \param usage A basic_usage_writer instance that will be used to format errors
         //!        and usage help.
         //! \returns The exit code of the command, or error_return_code if the command could not
         //!          be created.
         template<typename Range>
-        int run_command(const string_type &name, Range range, const usage_options_type &options = {}) const
+        int run_command(const string_type &name, Range range, usage_writer_type *usage = nullptr) const
         {
             // For ADL
             using std::begin;
             using std::end;
-            return run_command(name, begin(range), end(range), options);
+            return run_command(name, begin(range), end(range), usage);
         }
 
         //! \brief Creates an instance of the specified command, parsing the specified arguments,
@@ -523,14 +527,14 @@ namespace ookii
         //!         that can be converted to std::basic_string<CharType, Traits, Alloc>.
         //! \param name The name of the shell command.
         //! \param args An initializer list containing the arguments.
-        //! \param options A basic_shell_command_usage_options instance that will be used to format errors
+        //! \param usage A basic_usage_writer instance that will be used to format errors
         //!        and usage help.
         //! \returns The exit code of the command, or error_return_code if the command could not
         //!          be created.
         template<typename T>
-        int run_command(const string_type &name, std::initializer_list<T> args, const usage_options_type &options = {}) const
+        int run_command(const string_type &name, std::initializer_list<T> args, usage_writer_type *usage = nullptr) const
         {
-            return run_command(name, args.begin(), args.end(), options);
+            return run_command(name, args.begin(), args.end(), usage);
         }
 
         //! \brief Creates an instance of a command based onthe specified arguments, and runs the
@@ -546,14 +550,14 @@ namespace ookii
         //! \tparam Iterator The type of iterator for the arguments.
         //! \param begin An iterator to the first argument.
         //! \param end An iterator after the last argument.
-        //! \param options A basic_shell_command_usage_options instance that will be used to format errors
+        //! \param usage A basic_usage_writer instance that will be used to format errors
         //!        and usage help.
         //! \returns The exit code of the command, or error_return_code if the command could not
         //!          be created.
         template<typename Iterator>
-        int run_command(Iterator begin, Iterator end, const usage_options_type &options = {}) const
+        int run_command(Iterator begin, Iterator end, usage_writer_type *usage = nullptr) const
         {
-            auto command = create_command(begin, end, options);
+            auto command = create_command(begin, end, usage);
             if (!command)
                 return error_return_code;
 
@@ -572,17 +576,17 @@ namespace ookii
         //! 
         //! \tparam Range The type of a range containing the arguments.
         //! \param range A range containing the arguments.
-        //! \param options A basic_shell_command_usage_options instance that will be used to format errors
+        //! \param usage A basic_usage_writer instance that will be used to format errors
         //!        and usage help.
         //! \returns The exit code of the command, or error_return_code if the command could not
         //!          be created.
         template<typename Range>
-        int run_command(Range range, const usage_options_type &options = {}) const
+        int run_command(Range range, usage_writer_type *usage = nullptr) const
         {
             // For ADL
             using std::begin;
             using std::end;
-            return run_command(begin(range), end(range), options);
+            return run_command(begin(range), end(range), usage);
         }
 
         //! \brief Creates an instance of a command based onthe specified arguments, and runs the
@@ -598,14 +602,14 @@ namespace ookii
         //! \tparam T The type of the elements in the initializer list. This must be a string type
         //!         that can be converted to std::basic_string<CharType, Traits, Alloc>.
         //! \param args An initializer list containing the arguments.
-        //! \param options A basic_shell_command_usage_options instance that will be used to format errors
+        //! \param usage A basic_usage_writer instance that will be used to format errors
         //!        and usage help.
         //! \returns The exit code of the command, or error_return_code if the command could not
         //!          be created.
         template<typename T>
-        int run_command(std::initializer_list<T> args, const usage_options_type &options = {}) const
+        int run_command(std::initializer_list<T> args, usage_writer_type *usage = nullptr) const
         {
-            return run_command(args.begin(), args.end(), options);
+            return run_command(args.begin(), args.end(), usage);
         }
 
         //! \brief Creates an instance of a command based onthe specified arguments, and runs the
@@ -620,13 +624,13 @@ namespace ookii
         //! 
         //! \param argc The number of arguments.
         //! \param argv The arguments..
-        //! \param options A basic_shell_command_usage_options instance that will be used to format errors
+        //! \param usage A basic_usage_writer instance that will be used to format errors
         //!        and usage help.
         //! \returns The exit code of the command, or error_return_code if the command could not
         //!          be created.
-        int run_command(int argc, const CharType *const argv[], const usage_options_type &options = {}) const
+        int run_command(int argc, const CharType *const argv[], usage_writer_type *usage = nullptr) const
         {
-            auto command = create_command(argc, argv, options);
+            auto command = create_command(argc, argv, usage);
             if (!command)
                 return error_return_code;
 
@@ -634,20 +638,17 @@ namespace ookii
         }
 
         //! \brief Writes usage help about the available commands.
-        //! \param options A basic_shell_command_usage_options instance that will be used to format the
+        //! \param usage A basic_usage_writer instance that will be used to format the
         //!        usage help.
-        void write_usage(const usage_options_type &options = {}) const
+        void write_usage(usage_writer_type *usage = nullptr) const
         {
-            auto &stream = options.output;
-            auto usage = format::ncformat(_locale, options.command_usage_format, _application_name);
-            usage = format::ncformat(_locale, options.usage_prefix_format, usage);
-            stream << usage << std::endl << std::endl;
-            stream << options.available_commands_header << std::endl << std::endl;
-            stream << set_indent(options.command_indent);
-            for (const auto &command : _commands)
+            if (usage == nullptr)
             {
-                stream << reset_indent;
-                stream << format::ncformat(_locale, options.command_format, command.second.name(), command.second.description()) << std::endl;
+                usage_writer_type{}.write_command_list_usage(*this);
+            }
+            else
+            {
+                usage->write_command_list_usage(*this);
             }
         }
 

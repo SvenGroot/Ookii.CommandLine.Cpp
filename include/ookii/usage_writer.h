@@ -1,5 +1,5 @@
-//! \file basic_usage_options.h
-//! \brief Provides the ookii::basic_usage_options class.
+//! \file basic_usage_writer.h
+//! \brief Provides the ookii::basic_usage_writer class.
 #ifndef OOKII_USAGE_WRITER_H_
 #define OOKII_USAGE_WRITER_H_
 
@@ -30,6 +30,11 @@ namespace ookii
     template<typename CharType, typename Traits = std::char_traits<CharType>, typename Alloc = std::allocator<CharType>>
     class basic_usage_writer
     {
+        using line_wrapping_stream_type = basic_line_wrapping_ostream<CharType, Traits>;
+
+        std::optional<line_wrapping_stream_type> _owned_output;
+        std::optional<line_wrapping_stream_type> _owned_error;
+
     public:
         //! \brief Provides default values for the fields of basic_usage_writer.
         struct defaults
@@ -43,7 +48,6 @@ namespace ookii
             static constexpr size_t command_description_indent = 8;
         };
 
-        using line_wrapping_stream_type = basic_line_wrapping_ostream<CharType, Traits>;
         //! \brief The concrete string type used.
         using string_type = std::basic_string<CharType, Traits, Alloc>;
         //! \brief The concrete string_view type used.
@@ -86,6 +90,10 @@ namespace ookii
         basic_usage_writer(stream_type &output, stream_type &error)
             : output{output},
               error{error}
+        {
+        }
+
+        virtual ~basic_usage_writer()
         {
         }
 
@@ -143,16 +151,16 @@ namespace ookii
 
         bool blank_line_after_command_description{true};
 
-        virtual void write_parser_usage(const parser_type &parser, const std::locale &loc = {})
+        virtual void write_parser_usage(const parser_type &parser)
         {
             _parser = &parser;
-            write_usage_internal(loc);
+            write_usage_internal(parser.locale());
         }
 
-        virtual void write_command_list_usage(const command_manager_type &manager, const std::locale &loc = {})
+        virtual void write_command_list_usage(const command_manager_type &manager)
         {
             _command_manager = &manager;
-            write_usage_internal(loc);
+            write_usage_internal(manager.locale());
         }
 
     protected:
@@ -546,8 +554,6 @@ namespace ookii
             }
         }
 
-        std::optional<line_wrapping_stream_type> _owned_output;
-        std::optional<line_wrapping_stream_type> _owned_error;
         const parser_type *_parser{};
         const command_manager_type *_command_manager;
 
@@ -555,9 +561,9 @@ namespace ookii
         static constexpr char c_optionalEnd = ']';
     };
 
-    //! \brief Typedef for basic_usage_options using `char` as the character type.
+    //! \brief Typedef for basic_usage_writer using `char` as the character type.
     using usage_writer = basic_usage_writer<char>;
-    //! \brief Typedef for basic_usage_options using `wchar_t` as the character type.
+    //! \brief Typedef for basic_usage_writer using `wchar_t` as the character type.
     using wusage_writer = basic_usage_writer<wchar_t>;
 
 }

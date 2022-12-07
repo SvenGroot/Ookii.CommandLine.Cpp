@@ -14,7 +14,7 @@
 //! \param type The type of the struct or class that contains the arguments.
 //! \param char_type The character type to use for strings.
 #define OOKII_DECLARE_PARSE_METHOD_EX(type, char_type) \
-    static ::std::optional<type> parse(int argc, const char_type* const argv[], const ::ookii::basic_usage_options<char_type> &options = {})
+    static ::std::optional<type> parse(int argc, const char_type* const argv[], ::ookii::basic_usage_writer<char_type> *usage = nullptr)
 
 //! \brief A script to declare the static parse member function that the New-Parser.ps1 script will
 //!        generate, using the default character type.

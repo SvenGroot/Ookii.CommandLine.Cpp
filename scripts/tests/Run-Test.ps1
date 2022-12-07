@@ -3,5 +3,11 @@ param(
     [Parameter(Mandatory=$true)][string]$File
 )
 
-&$File
-exit $LASTEXITCODE
+try {
+    &$File
+    exit $LASTEXITCODE
+}
+catch {
+    Write-Error $_
+    exit 1
+}

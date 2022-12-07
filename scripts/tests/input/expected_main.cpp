@@ -3,7 +3,7 @@
 #include <ookii/command_line.h>
 #include "../input/arguments.h"
     
-std::optional<my_arguments> my_arguments::parse(int argc, const char *const argv[], const ookii::basic_usage_options<char> &options)
+std::optional<my_arguments> my_arguments::parse(int argc, const char *const argv[], ookii::basic_usage_writer<char> *options)
 {
     auto name = "name";
     my_arguments args{};
