@@ -14,6 +14,12 @@ namespace ookii
     template<typename CharType, typename Traits, typename Alloc>
     class basic_command_line_parser;
 
+    template<typename CharType, typename Traits, typename Alloc>
+    class basic_shell_command_manager;
+
+    template<typename CharType, typename Traits, typename Alloc>
+    class shell_command_info;
+
     enum class usage_help_request
     {
         full,
@@ -34,6 +40,7 @@ namespace ookii
             static constexpr size_t syntax_indent = 3;
             //! \brief Default value for basic_usage_writer::argument_description_indent.
             static constexpr size_t argument_description_indent = 8;
+            static constexpr size_t command_description_indent = 8;
         };
 
         using line_wrapping_stream_type = basic_line_wrapping_ostream<CharType, Traits>;
@@ -45,6 +52,8 @@ namespace ookii
         using stream_type = std::basic_ostream<CharType, Traits>;
         using parser_type = basic_command_line_parser<CharType, Traits, Alloc>;
         using argument_type = command_line_argument_base<CharType, Traits, Alloc>;
+        using command_manager_type = basic_shell_command_manager<CharType, Traits, Alloc>;
+        using command_info_type = shell_command_info<CharType, Traits, Alloc>;
 
         //! \brief Initializes a new instance of the basic_usage_writer class.
         //!
@@ -130,23 +139,21 @@ namespace ookii
 
         string_type name_separator{defaults::name_separator.data()};
 
+        int command_description_indent{defaults::command_description_indent};
+
+        bool blank_line_after_command_description{true};
+
         virtual void write_parser_usage(const parser_type &parser, const std::locale &loc = {})
         {
-            auto old_output_loc = output.imbue(loc);
-            details::scope_exit output_reset{[this, old_output_loc] { output.imbue(old_output_loc); }};
-            details::scope_exit error_reset;
-            if (std::addressof(output) != std::addressof(error))
-            {
-                auto old_error_loc = error.imbue(loc);
-                error_reset.reset([this, old_error_loc] { error.imbue(old_error_loc); });
-            }
-
             _parser = &parser;
-            details::scope_exit parser_reset{[this] { _parser = nullptr; }};
-            
-            write_parser_usage_core();
+            write_usage_internal(loc);
         }
 
+        virtual void write_command_list_usage(const command_manager_type &manager, const std::locale &loc = {})
+        {
+            _command_manager = &manager;
+            write_usage_internal(loc);
+        }
 
     protected:
         virtual void write_parser_usage_core()
@@ -168,7 +175,7 @@ namespace ookii
         virtual void write_parser_usage_syntax()
         {
             output << reset_indent << set_indent(syntax_indent);
-            write_usage_syntax_prefix();
+            write_usage_syntax_prefix(parser().command_name());
             parser().for_each_argument_in_usage_order([this](const auto &arg)
                 {
                     output << ' ';
@@ -197,9 +204,9 @@ namespace ookii
             }
         }
 
-        virtual void write_usage_syntax_prefix()
+        virtual void write_usage_syntax_prefix(string_view_type command_name)
         {
-            output << "Usage: " << parser().command_name();
+            output << "Usage: " << command_name;
         }
 
         virtual void write_abbreviated_remaining_arguments()
@@ -418,6 +425,77 @@ namespace ookii
             output << '.';
         }
 
+        virtual void write_command_list_usage_core()
+        {
+            output << reset_indent << set_indent(syntax_indent);
+            write_command_list_usage_syntax();
+            output << reset_indent << set_indent(0);
+            write_available_commands_header();
+            write_command_descriptions();
+        }
+
+        virtual void write_command_list_usage_syntax()
+        {
+            write_usage_syntax_prefix(command_manager().application_name());
+            output << " <command> [arguments]" << std::endl;
+            if (blank_line_after_syntax)
+            {
+                output << std::endl;
+            }
+        }
+
+        virtual void write_available_commands_header()
+        {
+            output << "The following commands are available:" << std::endl << std::endl;
+        }
+
+        virtual void write_command_descriptions()
+        {
+            output << set_indent(command_description_indent);
+            for (const auto &command : command_manager().commands())
+            {
+                write_command_description(command);
+            }
+        }
+
+        virtual void write_command_description(const command_info_type &command)
+        {
+            write_command_description_header(command);
+            write_command_description_body(command);
+
+            if (blank_line_after_command_description)
+            {
+                output << std::endl;
+            }
+        }
+
+        virtual void write_command_description_header(const command_info_type &command)
+        {
+            output << reset_indent;
+            write_spacing(command_description_indent / 2);
+            write_command_name(command.name());
+            output << std::endl;
+        }
+
+        virtual void write_command_description_body(const command_info_type &command)
+        {
+            if (!command.description().empty())
+            {
+                write_command_description(command.description());
+                output << std::endl;
+            }
+        }
+
+        virtual void write_command_name(string_view_type name)
+        {
+            output << name;
+        }
+
+        virtual void write_command_description(string_view_type description)
+        {
+            output << description;
+        }
+
         virtual void write_spacing(int count)
         {
             for (int i = 0; i < count; ++i)
@@ -431,10 +509,47 @@ namespace ookii
             return *_parser;
         }
 
+        const command_manager_type &command_manager() const
+        {
+            return *_command_manager;
+        }
+
     private:
+        void write_usage_internal(const std::locale &loc)
+        {
+            auto old_output_loc = output.imbue(loc);
+            std::optional<std::locale> old_error_loc;
+            details::scope_exit revert{[this, &old_output_loc, &old_error_loc]()
+                {
+                    _parser = nullptr;
+                    if (old_error_loc)
+                    {
+                        error.imbue(*old_error_loc);
+                    }
+
+                    output.imbue(old_output_loc);
+                }
+            };
+
+            if (std::addressof(output) != std::addressof(error))
+            {
+                old_error_loc = error.imbue(loc);
+            }
+
+            if (_parser != nullptr)
+            {
+                write_parser_usage_core();
+            }
+            else
+            {
+                write_command_list_usage_core();
+            }
+        }
+
         std::optional<line_wrapping_stream_type> _owned_output;
         std::optional<line_wrapping_stream_type> _owned_error;
         const parser_type *_parser{};
+        const command_manager_type *_command_manager;
 
         static constexpr char c_optionalStart = '[';
         static constexpr char c_optionalEnd = ']';

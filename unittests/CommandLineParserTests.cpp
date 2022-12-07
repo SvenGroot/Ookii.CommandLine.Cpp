@@ -1,6 +1,6 @@
 #include "common.h"
 #include "framework.h"
-#include <ookii/command_line_builder.h>
+#include <ookii/command_line.h>
 #include "custom_types.h"
 using namespace std;
 using namespace ookii;
@@ -10,7 +10,6 @@ class CommandLineParserTests : public test::TestClass
 public:
     TEST_CLASS(CommandLineParserTests);
 
-    // This test must be disabled on clang because std::ranges seem to be broken on it.
     TEST_METHOD(TestEnumerateArguments)
     {
         tstring arg1;

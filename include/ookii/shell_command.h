@@ -265,6 +265,11 @@ namespace ookii
             };
         }
 
+        const string_type &application_name() const noexcept
+        {
+            return _application_name;
+        }
+
         //! \brief Gets information about a shell command by name.
         //! \param name The name of the shell command.
         //! \return An instance of shell_command_info describing the command, or `nullptr` if there

@@ -69,7 +69,6 @@ public:
             .add_command<Command2>()
             .add_command<Command3>(TEXT("LastCommand"), TEXT("Foo"));
 
-        // This test must be disabled on clang because std::ranges seem to be broken on it.
         size_t index = 0;
         for (const auto &command : manager.commands())
         {
@@ -128,7 +127,11 @@ public:
 
         tstringstream stream;
         tline_wrapping_stream wrap_stream{stream, 40};
-        manager.write_usage(basic_shell_command_usage_options<tchar_t>{wrap_stream});
+        // manager.write_usage(basic_shell_command_usage_options<tchar_t>{wrap_stream});
+        // VERIFY_EQUAL(c_usageExpected, stream.str());
+
+        basic_usage_writer<tchar_t> writer{wrap_stream};
+        writer.write_command_list_usage(manager);
         VERIFY_EQUAL(c_usageExpected, stream.str());
     }
 
@@ -185,7 +188,7 @@ public:
         VERIFY_NULL(command);
     }
 
-    static constexpr tstring_view c_usageExpected = TEXT(R"(Usage: TestApp <command> [args...]
+    static constexpr tstring_view c_usageExpected = TEXT(R"(Usage: TestApp <command> [arguments]
 
 The following commands are available:
 
@@ -195,7 +198,6 @@ The following commands are available:
         wrapped.
 
     Command1
-
 
     LastCommand
         Foo
