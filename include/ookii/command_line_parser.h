@@ -1,10 +1,10 @@
-//! \file command_line_core.h
+//! \file command_line_parser.h
 //!
 //! \brief Provides the ookii::basic_command_line_parser class.
 //! 
 //! This file contains the core functionality of the argument parsing library.
-#ifndef OOKII_COMMAND_LINE_CORE_H_
-#define OOKII_COMMAND_LINE_CORE_H_
+#ifndef OOKII_COMMAND_LINE_PARSER_H_
+#define OOKII_COMMAND_LINE_PARSER_H_
 
 #pragma once
 

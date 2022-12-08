@@ -7,7 +7,7 @@
 
 #pragma once
 
-#include "command_line_core.h"
+#include "command_line_parser.h"
 
 namespace ookii
 {
