@@ -43,6 +43,7 @@ namespace ookii
         using string_type = typename parser_type::string_type;
         //! \copydoc parser_type::argument_base_type
         using argument_base_type = typename parser_type::argument_base_type;
+        using string_provider_type = basic_localized_string_provider<CharType, Traits, Alloc>;
 
         //! \brief The specialized type of the command_line_argument instances that will be built.
         //! \tparam T The type of the argument's value.
@@ -345,8 +346,8 @@ namespace ookii
         //! \brief Initializes a new instance of the basic_parser_builder class.
         //! \param command_name The name of the command that the arguments belong to. Often, this
         //!        is the executable name of the application.
-        basic_parser_builder(string_type command_name)
-            : _storage{command_name}
+        basic_parser_builder(string_type command_name, string_provider_type *string_provider = nullptr)
+            : _storage{command_name, string_provider}
         {
         }
 

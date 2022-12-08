@@ -5,7 +5,7 @@
 
 #pragma once
 
-#include "format_helper.h"
+#include "localized_string_provider.h"
 
 namespace ookii
 {
@@ -74,6 +74,7 @@ namespace ookii
     {
         //! \brief The concrete string type used by this structure.
         using string_type = std::basic_string<CharType, Traits, Alloc>;
+        using string_provider_type = basic_localized_string_provider<CharType, Traits, Alloc>;
 
         //! \brief Initializes a new instance of the parse_result structure.
         //! 
@@ -81,11 +82,14 @@ namespace ookii
         //!        error.
         //! \param error_arg_name The name of the argument that caused the error, or a blank string
         //!        if there was no error or the error doesn't relate to a specific argument.
-        parse_result(parse_error error = parse_error::none, string_type error_arg_name = {})
-            : error{error},
+        parse_result(string_provider_type &string_provider, parse_error error = parse_error::none, string_type error_arg_name = {})
+            : string_provider{&string_provider},
+              error{error},
               error_arg_name{error_arg_name}
         {
         }
+
+        string_provider_type *string_provider;
 
         //! \brief The type of error that occurred, or parse_error::none to indicate no error.
         parse_error error;
@@ -105,10 +109,9 @@ namespace ookii
         //! 
         //! If appropriate, the message will include the name of the argument that caused the error.
         //! 
-        //! \param loc The locale to use to format the error message.
         //! \return The error message, or a blank string for parse_error::none and
         //! parse_error::parsing_cancelled.
-        string_type get_error_message(const std::locale &loc = {}) const
+        string_type get_error_message() const
         {
             switch (error)
             {
@@ -117,25 +120,25 @@ namespace ookii
                 return {};
 
             case parse_error::invalid_value:
-                return OOKII_FMT_NS format(loc, details::error_formats<CharType>::invalid_value.data(), error_arg_name);
+                return string_provider->invalid_value(error_arg_name);
 
             case parse_error::unknown_argument:
-                return OOKII_FMT_NS format(loc, details::error_formats<CharType>::unknown_argument.data(), error_arg_name);
+                return string_provider->unknown_argument(error_arg_name);
 
             case parse_error::missing_value:
-                return OOKII_FMT_NS format(loc, details::error_formats<CharType>::missing_value.data(), error_arg_name);
+                return string_provider->missing_value(error_arg_name);
 
             case parse_error::duplicate_argument:
-                return OOKII_FMT_NS format(loc, details::error_formats<CharType>::duplicate_argument.data(), error_arg_name);
+                return string_provider->duplicate_argument(error_arg_name);
 
             case parse_error::too_many_arguments:
-                return OOKII_FMT_NS format(loc, details::error_formats<CharType>::too_many_arguments.data(), error_arg_name);
+                return string_provider->too_many_arguments();
 
             case parse_error::missing_required_argument:
-                return OOKII_FMT_NS format(loc, details::error_formats<CharType>::missing_required_argument.data(), error_arg_name);
+                return string_provider->missing_required_argument(error_arg_name);
 
             default:
-                return OOKII_FMT_NS format(loc, details::error_formats<CharType>::unknown.data(), error_arg_name);
+                return string_provider->unknown_error();
             }
         }
     };

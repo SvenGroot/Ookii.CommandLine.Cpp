@@ -35,9 +35,11 @@ namespace ookii
         struct parser_storage
         {
             using string_type = std::basic_string<CharType, Traits, Alloc>;
+            using string_provider_type = basic_localized_string_provider<CharType, Traits, Alloc>;
 
-            parser_storage(string_type command_name)
-                : command_name(command_name)
+            parser_storage(string_type command_name, string_provider_type *string_provider)
+                : command_name{command_name},
+                  string_provider{string_provider}
             {
             }
 
@@ -48,6 +50,7 @@ namespace ookii
             CharType argument_value_separator{':'};
             bool allow_white_space_separator{true};
             bool allow_duplicate_arguments{false};
+            string_provider_type *string_provider;
         };
     }
 
@@ -107,6 +110,7 @@ namespace ookii
         using storage_type = details::parser_storage<CharType, Traits, Alloc>;
         //! \brief The callback function type for on_parsed().
         using on_parsed_callback = std::function<on_parsed_action(argument_base_type &, string_view_type value)>;
+        using string_provider_type = basic_localized_string_provider<CharType, Traits, Alloc>;
 
         //! \brief The specialized type of command_line_argument used.
         //!
@@ -161,6 +165,11 @@ namespace ookii
             : _storage{std::move(storage)},
               _arguments{string_less{case_sensitive, storage.locale}}
         {
+            if (_storage.string_provider == nullptr)
+            {
+                _storage.string_provider = &_default_string_provider;
+            }
+
             for (const auto &argument : arguments)
             {
                 auto actual_arg = argument->to_argument();
@@ -348,7 +357,7 @@ namespace ookii
                     }
 
                     if (position >= _positional_arguments.size())
-                        return {parse_error::too_many_arguments};
+                        return {*_storage.string_provider, parse_error::too_many_arguments};
 
                     auto result = set_argument_value(*_positional_arguments[position], arg);
                     if (!result)
@@ -356,14 +365,14 @@ namespace ookii
                 }
             }
 
-            result_type result;
-            for_each_argument_in_usage_order([&result](auto &arg)
+            result_type result{*_storage.string_provider};
+            for_each_argument_in_usage_order([this, &result](auto &arg)
                 {
                     if (arg.is_required())
                     {
                         if (!arg.has_value())
                         {
-                            result = {parse_error::missing_required_argument, arg.name()};
+                            result = {*_storage.string_provider, parse_error::missing_required_argument, arg.name()};
                             return false;
                         }
                     }
@@ -603,11 +612,11 @@ namespace ookii
                 {
                     if (usage == nullptr)
                     {
-                        usage_writer_type{}.error << result.get_error_message(locale()) << std::endl << std::endl;
+                        usage_writer_type{}.error << result.get_error_message() << std::endl << std::endl;
                     }
                     else
                     {
-                        usage->error << result.get_error_message(locale()) << std::endl << std::endl;
+                        usage->error << result.get_error_message() << std::endl << std::endl;
                     }
                 }
 
@@ -651,7 +660,7 @@ namespace ookii
 
             auto it = this->_arguments.find(name);
             if (it == this->_arguments.end())
-                return {parse_error::unknown_argument, string_type{name}};
+                return {*_storage.string_provider, parse_error::unknown_argument, string_type{name}};
 
             if (!has_value)
             {
@@ -673,20 +682,20 @@ namespace ookii
             if (has_value)
             {
                 if (!_storage.allow_duplicate_arguments && !it->second->is_multi_value() && it->second->has_value())
-                    return {parse_error::duplicate_argument, it->second->name()};
+                    return {*_storage.string_provider, parse_error::duplicate_argument, it->second->name()};
 
                 return set_argument_value(*it->second, value);
             }
             else
             {
-                return {parse_error::missing_value, it->second->name()};
+                return {*_storage.string_provider, parse_error::missing_value, it->second->name()};
             }
         }
 
         result_type set_argument_value(argument_base_type &arg, string_view_type value)
         {
             if (!arg.set_value(value, _storage.locale))
-                return {parse_error::invalid_value, arg.name()};
+                return {*_storage.string_provider, parse_error::invalid_value, arg.name()};
 
             return post_process_argument(arg, value);
         }
@@ -700,13 +709,14 @@ namespace ookii
             if (action == on_parsed_action::cancel_parsing || 
                 (arg.cancel_parsing() && action != on_parsed_action::always_continue))
             {
-                return {parse_error::parsing_cancelled, arg.name()};
+                return {*_storage.string_provider, parse_error::parsing_cancelled, arg.name()};
             }
 
-            return {parse_error::none};
+            return {*_storage.string_provider, parse_error::none};
         }
 
         storage_type _storage;
+        string_provider_type _default_string_provider;
 
         // _positional_arguments contains pointers to items owned by _arguments. Since the two
         // have the same lifetime, this is okay.
