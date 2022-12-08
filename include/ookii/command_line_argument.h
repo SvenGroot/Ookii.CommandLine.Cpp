@@ -79,6 +79,7 @@ namespace ookii
         using string_type = typename storage_type::string_type;
         //! \brief The concrete type of `std::basic_string_view` used.
         using string_view_type = std::basic_string_view<CharType, Traits>;
+        //! \brief The concrete type of `std::basic_ostream` used.
         using stream_type = std::basic_ostream<CharType, Traits>;
 
         command_line_argument_base(const command_line_argument_base &) = delete;
@@ -242,18 +243,16 @@ namespace ookii
         //! For a multi-value argument, this adds a value of `true` to the container.
         virtual bool set_switch_value() = 0;
 
-        //! \brief Convert the default value of the argument to a string using the specified usage
-        //!        options.
-        //! \param options The usage options specifying the default value format string.
-        //! \param loc The locale used to format the value.
-        //! \return The formatted default value, or an empty string if the argument doesn't have
-        //!         a default value or the options indicate to exclude it.
-        //! 
-        //! With the default options, this will return a string like "Default value: value".
-        //! 
+        //! \brief Writes the default value to the specified stream.
+        //!
         //! The default value for an argument can be specified using basic_parser_builder::argument_builder::default_value().
+        //!
+        //! \param stream The stream to write to.
+        //! \return The stream.
         virtual stream_type &write_default_value(stream_type &stream) const = 0;
 
+        //! \brief Gets a value that indicates whether this argument has a default value.
+        //! \return `true` if the argument has a default value; otherwise, `false`.
         virtual bool has_default_value() const noexcept = 0;
 
     protected:

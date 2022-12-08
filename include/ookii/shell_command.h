@@ -264,11 +264,13 @@ namespace ookii
             };
         }
 
+        //! \brief Gets the name of the application containing the command
         const string_type &application_name() const noexcept
         {
             return _application_name;
         }
 
+        //! \brief Gets the locale used to parse argument values and to format strings.
         const std::locale &locale() const noexcept
         {
             return _locale;
