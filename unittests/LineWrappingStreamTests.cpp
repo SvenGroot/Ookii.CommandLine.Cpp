@@ -164,10 +164,11 @@ erfinancialgoalsaswell.
     eyourotherfinancialgoalsaswell.
 )")};
 
-    static constexpr tstring_view c_blankLineInput{TEXT("Where do you stand so far?\n\nNow is a good time to check out the progress you've made with your retirement savings, take a look at what you've contributed so far this year, and update your other financial goals as well.")};
-    static constexpr tstring_view c_blankLineIndentResult{TEXT(R"(Where do you stand so far?
+    static constexpr tstring_view c_blankLineInput{TEXT("\nWhere do you stand so far?\n\nNow is a good time to check out the progress you've made with your retirement savings, take a look at what you've contributed so far this year, and update your other financial goals as well.")};
+    static constexpr tstring_view c_blankLineIndentResult{TEXT(R"(
+Where do you stand so far?
 
-    Now is a good time to check out the
+Now is a good time to check out the
     progress you've made with your
     retirement savings, take a look at
     what you've contributed so far this
@@ -175,9 +176,10 @@ erfinancialgoalsaswell.
     financial goals as well.
 )")};
 
-    static constexpr tstring_view c_blankLineNoLimitIndentResult{TEXT(R"(Where do you stand so far?
+    static constexpr tstring_view c_blankLineNoLimitIndentResult{TEXT(R"(
+Where do you stand so far?
 
-    Now is a good time to check out the progress you've made with your retirement savings, take a look at what you've contributed so far this year, and update your other financial goals as well.
+Now is a good time to check out the progress you've made with your retirement savings, take a look at what you've contributed so far this year, and update your other financial goals as well.
 )")};
 
     static constexpr tstring_view c_inputFormatting{TEXT("\x1b[34mLorem \x1b[34mipsum \x1b[34mdolor \x1b[34msit \x1b[34mamet, \x1b[34mconsectetur \x1b[34madipiscing \x1b[34melit, \x1b]0;new title\x1b\\sed do \x1b]0;new title2\aeiusmod \x1b(Btempor\x1bH incididunt\nut labore et dolore magna aliqua. Donec\x1b[38;2;1;2;3m adipiscing tristique risus nec feugiat in fermentum.\x1b[0m")};

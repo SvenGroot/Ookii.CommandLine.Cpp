@@ -236,20 +236,23 @@ namespace ookii
                     return traits_type::not_eof(ch);
                 }
 
-                // Write indentation if needed.
-                // N.B. Don't indent blank lines.
-                if (_need_indent && !is_new_line(ch))
-                {
-                    if (!write_indent())
-                    {
-                        return traits_type::eof();
-                    }
-                }
-
-                // If a line break, indicate the next line needs indentation
+                // If a line break, indicate the next line needs indentation, unless the previous
+                // line was blank.
                 if (is_new_line(ch))
                 {
-                    _need_indent = true;
+                    _need_indent = !_blank_line;
+                    _blank_line = true;
+                }
+                else
+                {
+                    // Write indentation if needed.
+                    // N.B. Don't indent blank lines.
+                    if (_need_indent && !write_indent())
+                    {
+                       return traits_type::eof();
+                    }
+
+                    _blank_line = false;
                 }
 
                 // Write the character to the base stream.
@@ -357,13 +360,14 @@ namespace ookii
                 }
 
                 // Check if we need to output a line.
-                if (++line_length > _max_line_length || traits_type::eq(*current, _new_line))
+                if (line_length >= _max_line_length || traits_type::eq(*current, _new_line))
                 {
                     // Before writing the line, add indentation if necessary.
                     // N.B. Don't indent empty lines.
-                    if (_need_indent && (line_length - _indent_count) > 1)
+                    if (_need_indent)
                     {
-                        if (!write_indent())
+                        line_length -= _indent_count;
+                        if (line_length > 0 && !write_indent())
                         {
                             return false;
                         }
@@ -393,8 +397,16 @@ namespace ookii
                     // Update the state for the new line.
                     start = new_start;
                     potential_line_break = nullptr;
-                    line_length = ((current + 1) - start) + _indent_count;
-                    _need_indent = true;
+                    _need_indent = line_length > 0;
+                    line_length = ((current + 1) - start);
+                    if (_need_indent)
+                    {
+                        line_length += _indent_count;
+                    }
+                }
+                else
+                {
+                    ++line_length;
                 }
             }
 
@@ -498,6 +510,7 @@ namespace ookii
         char_type _space{};
         size_t _indent_count{};
         bool _need_indent{};
+        bool _blank_line{true};
         bool _count_formatting{};
     };
 
