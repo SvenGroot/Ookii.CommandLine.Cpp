@@ -12,73 +12,66 @@ public:
 
     TEST_METHOD(TestWrapping)
     {
-        tstringstream stream;
-        tline_wrapping_stream wrapStream{stream, 40};
-        wrapStream << c_input << endl;
+        tline_wrapping_ostringstream stream{40};
+        stream << c_input << endl;
         VERIFY_EQUAL(c_wrapResult, stream.str());
     }
 
     TEST_METHOD(TestIndent)
     {
-        tstringstream stream;
-        tline_wrapping_stream wrapStream{stream, 40};
-        wrapStream << set_indent(4) << c_input << endl;
-        wrapStream << TEXT("Indented.") << endl;
-        wrapStream << reset_indent << TEXT("Not indented.") << endl;
-        wrapStream << TEXT("Indented again.") << endl;
-        wrapStream << set_indent(6) << TEXT("Changed indent.") << endl;
+        tline_wrapping_ostringstream stream{40};
+        stream << set_indent(4) << c_input << endl;
+        stream << TEXT("Indented.") << endl;
+        stream << reset_indent << TEXT("Not indented.") << endl;
+        stream << TEXT("Indented again.") << endl;
+        stream << set_indent(6) << TEXT("Changed indent.") << endl;
         VERIFY_EQUAL(c_indentResult, stream.str());
     }
 
     TEST_METHOD(TestIndentNoLimit)
     {
-        tstringstream stream;
-        tline_wrapping_stream wrapStream{stream, 0};
-        wrapStream << set_indent(4) << c_input << endl;
-        wrapStream << TEXT("Indented.") << endl;
-        wrapStream << reset_indent << TEXT("Not indented.") << endl;
-        wrapStream << TEXT("Indented again.") << endl;
-        wrapStream << set_indent(6) << TEXT("Changed indent.") << endl;
+        tline_wrapping_ostringstream stream{0};
+        stream << set_indent(4) << c_input << endl;
+        stream << TEXT("Indented.") << endl;
+        stream << reset_indent << TEXT("Not indented.") << endl;
+        stream << TEXT("Indented again.") << endl;
+        stream << set_indent(6) << TEXT("Changed indent.") << endl;
         VERIFY_EQUAL(c_indentNoLimitResult, stream.str());
     }
 
     TEST_METHOD(TestWrappingNoSpace)
     {
-        tstringstream stream;
-        tline_wrapping_stream wrapStream{stream, 40};
-        wrapStream << c_noSpaceInput << endl;
+        tline_wrapping_ostringstream stream{40};
+        stream << c_noSpaceInput << endl;
         VERIFY_EQUAL(c_noSpaceWrapResult, stream.str());
     }
 
     TEST_METHOD(TestIndentNoSpace)
     {
-        tstringstream stream;
-        tline_wrapping_stream wrapStream{stream, 40};
-        wrapStream << set_indent(4) << c_noSpaceInput << endl;
+        tline_wrapping_ostringstream stream{40};
+        stream << set_indent(4) << c_noSpaceInput << endl;
         VERIFY_EQUAL(c_noSpaceIndentResult, stream.str());
     }
 
     TEST_METHOD(TestIndentBlankLine)
     {
-        tstringstream stream;
-        tline_wrapping_stream wrapStream{stream, 40};
-        wrapStream << set_indent(4) << c_blankLineInput << endl;
+        tline_wrapping_ostringstream stream{40};
+        stream << set_indent(4) << c_blankLineInput << endl;
         VERIFY_EQUAL(c_blankLineIndentResult, stream.str());
     }
 
     TEST_METHOD(TestIndentBlankLineNoLimit)
     {
-        tstringstream stream;
-        tline_wrapping_stream wrapStream{stream, 0};
-        wrapStream << set_indent(4) << c_blankLineInput << endl;
+        tline_wrapping_ostringstream stream{0};
+        stream << set_indent(4) << c_blankLineInput << endl;
         VERIFY_EQUAL(c_blankLineNoLimitIndentResult, stream.str());
     }
 
     TEST_METHOD(TestMove)
     {
         tstringstream stream;
-        tline_wrapping_stream wrapStreamSource{stream, 40};
-        tline_wrapping_stream wrapStream{std::move(wrapStreamSource)};
+        tline_wrapping_stream streamSource{stream, 40};
+        tline_wrapping_stream wrapStream{std::move(streamSource)};
         wrapStream << set_indent(4) << c_input << endl;
         wrapStream << TEXT("Indented.") << endl;
         wrapStream << reset_indent << TEXT("Not indented.") << endl;
@@ -95,43 +88,43 @@ public:
 
     TEST_METHOD(TestSkipFormattingNoMaximum)
     {
-        tstringstream stream;
-        tline_wrapping_stream wrapStream{stream, 0};
-        wrapStream << c_inputFormatting;
+        tline_wrapping_ostringstream stream{0};
+        stream << c_inputFormatting;
         VERIFY_EQUAL(c_inputFormatting, stream.str());
     }
 
     TEST_METHOD(TestCountFormatting)
     {
-        tstringstream stream;
-        tline_wrapping_stream wrapStream{stream, 80, true};
-        wrapStream << set_indent(8) << c_inputFormatting << endl;
+        tline_wrapping_ostringstream stream{80, true};
+        stream << set_indent(8) << c_inputFormatting << endl;
         VERIFY_EQUAL(c_expectedFormattingCounted, stream.str());
     }
 
     TEST_METHOD(TestFlush)
     {
-        tstringstream stream;
-        tline_wrapping_stream wrapStream{stream, 40};
-        wrapStream << set_indent(4) << c_blankLineInput;
+        tline_wrapping_ostringstream stream{40};
+        stream << set_indent(4) << c_blankLineInput;
         VERIFY_EQUAL(c_expectedFlush, stream.str());
 
-        wrapStream << std::flush;
+        stream << std::flush;
         VERIFY_EQUAL(c_expectedFlush, stream.str());
 
-        wrapStream << ookii::flush(false);
+        stream << ookii::flush(false);
         VERIFY_EQUAL(c_expectedFlush, stream.str());
 
-        wrapStream << ookii::flush(true);
+        stream << ookii::flush(true);
+        VERIFY_EQUAL(c_blankLineIndentResult, stream.str());
+
+        // Doing it again doesn't add another new line.
+        stream << ookii::flush(true);
         VERIFY_EQUAL(c_blankLineIndentResult, stream.str());
     }
 
 private:
     void TestWrite(tstring_view input, tstring_view expected, size_t max_length, size_t indent)
     {
-        tstringstream stream;
-        tline_wrapping_stream wrapStream{stream, max_length};
-        wrapStream << set_indent(indent) << input << endl;
+        tline_wrapping_ostringstream stream{max_length};
+        stream << set_indent(indent) << input << endl;
         VERIFY_EQUAL(expected, stream.str());
     }
 

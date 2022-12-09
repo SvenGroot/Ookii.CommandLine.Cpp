@@ -61,6 +61,7 @@ namespace ookii
     using tiostream = std::basic_iostream<tchar_t>;
     using tstringstream = std::basic_stringstream<tchar_t>;
     using tline_wrapping_stream = basic_line_wrapping_ostream<tchar_t>;
+    using tline_wrapping_ostringstream = basic_line_wrapping_ostringstream<tchar_t>;
 
 }
 

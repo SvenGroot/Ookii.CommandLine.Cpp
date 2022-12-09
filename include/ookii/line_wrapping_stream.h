@@ -25,7 +25,9 @@ namespace ookii
     //!          when writing starts, and that no other users are writing to the same stream
     //!          buffer. Otherwise, output will not be correctly wrapped or indented.
     //! 
-    //! \warning Syncing this buffer will not sync the contents of the last unfinished line.
+    //! \warning Syncing this buffer will not flush the contents of the last unfinished line.
+    //!          Use sync() with the `flush_last_line` parameter set to `true` to make sure
+    //!          all content is flushed (this may insert an additional new line character).
     //! 
     //! Several typedefs for common character types are provided:
     //! 
@@ -456,7 +458,7 @@ namespace ookii
                     {
                         return false;
                     }
-                    
+
                     count = end - start;
                     // Write the remainder of the buffer plus a new line.
                     if (_base_streambuf->sputn(start, count) < count ||
@@ -723,7 +725,8 @@ namespace ookii
     //!          Otherwise, output will not be correctly wrapped or indented.
     //! 
     //! \warning Flushing this stream will not flush the contents of the last unfinished line.
-    //!          The only way to guarantee all content is flushed is to write a newline.
+    //!          Use ookii::flush() with the `flush_last_line` parameter set to `true` to make sure
+    //!          all content is flushed (this may insert an additional new line character).
     //! 
     //! Several typedefs for common character types are provided:
     //! 
@@ -743,6 +746,14 @@ namespace ookii
         //! \brief The concrete base stream buffer type used by this stream.
         using streambuf_type = std::basic_streambuf<CharType, Traits>;
 
+        //! \brief Initializes a new instance of the basic_line_wrapping_ostream class.
+        //!
+        //! You must call the init() method before the stream is usable.
+        basic_line_wrapping_ostream()
+            : base_type{std::addressof(_buffer)}
+        {
+        }
+
         //! \brief Initializes a new instance of the basic_line_wrapping_ostream class with the
         //!        specified underlying stream and maximum line length.
         //!
@@ -754,6 +765,20 @@ namespace ookii
         //!        of a line.
         basic_line_wrapping_ostream(base_type &base_stream, size_t max_line_length, bool count_formatting = false)
             : base_type{std::addressof(_buffer)}
+        {
+            init(base_stream, max_line_length, count_formatting);
+        }
+
+        //! \brief Initializes a new instance of the basic_line_wrapping_ostream class with the
+        //!        specified underlying stream and maximum line length.
+        //!
+        //! \param base_stream The stream whose stream buffer to write output to.
+        //! \param max_line_length The maximum line length, or a value of 0 or larger than 65536
+        //!        to specify no limit. Use the use_console_width constant to use the console width
+        //!        as the maximum.
+        //! \param count_formatting Include virtual terminal sequences when calculating the length
+        //!        of a line.
+        void init(base_type &base_stream, size_t max_line_length, bool count_formatting = false)
         {
             _buffer.init(base_stream.rdbuf(), max_line_length, count_formatting);
             this->imbue(base_stream.rdbuf()->getloc());
@@ -839,4 +864,115 @@ namespace ookii
     //! \brief A line wrapping stream for use with the `wchar_t` type.
     using wline_wrapping_ostream = ookii::basic_line_wrapping_ostream<wchar_t>;
 
+    //! \brief Output string stream that wraps lines on white-space characters at the specified line
+    //!        length, and with support for indentation.
+    //! 
+    //! This stream writes to a string, whose contents can be retrieved using the str() and view()
+    //! methods.
+    //! 
+    //! \warning Flushing this stream will not flush the contents of the last unfinished line.
+    //!          Use ookii::flush() with the `flush_last_line` parameter set to `true` to make sure
+    //!          all content is flushed (this may insert an additional new line character).
+    //! 
+    //! Several typedefs for common character types are provided:
+    //! 
+    //! Type                                  | Definition
+    //! ------------------------------------- | ---------------------------------------------------
+    //! `ookii::line_wrapping_ostringstream`  | `ookii::basic_line_wrapping_ostringstream<char>`
+    //! `ookii::wline_wrapping_ostringstream` | `ookii::basic_line_wrapping_ostringstream<wchar_t>`
+    //! 
+    //! \tparam CharType The type of characters used.
+    //! \tparam Traits The character traits used.
+    //! \tparam Allocator The allocator to use for strings.
+    template<typename CharType, typename Traits = std::char_traits<CharType>, typename Allocator = std::allocator<CharType>>
+    class basic_line_wrapping_ostringstream : public basic_line_wrapping_ostream<CharType, Traits>
+    {
+    public:
+        //! \brief The concrete type that this class derives from.
+        using base_type = basic_line_wrapping_ostream<CharType, Traits>;
+        //! \brief The concrete type of `std::basic_ostringstream` used.
+        using ostringstream_type = std::basic_ostringstream<CharType, Traits, Allocator>;
+        //! \brief The concrete type of `std::basic_string` used.
+        using string_type = std::basic_string<CharType, Traits, Allocator>;
+
+        //! \brief Initializes a new instance of the basic_line_wrapping_ostringstream class with
+        //!        the specified maximum line length.
+        //!
+        //! \param max_line_length The maximum line length, or a value of 0 or larger than 65536
+        //!        to specify no limit. Use the use_console_width constant to use the console width
+        //!        as the maximum.
+        //! \param count_formatting Include virtual terminal sequences when calculating the length
+        //!        of a line.
+        basic_line_wrapping_ostringstream(size_t max_line_length, bool count_formatting = false)
+        {
+            this->init(_stringstream, max_line_length, count_formatting);
+        }
+
+        //! \brief Gets a copy of the underlying string object.
+        //!
+        //! To make sure the result contains all the written text, you must flush the string using
+        //! ookii:flush(), specifying `true` to flush the final line.
+        string_type str() const&
+        {
+            return _stringstream.str();
+        }
+
+        //! \brief Gets a copy of the underlying string object, using `alloc` as allocator.
+        //!
+        //! To make sure the result contains all the written text, you must flush the string using
+        //! ookii:flush(), specifying `true` to flush the final line.
+        template<typename SAlloc>
+        std::basic_string<CharType, Traits, SAlloc> str(const SAlloc &alloc) const
+        {
+            return _stringstream.str(alloc);
+        }
+
+        //! \brief Gets a string move-constructed from the underlying string.
+        //!
+        //! To make sure the result contains all the written text, you must flush the string using
+        //! ookii:flush(), specifying `true` to flush the final line.
+        string_type str() &&
+        {
+            return std::move(_stringstream).str();
+        }
+
+        //! \brief Replaces the contents of the underlying string.
+        //! \param s The new contents.
+        void str(const string_type &s)
+        {
+            _stringstream.str(s);
+        }
+
+        //! \brief Replaces the contents of the underlying string.
+        //! \param s The new contents.
+        template<typename SAlloc>
+        void str(const std::basic_string<CharType, Traits, SAlloc> &s)
+        {
+            _stringstream.str(s);
+        }
+
+        //! \brief Replaces the contents of the underlying string.
+        //! \param s The new contents.
+        void str(string_type &&s)
+        {
+            _stringstream.str(std::move(s));
+        }
+
+        //! \brief Gets a view over the underlying string.
+        //!
+        //! To make sure the result contains all the written text, you must flush the string using
+        //! ookii:flush(), specifying `true` to flush the final line.
+        std::basic_string_view<CharType, Traits> view() const noexcept
+        {
+            return _stringstream.view();
+        }
+
+    private:
+        ostringstream_type _stringstream;
+    };
+
+    //! \brief A line wrapping string stream for use with the `char` type.
+    using line_wrapping_ostringstream = ookii::basic_line_wrapping_ostringstream<char>;
+    //! \brief A line wrapping string stream for use with the `wchar_t` type.
+    using wline_wrapping_ostringstream = ookii::basic_line_wrapping_ostringstream<wchar_t>;
 }
