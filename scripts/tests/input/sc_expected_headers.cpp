@@ -2,7 +2,7 @@
 #include "foo.h"
 #include "bar.h"
 #include <filesystem>
-#include <ookii/subcommand.h>
+#include <ookii/command_line.h>
 #include <ookii/command_line_generated.h>
 #include "../input/subcommand.h"
 #include "../input/subcommand2.h"

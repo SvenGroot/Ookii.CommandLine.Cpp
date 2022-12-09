@@ -245,7 +245,7 @@ stand-alone parser.
 It takes as input one or more C++ headers, which contain declarations of the shell commands, and
 generates argument parsers for them, as well as the `ookii::register_commands` function, which
 registers all the shell commands it found and returns a `command_manager`. To use this
-function, include `<ookii/command_line_generated.h>` _after_ you include `<ookii/subcommand.h>`
+function, include `<ookii/command_line_generated.h>` _after_ you include `<ookii/command_line.h>`
 
 For the purposes of the code-generation scripts, the major differences between a shell command and
 a regular arguments struct or class are that:

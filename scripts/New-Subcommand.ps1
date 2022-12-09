@@ -86,7 +86,7 @@ begin {
     }
 
     $headers += "#include <filesystem>",
-        "#include <ookii/subcommand.h>",
+        "#include <ookii/command_line.h>",
         "#include <ookii/command_line_generated.h>"
 
     if ($WideChar) {

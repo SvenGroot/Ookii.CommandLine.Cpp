@@ -3,7 +3,7 @@
 
 #pragma once
 
-#include <ookii/subcommand.h>
+#include <ookii/command_line.h>
 
 // This is a sample command that can be invoked by specifying "read" as the first argument to the
 // sample application.

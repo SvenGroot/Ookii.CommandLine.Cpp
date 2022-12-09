@@ -1,6 +1,6 @@
 #include "common.h"
 #include "framework.h"
-#include <ookii/subcommand.h>
+#include <ookii/command_line.h>
 #include "custom_types.h"
 using namespace std;
 using namespace ookii;
@@ -57,10 +57,10 @@ public:
     }
 };
 
-class ShellCommandTests : public test::TestClass
+class SubcommandTests : public test::TestClass
 {
 public:
-    TEST_CLASS(ShellCommandTests);
+    TEST_CLASS(SubcommandTests);
 
     TEST_METHOD(TestCommands)
     {
@@ -213,4 +213,4 @@ Usage: TestApp AnotherCommand -Value <int>
 
 };
 
-TEST_CLASS_REGISTRATION(ShellCommandTests);
+TEST_CLASS_REGISTRATION(SubcommandTests);

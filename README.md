@@ -116,8 +116,7 @@ the following:
 #include <ookii/command_line.h>
 ```
 
-This gets you all the core functionality, except for [shell commands](docs/ShellCommands.md), for
-which you should include `<ookii/subcommand.h>` instead.
+This gets you all the core functionality, including subcommands.
 
 ## Building and running tests and samples
 

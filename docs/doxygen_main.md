@@ -10,9 +10,9 @@ constructed using the ookii::parser_builder class.
 Functionality for applications that have multiple subcommands, each with their own arguments, is
 provided using the ookii::basic_command class.
 
-To use any of the headers provided here, you should typically include \<ookii/command_line.h> or 
-\<ookii/subcommand.h> instead of including other headers directly.
+To use any of the headers provided here, you should typically include \<ookii/command_line.h>
+instead of including other headers directly.
 
-Additional helper types are availabe, which are used by the library internally but can also be used
+Additional helper types are available, which are used by the library internally but can also be used
 for other purposes. Chief among these is the ookii::basic_line_wrapping_ostream, a stream wrapper
 that can be used to white-space wrap text on output at a specified line length.
