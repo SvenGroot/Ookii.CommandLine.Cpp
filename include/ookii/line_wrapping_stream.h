@@ -95,8 +95,7 @@ namespace ookii
         {
             if (_base_streambuf != nullptr)
             {
-                // TODO: Flush full.
-                flush_buffer();
+                flush_buffer(true);
             }
 
             _base_streambuf = streambuf;
@@ -209,6 +208,43 @@ namespace ookii
             }
         }
 
+        //! \brief Flushes the buffer to the underlying stream buffer, optionally including the the
+        //!        final, partial line.
+        //!
+        //! If the buffer contains a line that's shorter than the maximum and was not terminated by
+        //! a line break, the normal `pubsync()` function will not flush that final line, because
+        //! doing so would make it impossible to find the correct place to break the line later
+        //! if that place was already flushed.
+        //!
+        //! This function offers the ability to flush the buffer including the last line. If there
+        //! is a non-empty, non-terminated line in the buffer, that line will be flushed, followed
+        //! by a line break.
+        //!
+        //! \param flush_last_line `true` to flush the final non-terminated line; `false` to leave
+        //!        that line in the buffer.
+        //! \return The result of calling `pubsync()` on the underlying stream buffer.
+        virtual int sync(bool flush_last_line)
+        {
+            if (_base_streambuf == nullptr)
+            {
+                return -1;
+            }
+
+            // Nothing to flush if not using a buffer, but ask the base buffer to sync.
+            if (_buffer.empty())
+            {
+                return _base_streambuf->pubsync();
+            }
+
+            // Attempt to flush the buffer if it's not empty.
+            if (this->pptr() > this->pbase() && !flush_buffer(flush_last_line))
+            {
+                return -1;
+            }
+
+            return _base_streambuf->pubsync();
+        }
+
     protected:
         //! \brief Ensure there is space to write at least one character to the buffer.
         //! 
@@ -283,17 +319,16 @@ namespace ookii
         }
 
         //! \brief Flushes the buffer to the underlying stream buffer.
+        //!
+        //! If the buffer contains a line that's shorter than the maximum and was not terminated by
+        //! a line break, this function will not flush that final line, because doing so would make
+        //! it impossible to find the correct place to wrap the line later if that place was
+        //! already flushed.
+        //!
         //! \return The result of calling `pubsync()` on the underlying stream buffer.
         virtual int sync() override
         {
-            // Attempt to overflow the buffer, and if that succeeds also flush the underlying stream
-            // buffer.
-            if (_base_streambuf != nullptr && !is_eof(overflow()))
-            {
-                return _base_streambuf->pubsync();
-            }
-
-            return -1;
+            return sync(false);
         }
 
         //! \brief Change the locale of the stream buffer.
@@ -311,9 +346,9 @@ namespace ookii
     private:
         using vt_helper_type = vt::details::vt_helper<CharType, Traits>;
 
-        // Write the contents of the buffer to the underlying stream buffer, wrapping lines and adding
-        // indentation as necessary.
-        bool flush_buffer()
+        // Write the contents of the buffer to the underlying stream buffer, wrapping lines and
+        // adding indentation as necessary.
+        bool flush_buffer(bool flush_last_line = false)
         {
             if (_base_streambuf == nullptr)
             {
@@ -392,7 +427,10 @@ namespace ookii
                     }
 
                     // Write the line break.
-                    _base_streambuf->sputc(_new_line);
+                    if (is_eof(_base_streambuf->sputc(_new_line)))
+                    {
+                        return false;
+                    }
 
                     // Update the state for the new line.
                     start = new_start;
@@ -410,11 +448,32 @@ namespace ookii
                 }
             }
 
-            // If we flushed any characters, move the remaining characters to the front for the next
-            // flush.
-            // N.B. line_length can't be used for this because it includes indent character count.
-            if (start > this->pbase())
+            if (flush_last_line)
             {
+                if (end > start)
+                {
+                    if (_need_indent && !write_indent())
+                    {
+                        return false;
+                    }
+                    
+                    count = end - start;
+                    // Write the remainder of the buffer plus a new line.
+                    if (_base_streambuf->sputn(start, count) < count ||
+                        is_eof(_base_streambuf->sputc(_new_line)))
+                    {
+                        return false;
+                    }
+                }
+
+                reset_put_area(0);
+            }
+            else if (start > this->pbase())
+            {
+                // If we flushed any characters, move the remaining characters to the front for the
+                // next flush.
+                // N.B. line_length can't be used for this because it includes indent character
+                // count.
                 count = 0;
                 if (end > start)
                 {
@@ -552,6 +611,26 @@ namespace ookii
             return stream;
         }
 
+        struct flush_helper
+        {
+            bool flush_last_line;
+        };
+
+        template<typename CharType, typename Traits>
+        std::basic_ostream<CharType, Traits> &operator<<(std::basic_ostream<CharType, Traits> &stream, const flush_helper &helper)
+        {
+            auto buffer = get_line_wrapping_streambuf(stream);
+            if (buffer != nullptr)
+            {
+                buffer->sync(helper.flush_last_line);
+            }
+            else
+            {
+                stream.flush();
+            }
+
+            return stream;
+        }
     }
 
     //! \brief IO manipulator that changes the number of spaces that each line is indented with
@@ -563,7 +642,7 @@ namespace ookii
     //! Sample:
     //! 
     //! ```
-    //! stream << set_indent(4);
+    //! stream << ookii::set_indent(4);
     //! ```
     //! 
     //! \param indent The new indentation size.
@@ -582,7 +661,7 @@ namespace ookii
     //! Sample:
     //! 
     //! ```
-    //! stream << reset_indent;
+    //! stream << ookii::reset_indent;
     //! ```
     //! 
     //! \tparam CharType The character type of the stream.
@@ -601,6 +680,36 @@ namespace ookii
         }
 
         return stream;
+    }
+
+    //! \brief IO manipulator that flushes a stream using a basic_line_wrapping_streambuf,
+    //! optionally flushing the last unterminated line.
+    //!
+    //! If the basic_line_wrapping_streambuf contains a line that's shorter than the maximum and was
+    //! not terminated by a line break, the normal `std::flush` manipulator will not flush that
+    //! final line, because doing so would make it impossible to find the correct place to wrap the
+    //! line later if that place was already flushed.
+    //!
+    //! This manipulator offers the ability to flush the buffer including the last line. If there is
+    //! a non-empty, non-terminated line in the buffer, that line will be flushed, followed by a
+    //! line break.
+    //!
+    //! Sample:
+    //! 
+    //! ```
+    //! stream << ookii::flush;
+    //! ```
+    //! 
+    //! \attention If the stream does not use a basic_line_wrapping_streambuf, the effect is the
+    //! same as using `std::flush`.
+    //!
+    //! \warning This IO manipulator uses `dynamic_cast` and may require RTTI.
+    //! 
+    //! \param flush_last_line `true` to flush the final non-terminated line; `false` to leave
+    //!        that line in the buffer.
+    inline details::flush_helper flush(bool flush_last_line)
+    {
+        return {flush_last_line};
     }
 
     //! \brief Output stream that wraps lines on white-space characters at the specified line
@@ -695,6 +804,29 @@ namespace ookii
             {
                 base_type::swap(other);
                 _buffer.swap(other._buffer);
+            }
+        }
+
+        //! \brief Flushes the buffer to the underlying stream buffer, optionally including the the
+        //!        final, partial line.
+        //!
+        //! If the buffer contains a line that's shorter than the maximum and was not terminated by
+        //! a line break, the normal `basic_ostream::flush()` function will not flush that final
+        //! line, because doing so would make it impossible to find the correct place to wrap the
+        //! line later if that place was already flushed.
+        //!
+        //! This function offers the ability to flush the buffer including the last line. If there
+        //! is a non-empty, non-terminated line in the buffer, that line will be flushed, followed
+        //! by a line break.
+        //!
+        //! \param flush_last_line `true` to flush the final non-terminated line; `false` to leave
+        //!        that line in the buffer.
+        //! \return The result of calling `pubsync()` on the underlying stream buffer.
+        void flush(bool flush_last_line)
+        {
+            if (_buffer.sync(flush_last_line) < 0)
+            {
+                this->setstate(basic_line_wrapping_ostream::badbit);
             }
         }
 

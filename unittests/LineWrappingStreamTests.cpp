@@ -109,6 +109,23 @@ public:
         VERIFY_EQUAL(c_expectedFormattingCounted, stream.str());
     }
 
+    TEST_METHOD(TestFlush)
+    {
+        tstringstream stream;
+        tline_wrapping_stream wrapStream{stream, 40};
+        wrapStream << set_indent(4) << c_blankLineInput;
+        VERIFY_EQUAL(c_expectedFlush, stream.str());
+
+        wrapStream << std::flush;
+        VERIFY_EQUAL(c_expectedFlush, stream.str());
+
+        wrapStream << ookii::flush(false);
+        VERIFY_EQUAL(c_expectedFlush, stream.str());
+
+        wrapStream << ookii::flush(true);
+        VERIFY_EQUAL(c_blankLineIndentResult, stream.str());
+    }
+
 private:
     void TestWrite(tstring_view input, tstring_view expected, size_t max_length, size_t indent)
     {
@@ -203,6 +220,17 @@ Now is a good time to check out the progress you've made with your retirement sa
         ut labore et dolore magna aliqua. Donec[38;2;1;2;3m adipiscing
         tristique risus nec feugiat in fermentum.[0m
 )")};
+
+    static constexpr tstring_view c_expectedFlush{TEXT(R"(
+Where do you stand so far?
+
+Now is a good time to check out the
+    progress you've made with your
+    retirement savings, take a look at
+    what you've contributed so far this
+    year, and update your other
+)")};
+
 
 };
 
