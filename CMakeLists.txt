@@ -69,11 +69,11 @@ endif()
 
 if (OOKIICL_SAMPLES)
     add_subdirectory("samples/parser")
-    add_subdirectory("samples/shell_command")
+    add_subdirectory("samples/subcommand")
 
     if (POWERSHELL_PATH)
         add_subdirectory("samples/generated_parser")
-        add_subdirectory("samples/generated_shell_commands")
+        add_subdirectory("samples/generated_subcommand")
     endif()
 endif()
 

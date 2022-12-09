@@ -6,9 +6,9 @@ BeforeAll {
 
     $inputPath = Join-Path $PSScriptRoot "input"
     $outputPath = Join-Path $PSScriptRoot "output"
-    $scriptPath = Join-Path (Split-Path -Parent $PSScriptRoot) "New-ShellCommand.ps1"
-    $input1 = Join-Path $inputPath "shell_command.h"
-    $input2 = Join-Path $inputPath "shell_command2.h"
+    $scriptPath = Join-Path (Split-Path -Parent $PSScriptRoot) "New-Subcommand.ps1"
+    $input1 = Join-Path $inputPath "subcommand.h"
+    $input2 = Join-Path $inputPath "subcommand2.h"
     $inputs = $input1,$input2
 }
 

@@ -33,7 +33,7 @@
   </PropertyGroup>
   <Target Name="OokiiGenerateCommand" BeforeTargets="ClCompile" Inputs="@(OokiiCommandInput)" Outputs="$(OokiiCommandOutput)" Condition="'@(OokiiCommandInput)'!=''">
     <Message Text="Generating $(OokiiCommandOutput)"/>
-    <Exec Command="&quot;$(OokiiPwshPath)&quot; -ExecutionPolicy Bypass -Command &quot;&amp;{ &amp;'$(MSBuildThisFileDirectory)..\..\tools\New-ShellCommand.ps1' ('@(OokiiCommandInput)' -split ';') '$(OokiiCommandOutput)' $(OokiiCommandWideCharArg) $(OokiiCommandGenerateMainArg) $(OokiiCommandNameTransformArg) $(OokiiCommandAdditionalHeadersArg) }&quot;" />
+    <Exec Command="&quot;$(OokiiPwshPath)&quot; -ExecutionPolicy Bypass -Command &quot;&amp;{ &amp;'$(MSBuildThisFileDirectory)..\..\tools\New-Subcommand.ps1' ('@(OokiiCommandInput)' -split ';') '$(OokiiCommandOutput)' $(OokiiCommandWideCharArg) $(OokiiCommandGenerateMainArg) $(OokiiCommandNameTransformArg) $(OokiiCommandAdditionalHeadersArg) }&quot;" />
     <ItemGroup>
       <ClCompile Remove="$(OokiiCommandOutput)" />
       <ClCompile Include="$(OokiiCommandOutput)" />

@@ -3,15 +3,15 @@
 
 #pragma once
 
-#include <ookii/shell_command.h>
+#include <ookii/subcommand.h>
 
 // This is a sample command that can be invoked by specifying "write" as the first argument to the
 // sample application.
 // 
-// Shell command argument parsing uses the command_line_parser, using the arguments that the
-// command class's constructor creates. After the arguments have been parsed, the run method is
-// invoked to execute the command.
-class write_command : public ookii::shell_command
+// Subcommand argument parsing uses the command_line_parser, using the arguments that the command
+// class's constructor creates. After the arguments have been parsed, the run method is invoked to
+// execute the command.
+class write_command : public ookii::command
 {
 public:
     write_command(builder_type &builder);

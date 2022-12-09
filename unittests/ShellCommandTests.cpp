@@ -1,11 +1,11 @@
 #include "common.h"
 #include "framework.h"
-#include <ookii/shell_command.h>
+#include <ookii/subcommand.h>
 #include "custom_types.h"
 using namespace std;
 using namespace ookii;
 
-class Command1 : public basic_shell_command<tchar_t>
+class Command1 : public basic_command<tchar_t>
 {
 public:
     Command1(builder_type &)
@@ -18,7 +18,7 @@ public:
     }
 };
 
-class Command2 : public basic_shell_command<tchar_t>
+class Command2 : public basic_command<tchar_t>
 {
 public:
     Command2(builder_type &builder)
@@ -44,7 +44,7 @@ public:
     int value{};
 };
 
-class Command3 : public basic_shell_command<tchar_t>
+class Command3 : public basic_command<tchar_t>
 {
 public:
     Command3(builder_type &)
@@ -64,7 +64,7 @@ public:
 
     TEST_METHOD(TestCommands)
     {
-        basic_shell_command_manager<tchar_t> manager{TEXT("TestApp")};
+        basic_command_manager<tchar_t> manager{TEXT("TestApp")};
         manager.add_command<Command1>()
             .add_command<Command2>()
             .add_command<Command3>(TEXT("LastCommand"), TEXT("Foo"));
@@ -120,7 +120,7 @@ public:
 
     TEST_METHOD(TestCommandListUsage)
     {
-        basic_shell_command_manager<tchar_t> manager{TEXT("TestApp")};
+        basic_command_manager<tchar_t> manager{TEXT("TestApp")};
         manager.add_command<Command1>()
             .add_command<Command2>()
             .add_command<Command3>(TEXT("LastCommand"), TEXT("Foo"));
@@ -134,7 +134,7 @@ public:
 
     TEST_METHOD(TestCreate)
     {
-        basic_shell_command_manager<tchar_t> manager{TEXT("TestApp")};
+        basic_command_manager<tchar_t> manager{TEXT("TestApp")};
         manager.add_command<Command1>()
             .add_command<Command2>()
             .add_command<Command3>(TEXT("LastCommand"), TEXT("Foo"));
@@ -158,7 +158,7 @@ public:
 
     TEST_METHOD(TestRun)
     {
-        basic_shell_command_manager<tchar_t> manager{TEXT("TestApp")};
+        basic_command_manager<tchar_t> manager{TEXT("TestApp")};
         manager.add_command<Command1>()
             .add_command<Command2>()
             .add_command<Command3>(TEXT("LastCommand"), TEXT("Foo"));
@@ -172,7 +172,7 @@ public:
 
     TEST_METHOD(TestCaseSensitive)
     {
-        basic_shell_command_manager<tchar_t> manager{TEXT("TestApp"), true};
+        basic_command_manager<tchar_t> manager{TEXT("TestApp"), true};
         manager.add_command<Command1>()
             .add_command<Command2>()
             .add_command<Command3>(TEXT("LastCommand"), TEXT("Foo"));

@@ -1,9 +1,9 @@
-// [shell_command: name]
+// [command: name]
 // Description of the command
 // with a line break.
 //
 // And a paragraph.
-class my_command : public ookii::shell_command
+class my_command : public ookii::command
 {
 public:
     my_command(builder_type &builder);

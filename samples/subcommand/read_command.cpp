@@ -4,7 +4,7 @@
 
 // Create the command line arguments for the command. The builder will have been initialized with
 // the name and description of the command, as well as the locale and case sensitivity settings
-// used by the shell_command_manager. If we want to override any settings, that can be done here
+// used by the command_manager. If we want to override any settings, that can be done here
 // too.
 read_command::read_command(read_command::builder_type &builder)
 {

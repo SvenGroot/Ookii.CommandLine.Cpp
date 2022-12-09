@@ -559,9 +559,9 @@ namespace ookii
         parser_storage_type _storage;
     };
 
-    //! \brief Typedef for basic_shell_command using `char` as the character type.
+    //! \brief Typedef for basic_command using `char` as the character type.
     using parser_builder = basic_parser_builder<char>;
-    //! \brief Typedef for basic_shell_command using `wchar_t` as the character type.
+    //! \brief Typedef for basic_command using `wchar_t` as the character type.
     using wparser_builder = basic_parser_builder<wchar_t>;
 
 }

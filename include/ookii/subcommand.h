@@ -1,8 +1,8 @@
-//! \file shell_command.h
+//! \file subcommand.h
 //! \brief Provides functionality for applications that have multiple subcommands, all with
 //!        their own arguments.
-#ifndef OOKII_SHELL_COMMAND_H_
-#define OOKII_SHELL_COMMAND_H_
+#ifndef OOKII_SUBCOMMAND_H_
+#define OOKII_SUBCOMMAND_H_
 
 #pragma once
 
@@ -10,26 +10,26 @@
 
 namespace ookii
 {
-    //! \brief Abstract base class for all shell commands.
+    //! \brief Abstract base class for all subcommands.
     //! 
-    //! When you implement a shell command, you must derive from the basic_shell_command class, and
+    //! When you implement a subcommand, you must derive from the basic_command class, and
     //! implement the run() method.
     //! 
     //! In addition, you must provide a constructor that takes a reference to builder_type, which
     //! is a typedef for basic_parser_builder, which creates the arguments accepted by this command.
     //! This basic_parser_builder will have been initialized with the name and description of the
     //! command, as well as basic_parser_builder::case_sensitive() and basic_parser_builder::locale()
-    //! values matching the basic_shell_command_manager.
+    //! values matching the basic_command_manager.
     //! 
     //! To specify a name or description for your command, you can either pass them to
-    //! basic_shell_command_manager::add_command(), or you can provide static methods that return them.
+    //! basic_command_manager::add_command(), or you can provide static methods that return them.
     //! If a name is not provided using either method, the name will match the type name of the
-    //! shell command class.
+    //! subcommand class.
     //! 
     //! For example:
     //! 
     //! ```
-    //! class some_command : public std::shell_command
+    //! class some_command : public std::command
     //! {
     //! public:
     //!     some_command(builder_type &builder)
@@ -58,31 +58,31 @@ namespace ookii
     //! 
     //! Type                    | Definition
     //! ----------------------- | -------------------------------------
-    //! `ookii::shell_command`  | `ookii::basic_shell_command<char>`
-    //! `ookii::wshell_command` | `ookii::basic_shell_command<wchar_t>`
+    //! `ookii::command`  | `ookii::basic_command<char>`
+    //! `ookii::wcommand` | `ookii::basic_command<wchar_t>`
     //! 
     //! \tparam CharType The character type used for arguments and other strings.
     //! \tparam Traits The character traits to use for strings. Defaults to `std::char_traits<CharType>`.
     //! \tparam Alloc The allocator to use for strings. Defaults to `std::allocator<CharType>`.
     template<typename CharType = details::default_char_type, typename Traits = std::char_traits<CharType>, typename Alloc = std::allocator<CharType>>
-    class basic_shell_command
+    class basic_command
     {
     public:
         //! \brief The concrete type of basic_parser_builder used.
         using builder_type = basic_parser_builder<CharType, Traits, Alloc>;
 
-        //! \brief Initializes a new instance of the basic_shell_command class.
-        basic_shell_command() = default;
+        //! \brief Initializes a new instance of the basic_command class.
+        basic_command() = default;
 
-        //! \brief Initializes a new instance of the basic_shell_command class.
+        //! \brief Initializes a new instance of the basic_command class.
         //!
         //! \attention You don't need to call this constructor when implementing a derived class,
-        //!            as it does nothing. It exists so `New-ShellCommand.ps1` can generate code
-        //!            that supports shell commands with a base class that does have a constructor.
-        basic_shell_command(builder_type &) {}
+        //!            as it does nothing. It exists so `New-Subcommand.ps1` can generate code
+        //!            that supports subcommands with a base class that does have a constructor.
+        basic_command(builder_type &) {}
 
         //! \brief Default destructor.
-        virtual ~basic_shell_command() = default;
+        virtual ~basic_command() = default;
 
         //! \brief Runs the command, after argument parsing was successful.
         //! \return The exit code for the command. Typically, this code will be returned from the
@@ -90,22 +90,22 @@ namespace ookii
         virtual int run() = 0;
     };
 
-    //! \brief Typedef for basic_shell_command using `char` as the character type.
-    using shell_command = basic_shell_command<char>;
-    //! \brief Typedef for basic_shell_command using `wchar_t` as the character type.
-    using wshell_command = basic_shell_command<wchar_t>;
+    //! \brief Typedef for basic_command using `char` as the character type.
+    using command = basic_command<char>;
+    //! \brief Typedef for basic_command using `wchar_t` as the character type.
+    using wcommand = basic_command<wchar_t>;
 
-    //! \brief Provides information about a shell command.
+    //! \brief Provides information about a subcommand.
     //! 
     //! \tparam CharType The character type used for arguments and other strings.
     //! \tparam Traits The character traits to use for strings. Defaults to `std::char_traits<CharType>`.
     //! \tparam Alloc The allocator to use for strings. Defaults to `std::allocator<CharType>`.
     template<typename CharType, typename Traits = std::char_traits<CharType>, typename Alloc = std::allocator<CharType>>
-    class shell_command_info
+    class command_info
     {
     public:
-        //! \brief The concrete type of basic_shell_command used.
-        using command_type = basic_shell_command<CharType, Traits, Alloc>;
+        //! \brief The concrete type of basic_command used.
+        using command_type = basic_command<CharType, Traits, Alloc>;
         //! \brief The concrete type of basic_parser_builder used.
         using builder_type = typename command_type::builder_type;
         //! \brief The concrete string type used.
@@ -116,13 +116,13 @@ namespace ookii
 
     public:
 
-        //! \brief Creates a shell_command_info instance for the specified type.
+        //! \brief Creates a command_info instance for the specified type.
         //! 
-        //! \tparam T The type of the shell command, which must derive from basic_shell_command.
-        //! \param name The name of the shell command.
-        //! \param description The description of the shell command.
+        //! \tparam T The type of the subcommand, which must derive from basic_command.
+        //! \param name The name of the subcommand.
+        //! \param description The description of the subcommand.
         template<typename T>
-        static shell_command_info create(string_type name, string_type description)
+        static command_info create(string_type name, string_type description)
         {
             auto creator = [](builder_type &builder) -> std::unique_ptr<command_type>
             {
@@ -132,28 +132,28 @@ namespace ookii
             return {name, description, creator};
         }
 
-        //! \brief Creates an instance of the shell command type.
+        //! \brief Creates an instance of the subcommand type.
         //! 
-        //! \param builder The basic_parser_builder to pass to the shell command type's constructor.
+        //! \param builder The basic_parser_builder to pass to the subcommand type's constructor.
         std::unique_ptr<command_type> create(builder_type &builder) const
         {
             return _creator(builder);
         }
 
-        //! \brief Gets the name of the shell command.
+        //! \brief Gets the name of the subcommand.
         const string_type &name() const noexcept
         {
             return _name;
         }
 
-        //! \brief Gets the description of the shell command.
+        //! \brief Gets the description of the subcommand.
         const string_type &description() const noexcept
         {
             return _description;
         }
 
     private:
-        shell_command_info(string_type name, string_type description, creator creator)
+        command_info(string_type name, string_type description, creator creator)
             : _name{name},
               _description{description},
               _creator{creator}
@@ -165,10 +165,10 @@ namespace ookii
         creator _creator;
     };
 
-    //! \brief Manages registration, creation and invocation of shell commands for an application.
+    //! \brief Manages registration, creation and invocation of subcommands for an application.
     //! 
-    //! To use shell commands in your application, you define a class that derives from
-    //! basic_shell_command for each one. Then, you register each class with the basic_shell_command_manager
+    //! To use subcommands in your application, you define a class that derives from
+    //! basic_command for each one. Then, you register each class with the basic_command_manager
     //! using the add_command() method.
     //! 
     //! You can then invoke create_command() to create an instance of a command type based on the
@@ -178,8 +178,8 @@ namespace ookii
     //! 
     //! Type                            | Definition
     //! ------------------------------- | -------------------------------------
-    //! `ookii::shell_command_manager`  | `ookii::basic_shell_command_manager<char>`
-    //! `ookii::wshell_command_manager` | `ookii::basic_shell_command_manager<wchar_t>`
+    //! `ookii::command_manager`  | `ookii::basic_command_manager<char>`
+    //! `ookii::wcommand_manager` | `ookii::basic_command_manager<wchar_t>`
     //! 
     //! \tparam CharType The character type used for arguments and other strings. Only `char` and
     //!         `wchar_t` are supported. Defaults to `wchar_t` if `_UNICODE` is defined, otherwise
@@ -187,27 +187,27 @@ namespace ookii
     //! \tparam Traits The character traits to use for strings. Defaults to `std::char_traits<CharType>`.
     //! \tparam Alloc The allocator to use for strings. Defaults to `std::allocator<CharType>`.
     template<typename CharType = details::default_char_type, typename Traits = std::char_traits<CharType>, typename Alloc = std::allocator<CharType>>
-    class basic_shell_command_manager
+    class basic_command_manager
     {
     public:
-        //! \brief The concrete type of shell_command_info used.
-        using info_type = shell_command_info<CharType, Traits, Alloc>;
+        //! \brief The concrete type of command_info used.
+        using info_type = command_info<CharType, Traits, Alloc>;
         //! \brief The concrete string type used.
         using string_type = typename info_type::string_type;
         //! \brief The concrete type of basic_parser_builder used.
         using builder_type = typename info_type::builder_type;
-        //! \brief The concrete type of basic_shell_command used.
+        //! \brief The concrete type of basic_command used.
         using command_type = typename info_type::command_type;
         //! \brief The concrete type of basic_usage_writer used.
         using usage_writer_type = basic_usage_writer<CharType, Traits, Alloc>;
         //! \brief The concrete type of output stream used.
         using stream_type = std::basic_ostream<CharType, Traits>;
 
-        //! \brief The error exit code used by run_shell_command() if no command name was supplied
-        //!        or thesupplied command could not be found.
+        //! \brief The error exit code used by run_command() if no command name was supplied
+        //!        or the supplied command could not be found.
         static constexpr int error_return_code = 1;
 
-        //! \brief Initializes a new instance of the basic_shell_command_manager class.
+        //! \brief Initializes a new instance of the basic_command_manager class.
         //! 
         //! \param application_name The name of the application containing the command. This name
         //!        is used when printing usage help.
@@ -215,7 +215,7 @@ namespace ookii
         //!        sensitive. The default is false.
         //! \param locale The locale to use when converting argument values. The default is a copy
         //!        of the current global locale.
-        basic_shell_command_manager(string_type application_name, bool case_sensitive = false, const std::locale &locale = {})
+        basic_command_manager(string_type application_name, bool case_sensitive = false, const std::locale &locale = {})
             : _commands{string_less{case_sensitive, locale}},
               _application_name{application_name},
               _locale{locale},
@@ -223,9 +223,9 @@ namespace ookii
         {
         }
 
-        //! \brief Adds a command to the basic_shell_command_manager.
+        //! \brief Adds a command to the basic_command_manager.
         //! 
-        //! \tparam The type of the command, which must derive from basic_shell_command<CharType>.
+        //! \tparam The type of the command, which must derive from basic_command<CharType>.
         //! \param name The name used to invoke the command. If left blank, it will be determined
         //!        by the static name() method of the command type, or the type name if there is no
         //!        such method.
@@ -233,7 +233,7 @@ namespace ookii
         //!        it will be determined by the static description() method of the command type. If
         //!        no such method exist, the description will be blank.
         template<typename T>
-        basic_shell_command_manager &add_command(string_type name = {}, string_type description = {})
+        basic_command_manager &add_command(string_type name = {}, string_type description = {})
         {
             if (name.empty())
                 name = name_helper<T>::name();
@@ -276,9 +276,9 @@ namespace ookii
             return _locale;
         }
 
-        //! \brief Gets information about a shell command by name.
-        //! \param name The name of the shell command.
-        //! \return An instance of shell_command_info describing the command, or `nullptr` if there
+        //! \brief Gets information about a subcommand by name.
+        //! \param name The name of the subcommand.
+        //! \return An instance of command_info describing the command, or `nullptr` if there
         //!         is no command with that name.
         const info_type *get_command(const string_type &name) const
         {
@@ -298,12 +298,12 @@ namespace ookii
         //! \warning The passed arguments must not include the application name or the command name.
         //! 
         //! \tparam Iterator The type of iterator for the arguments.
-        //! \param name The name of the shell command.
+        //! \param name The name of the subcommand.
         //! \param begin An iterator to the first argument.
         //! \param end An iterator after the last argument.
         //! \param usage A basic_usage_writer instance that will be used to format errors
         //!        and usage help.
-        //! \returns An instance of the shell command type, or `nullptr` if the an error occurred.
+        //! \returns An instance of the subcommand type, or `nullptr` if the an error occurred.
         template<typename Iterator>
         std::unique_ptr<command_type> create_command(const string_type &name, Iterator begin, Iterator end, usage_writer_type *usage = nullptr) const
         {
@@ -332,11 +332,11 @@ namespace ookii
         //! \warning The passed arguments must not include the application name or the command name.
         //! 
         //! \tparam Range The type of a range containing the arguments.
-        //! \param name The name of the shell command.
+        //! \param name The name of the subcommand.
         //! \param range A range containing the arguments.
         //! \param usage A basic_usage_writer instance that will be used to format errors
         //!        and usage help.
-        //! \returns An instance of the shell command type, or `nullptr` if the an error occurred.
+        //! \returns An instance of the subcommand type, or `nullptr` if the an error occurred.
         template<typename Range>
         std::unique_ptr<command_type> create_command(const string_type &name, Range range, usage_writer_type *usage = nullptr) const
         {
@@ -356,11 +356,11 @@ namespace ookii
         //! 
         //! \tparam T The type of the elements in the initializer list. This must be a string type
         //!         that can be converted to std::basic_string<CharType, Traits, Alloc>.
-        //! \param name The name of the shell command.
+        //! \param name The name of the subcommand.
         //! \param args An initializer list containing the arguments.
         //! \param usage A basic_usage_writer instance that will be used to format errors
         //!        and usage help.
-        //! \returns An instance of the shell command type, or `nullptr` if the an error occurred.
+        //! \returns An instance of the subcommand type, or `nullptr` if the an error occurred.
         template<typename T>
         std::unique_ptr<command_type> create_command(const string_type &name, std::initializer_list<T> args, usage_writer_type *usage = nullptr) const
         {
@@ -381,7 +381,7 @@ namespace ookii
         //! \param end An iterator after the last argument.
         //! \param usage A basic_usage_writer instance that will be used to format errors
         //!        and usage help.
-        //! \returns An instance of the shell command type, or `nullptr` if the an error occurred.
+        //! \returns An instance of the subcommand type, or `nullptr` if the an error occurred.
         template<typename Iterator>
         std::unique_ptr<command_type> create_command(Iterator begin, Iterator end, usage_writer_type *usage = nullptr) const
         {
@@ -408,7 +408,7 @@ namespace ookii
         //! \param range A range containing the arguments.
         //! \param usage A basic_usage_writer instance that will be used to format errors
         //!        and usage help.
-        //! \returns An instance of the shell command type, or `nullptr` if the an error occurred.
+        //! \returns An instance of the subcommand type, or `nullptr` if the an error occurred.
         template<typename Range>
         std::unique_ptr<command_type> create_command(Range range, usage_writer_type *usage = nullptr) const
         {
@@ -432,7 +432,7 @@ namespace ookii
         //! \param args An initializer list containing the arguments.
         //! \param usage A basic_usage_writer instance that will be used to format errors
         //!        and usage help.
-        //! \returns An instance of the shell command type, or `nullptr` if the an error occurred.
+        //! \returns An instance of the subcommand type, or `nullptr` if the an error occurred.
         template<typename T>
         std::unique_ptr<command_type> create_command(std::initializer_list<T> args, usage_writer_type *usage = nullptr) const
         {
@@ -452,7 +452,7 @@ namespace ookii
         //! \param argv The arguments..
         //! \param usage A basic_usage_writer instance that will be used to format errors
         //!        and usage help.
-        //! \returns An instance of the shell command type, or `nullptr` if the an error occurred.
+        //! \returns An instance of the subcommand type, or `nullptr` if the an error occurred.
         std::unique_ptr<command_type> create_command(int argc, const CharType *const argv[], usage_writer_type *usage = nullptr) const
         {
             if (argc < 2)
@@ -474,7 +474,7 @@ namespace ookii
         //! \warning The passed arguments must not include the application name or the command name.
         //! 
         //! \tparam Iterator The type of iterator for the arguments.
-        //! \param name The name of the shell command.
+        //! \param name The name of the subcommand.
         //! \param begin An iterator to the first argument.
         //! \param end An iterator after the last argument.
         //! \param usage A basic_usage_writer instance that will be used to format errors
@@ -501,7 +501,7 @@ namespace ookii
         //! \warning The passed arguments must not include the application name or the command name.
         //! 
         //! \tparam Range The type of a range containing the arguments.
-        //! \param name The name of the shell command.
+        //! \param name The name of the subcommand.
         //! \param range A range containing the arguments.
         //! \param usage A basic_usage_writer instance that will be used to format errors
         //!        and usage help.
@@ -527,7 +527,7 @@ namespace ookii
         //! 
         //! \tparam T The type of the elements in the initializer list. This must be a string type
         //!         that can be converted to std::basic_string<CharType, Traits, Alloc>.
-        //! \param name The name of the shell command.
+        //! \param name The name of the subcommand.
         //! \param args An initializer list containing the arguments.
         //! \param usage A basic_usage_writer instance that will be used to format errors
         //!        and usage help.
@@ -657,9 +657,9 @@ namespace ookii
         //! \brief Creates a basic_parser_builder for a specified command.
         //! 
         //! The parser builder will be initialized with the name and description of the command,
-        //! as well the locale and case sensitive value of the basic_shell_command_manager.
+        //! as well the locale and case sensitive value of the basic_command_manager.
         //! 
-        //! \param command The shell_command_info for the command.
+        //! \param command The command_info for the command.
         //! \return A parser builder with suitable defaults for the command.
         builder_type create_parser_builder(const info_type &command) const
         {
@@ -716,10 +716,10 @@ namespace ookii
         bool _case_sensitive;
     };
 
-    //! \brief Typedef for basic_shell_command_manager using `char` as the character type.
-    using shell_command_manager = basic_shell_command_manager<char>;
-    //! \brief Typedef for basic_shell_command_manager using `wchar_t` as the character type.
-    using wshell_command_manager = basic_shell_command_manager<wchar_t>;
+    //! \brief Typedef for basic_command_manager using `char` as the character type.
+    using command_manager = basic_command_manager<char>;
+    //! \brief Typedef for basic_command_manager using `wchar_t` as the character type.
+    using wcommand_manager = basic_command_manager<wchar_t>;
 
 }
 

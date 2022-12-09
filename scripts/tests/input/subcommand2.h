@@ -1,7 +1,7 @@
-// [shell_command, no_register]
+// [command, no_register]
 // [prefixes: --, -]
 // [case_sensitive, no_whitespace_separator, allow_duplicate_arguments, argument_value_separator: =]
-class other_command : public ookii::shell_command
+class other_command : public ookii::command
 {
 public:
     other_command(builder_type &builder);
@@ -14,7 +14,7 @@ private:
 };
 
 // Tests multiple classes in one file.
-// [shell_command]
+// [command]
 class third_command : public other_command
 {
 public:

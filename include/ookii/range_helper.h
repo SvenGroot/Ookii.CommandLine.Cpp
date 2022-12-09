@@ -22,8 +22,9 @@ namespace ookii::details
             using pointer = std::remove_reference_t<value_type>*;
             using reference = value_type&;
 
-            iterator(IteratorType it, filter_function_type filter, transform_function_type transform)
+            iterator(IteratorType it, IteratorType end, filter_function_type filter, transform_function_type transform)
                 : _current{it},
+                  _end{end},
                   _filter{filter},
                   _transform{transform}
             {
@@ -56,7 +57,7 @@ namespace ookii::details
         private:
             void next_value(bool check_current)
             {
-                if (check_current && (!_filter || _filter(*_current)))
+                if (_current == _end || check_current && (!_filter || _filter(*_current)))
                 {
                     return;
                 }
@@ -65,10 +66,11 @@ namespace ookii::details
                 {
                     ++_current;
 
-                } while (_filter && !_filter(*_current));
+                } while (_current != _end && _filter && !_filter(*_current));
             }
 
             IteratorType _current;
+            IteratorType _end;
             filter_function_type _filter;
             transform_function_type _transform;
         };
@@ -85,12 +87,12 @@ namespace ookii::details
 
         iterator begin() const noexcept
         {
-            return iterator{_begin, _filter, _transform};
+            return iterator{_begin, _end, _filter, _transform};
         }
 
         iterator end() const noexcept
         {
-            return iterator{_end, _filter, _transform};
+            return iterator{_end, _end, _filter, _transform};
         }
 
     private:

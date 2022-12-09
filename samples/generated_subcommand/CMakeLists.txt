@@ -14,20 +14,20 @@ make_directory("${OOKII_GENERATED_DIR}")
 # We have to use -Command to be able to pass an array
 add_custom_command(
     OUTPUT ${OOKII_GENERATED_OUTPUT}
-    COMMAND ${POWERSHELL_PATH} -ExecutionPolicy Bypass -Command "&{ ${CMAKE_CURRENT_LIST_DIR}/../../scripts/New-ShellCommand.ps1 -Path ${OOKII_GENERATED_INPUT_LIST} -OutputPath ${OOKII_GENERATED_OUTPUT} -NameTransform PascalCase -GenerateMain }"
+    COMMAND ${POWERSHELL_PATH} -ExecutionPolicy Bypass -Command "&{ ${CMAKE_CURRENT_LIST_DIR}/../../scripts/New-Subcommand.ps1 -Path ${OOKII_GENERATED_INPUT_LIST} -OutputPath ${OOKII_GENERATED_OUTPUT} -NameTransform PascalCase -GenerateMain }"
     DEPENDS ${OOKII_GENERATED_INPUT}
     VERBATIM
 )
 
-add_executable(generated_shell_command "read_command.cpp" "read_command.h" "write_command.h" "write_command.cpp" ${OOKII_GENERATED_OUTPUT})
-target_link_libraries(generated_shell_command PRIVATE Ookii.CommandLine::OOKIICL)
+add_executable(generated_subcommand "read_command.cpp" "read_command.h" "write_command.h" "write_command.cpp" ${OOKII_GENERATED_OUTPUT})
+target_link_libraries(generated_subcommand PRIVATE Ookii.CommandLine::OOKIICL)
 
-set_property(TARGET generated_shell_command PROPERTY CXX_STANDARD 20)
+set_property(TARGET generated_subcommand PROPERTY CXX_STANDARD 20)
 
 if(MSVC)
-  target_compile_options(generated_shell_command PRIVATE /W4)
+  target_compile_options(generated_subcommand PRIVATE /W4)
 else()
-  target_compile_options(generated_shell_command PRIVATE -Wall -Wextra -Wpedantic)
+  target_compile_options(generated_subcommand PRIVATE -Wall -Wextra -Wpedantic)
 
   # link libfmt if <format> is not supported.
   if(NOT OOKIICL_FORCE_LIBFMT)
@@ -35,6 +35,6 @@ else()
   endif()
   if(NOT HAVE_FORMAT)
     find_package(fmt)
-    target_link_libraries(generated_shell_command PRIVATE fmt::fmt)
+    target_link_libraries(generated_subcommand PRIVATE fmt::fmt)
   endif()
 endif()

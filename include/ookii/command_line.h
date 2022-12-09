@@ -9,6 +9,6 @@
 #pragma once
 
 // This header is sufficient to include everything.
-#include "shell_command.h"
+#include "subcommand.h"
 
 #endif

@@ -117,7 +117,7 @@ the following:
 ```
 
 This gets you all the core functionality, except for [shell commands](docs/ShellCommands.md), for
-which you should include `<ookii/shell_command.h>` instead.
+which you should include `<ookii/subcommand.h>` instead.
 
 ## Building and running tests and samples
 
@@ -222,7 +222,7 @@ the character type, so they can support both `char` and `wchar_t`. The `std::com
 class is actually a typedef for `std::basic_command_line_parser<char>`, and there is a similar
 typedef `std::wcommand_line_parser` that translates to `std::basic_command_line_parser<wchar_t>`.
 
-The same is true of `std::parser_builder`, `std::usage_options`, `std::shell_command`, `std::shell_command_manager`,
+The same is true of `std::parser_builder`, `std::usage_options`, `std::command`, `std::command_manager`,
 and `std::shell_command_usage_options` which all have wide character versions starting with `w`.
 
 If you wish to test out Unicode support on Windows, you can compile the unit tests for Unicode

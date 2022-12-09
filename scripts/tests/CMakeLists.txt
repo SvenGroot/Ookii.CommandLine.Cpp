@@ -8,5 +8,5 @@ make_directory(${CMAKE_CURRENT_LIST_DIR}/output)
 add_test(NAME generate-parser-tests
          COMMAND ${POWERSHELL_PATH} ${CMAKE_CURRENT_LIST_DIR}/Run-Test.ps1 ${CMAKE_CURRENT_LIST_DIR}/New-Parser.Tests.ps1)
 
-add_test(NAME generate-shell-command-tests
-         COMMAND ${POWERSHELL_PATH} ${CMAKE_CURRENT_LIST_DIR}/Run-Test.ps1 ${CMAKE_CURRENT_LIST_DIR}/New-ShellCommand.Tests.ps1)
+add_test(NAME generate-subcommand-tests
+         COMMAND ${POWERSHELL_PATH} ${CMAKE_CURRENT_LIST_DIR}/Run-Test.ps1 ${CMAKE_CURRENT_LIST_DIR}/New-Subcommand.Tests.ps1)

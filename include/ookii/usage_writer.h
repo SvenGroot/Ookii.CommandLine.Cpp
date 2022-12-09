@@ -15,10 +15,10 @@ namespace ookii
     class basic_command_line_parser;
 
     template<typename CharType, typename Traits, typename Alloc>
-    class basic_shell_command_manager;
+    class basic_command_manager;
 
     template<typename CharType, typename Traits, typename Alloc>
-    class shell_command_info;
+    class command_info;
 
     // TODO
     // enum class usage_help_request
@@ -28,12 +28,12 @@ namespace ookii
     //     none
     // };
 
-    //! \brief Creates usage help for the basic_command_line_parser and basic_shell_command_manager
+    //! \brief Creates usage help for the basic_command_line_parser and basic_command_manager
     //! classes.
     //!
     //! You can derive from this class to override the formatting of various aspects of the usage
     //! help. Pass it to the basic_command_line_parser::parse() method or the methods of the
-    //! basic_shell_command_manager class to specify a custom instance.
+    //! basic_command_manager class to specify a custom instance.
     //!
     //! Depending on what methods you override, you can change small parts of the formatting, or
     //! completely change how usage looks. Certain methods may not be called if you override the
@@ -86,10 +86,10 @@ namespace ookii
         using parser_type = basic_command_line_parser<CharType, Traits, Alloc>;
         //! \brief The concrete command_line_argument_base type used.
         using argument_type = command_line_argument_base<CharType, Traits, Alloc>;
-        //! \brief The concrete basic_shell_command_manager type used.
-        using command_manager_type = basic_shell_command_manager<CharType, Traits, Alloc>;
-        //! \brief The concrete shell_command_info type used.
-        using command_info_type = shell_command_info<CharType, Traits, Alloc>;
+        //! \brief The concrete basic_command_manager type used.
+        using command_manager_type = basic_command_manager<CharType, Traits, Alloc>;
+        //! \brief The concrete command_info type used.
+        using command_info_type = command_info<CharType, Traits, Alloc>;
 
         //! \brief Initializes a new instance of the basic_usage_writer class.
         //!
@@ -222,7 +222,7 @@ namespace ookii
 
         //! \brief Creates usage help for the specified command manager.
         //!
-        //! \param manager The basic_shell_command_manager.
+        //! \param manager The basic_command_manager.
         virtual void write_command_list_usage(const command_manager_type &manager)
         {
             _command_manager = &manager;
@@ -698,10 +698,10 @@ namespace ookii
             output << '.';
         }
 
-        //! \brief Creates the usage help for a basic_shell_command_manager instance.
+        //! \brief Creates the usage help for a basic_command_manager instance.
         //!
         //! This is the primary method used to generate usage help for the
-        //! basic_shell_command_manager class. It calls into the various other methods of this
+        //! basic_command_manager class. It calls into the various other methods of this
         //! class, so overriding this method should not typically be necessary unless you wish to
         //! deviate from the order in which usage elements are written.
         //!
@@ -862,7 +862,7 @@ namespace ookii
             return *_parser;
         }
 
-        //! \brief Gets the basic_shell_command_manager that usage is being written for.
+        //! \brief Gets the basic_command_manager that usage is being written for.
         //!
         //! This method is not safe to call except during an invocation of the
         //! write_command_list_usage() method, and the methods it calls.
