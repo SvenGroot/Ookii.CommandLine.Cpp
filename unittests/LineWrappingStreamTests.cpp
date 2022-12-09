@@ -101,6 +101,14 @@ public:
         VERIFY_EQUAL(c_inputFormatting, stream.str());
     }
 
+    TEST_METHOD(TestCountFormatting)
+    {
+        tstringstream stream;
+        tline_wrapping_stream wrapStream{stream, 80, true};
+        wrapStream << set_indent(8) << c_inputFormatting << endl;
+        VERIFY_EQUAL(c_expectedFormattingCounted, stream.str());
+    }
+
 private:
     void TestWrite(tstring_view input, tstring_view expected, size_t max_length, size_t indent)
     {
@@ -185,6 +193,13 @@ erfinancialgoalsaswell.
     static constexpr tstring_view c_expectedLongFormatting{TEXT(R"(Lorem ipsum dolor sit amet, consectetur[34m[34m[34m[34m[34m[34m[34m[34m[34m[34m[34m[34m[34m[34m[34m[34m[34m[34m[34m[34m[34m[34m[34m[34m[34m[34m[34m[34m[34m[34m[34m[34m[34m[34m[34m[34m[34m[34m[34m[34m[34m[34m[34m[34m[34m[34m[34m[34m[34m[34m[34m[34m[34m[34m[34m[34m[34m[34m[34m[34m[34m[34m[34m[34m[34m[34m[34m[34m[34m[34m[34m[34m[34m[34m[34m[34m[34m[34m[34m[34m[34m[34m[34m[34m[34m[34m[34m[34m[34m[34m[34m[34m[34m adipiscing elit, sed do eiusmod tempor
         incididunt ut labore et dolore magna aliqua. Donec adipiscing tristique
         risus nec feugiat in fermentum.
+)")};
+
+    static constexpr tstring_view c_expectedFormattingCounted{TEXT(R"([34mLorem [34mipsum [34mdolor [34msit [34mamet, [34mconsectetur
+        [34madipiscing [34melit, ]0;new title\sed do ]0;new title2eiusmod
+        (BtemporH incididunt
+        ut labore et dolore magna aliqua. Donec[38;2;1;2;3m adipiscing
+        tristique risus nec feugiat in fermentum.[0m
 )")};
 
 };

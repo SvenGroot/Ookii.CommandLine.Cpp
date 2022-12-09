@@ -89,12 +89,18 @@ namespace ookii
         //! \param max_line_length The maximum line length, or a value of 0 or larger than 65536
         //!        to specify no limit. Use the use_console_width constant to use the console width
         //!        as the maximum.
-        void init(base_type *streambuf, size_t max_line_length) noexcept
+        //! \param count_formatting Include virtual terminal sequences when calculating the length
+        //!        of a line.
+        void init(base_type *streambuf, size_t max_line_length, bool count_formatting = false) noexcept
         {
             if (_base_streambuf != nullptr)
+            {
+                // TODO: Flush full.
                 flush_buffer();
+            }
 
             _base_streambuf = streambuf;
+            _count_formatting = count_formatting;
 
             // Check if the caller wants to use the console width.
             if (max_line_length == use_console_width)
@@ -123,6 +129,12 @@ namespace ookii
                 // Make the buffer twice the length of the line to simplify the line wrapping code.
                 _buffer.resize(_max_line_length * 2);
                 reset_put_area();
+            }
+            else
+            {
+                // Clear out the buffer if there was one.
+                _buffer = {};
+                this->setp(nullptr, nullptr);
             }
         }
 
@@ -193,6 +205,7 @@ namespace ookii
                 std::swap(_space, other._space);
                 std::swap(_indent_count, other._indent_count);
                 std::swap(_need_indent, other._need_indent);
+                std::swap(_count_formatting, other._count_formatting);
             }
         }
 
@@ -329,7 +342,7 @@ namespace ookii
                     potential_line_break = current;
                 }
 
-                if (traits_type::eq(*current, vt_helper_type::c_escape))
+                if (!_count_formatting && traits_type::eq(*current, vt_helper_type::c_escape))
                 {
                     auto vt_end = vt_helper_type::find_sequence_end(current + 1, end, locale);
                     if (vt_end == nullptr)
@@ -485,6 +498,7 @@ namespace ookii
         char_type _space{};
         size_t _indent_count{};
         bool _need_indent{};
+        bool _count_formatting{};
     };
 
     //! \brief A line wrapping stream buffer for use with the `char` type.
@@ -614,10 +628,12 @@ namespace ookii
         //! \param max_line_length The maximum line length, or a value of 0 or larger than 65536
         //!        to specify no limit. Use the use_console_width constant to use the console width
         //!        as the maximum.
-        basic_line_wrapping_ostream(base_type &base_stream, size_t max_line_length)
+        //! \param count_formatting Include virtual terminal sequences when calculating the length
+        //!        of a line.
+        basic_line_wrapping_ostream(base_type &base_stream, size_t max_line_length, bool count_formatting = false)
             : base_type{std::addressof(_buffer)}
         {
-            _buffer.init(base_stream.rdbuf(), max_line_length);
+            _buffer.init(base_stream.rdbuf(), max_line_length, count_formatting);
             this->imbue(base_stream.rdbuf()->getloc());
         }
 
