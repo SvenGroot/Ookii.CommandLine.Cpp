@@ -6,6 +6,7 @@
 #include <cassert>
 #include <vector>
 #include "console_helper.h"
+#include "vt_helper.h"
 
 namespace ookii
 {
@@ -23,6 +24,8 @@ namespace ookii
     //! \warning This class assumes that the target stream buffer is at the start of a line
     //!          when writing starts, and that no other users are writing to the same stream
     //!          buffer. Otherwise, output will not be correctly wrapped or indented.
+    //! 
+    //! \warning Syncing this buffer will not sync the contents of the last unfinished line.
     //! 
     //! Several typedefs for common character types are provided:
     //! 
@@ -240,15 +243,21 @@ namespace ookii
                 return _base_streambuf->sputc(traits_type::to_char_type(ch));
             }
 
-            // If the buffer is not currently empty, try to flush it.
+            // If the buffer is not empty full, try to flush it.
             if (this->pptr() > this->pbase() && !flush_buffer())
             {
                 return traits_type::eof();
             }
 
-            // The buffer must now have space for at least one character.
             if (!is_eof(ch))
             {
+                // If the buffer is still full, try to grow it.
+                if (this->pptr() > this->epptr() && !grow_buffer())
+                {
+                    return traits_type::eof();
+                }
+
+                // The buffer must now have space for at least one character.
                 assert(this->pptr() != this->epptr());
                 this->sputc(traits_type::to_char_type(ch));
             }
@@ -284,6 +293,8 @@ namespace ookii
         }
 
     private:
+        using vt_helper_type = vt::details::vt_helper<CharType, Traits>;
+
         // Write the contents of the buffer to the underlying stream buffer, wrapping lines and adding
         // indentation as necessary.
         bool flush_buffer()
@@ -316,6 +327,20 @@ namespace ookii
                 if (std::isspace(*current, locale))
                 {
                     potential_line_break = current;
+                }
+
+                if (traits_type::eq(*current, vt_helper_type::c_escape))
+                {
+                    auto vt_end = vt_helper_type::find_sequence_end(current + 1, end, locale);
+                    if (current == nullptr)
+                    {
+                        // Incomplete VT sequence, so we can't flush until the end is found.
+                        break;
+                    }
+
+                    // Continue with the next character after the sequence.
+                    current = vt_end;
+                    continue;
                 }
 
                 // Check if we need to output a line.
@@ -360,18 +385,43 @@ namespace ookii
                 }
             }
 
-            // Move the remaining characters to the front for the next flush.
+            // If we flushed any characters, move the remaining characters to the front for the next
+            // flush.
             // N.B. line_length can't be used for this because it includes indent character count.
-            count = 0;
-            if (end > start)
+            if (start > this->pbase())
             {
-                count = end - start;
-                traits_type::move(this->pbase(), start, static_cast<size_t>(count));
+                count = 0;
+                if (end > start)
+                {
+                    count = end - start;
+                    traits_type::move(this->pbase(), start, static_cast<size_t>(count));
+                }
+
+                // Reset the put area, and indicate the number of characters moved to the front.
+                reset_put_area(static_cast<int>(count));
             }
 
-            // Reset the put area, and indicate the number of characters moved to the front.
-            reset_put_area(static_cast<int>(count));
+            return true;
+        }
 
+        bool grow_buffer()
+        {
+            assert(this->epptr() == this->pptr());
+            auto old_size = static_cast<int>(_buffer.size());
+            auto new_size = old_size * 2;
+            // Cap consumed memory at 2GB if overflow happened.
+            if (new_size < old_size)
+            {
+                new_size = std::numeric_limits<std::int32_t>::max();
+            }
+
+            if (new_size == old_size)
+            {
+                return false;
+            }
+
+            _buffer.resize(new_size);
+            reset_put_area(old_size);
             return true;
         }
 
@@ -535,6 +585,9 @@ namespace ookii
     //! \warning This class assumes that the target stream is at the start of a line
     //!          when writing starts, and that no other users are writing to the same stream.
     //!          Otherwise, output will not be correctly wrapped or indented.
+    //! 
+    //! \warning Flushing this stream will not flush the contents of the last unfinished line.
+    //!          The only way to guarantee all content is flushed is to write a newline.
     //! 
     //! Several typedefs for common character types are provided:
     //! 
