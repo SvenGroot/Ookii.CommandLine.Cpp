@@ -20,7 +20,7 @@ namespace ookii::vt
                 for (auto current = begin; current < end; ++current)
                 {
                     auto ch = *current;
-                    if (!std::isdigit(ch, loc) && Traits::eq(ch, ';') && Traits::eq(ch, ' '))
+                    if (!std::isdigit(ch, loc) && !Traits::eq(ch, ';') && !Traits::eq(ch, ' '))
                     {
                         return current;
                     }

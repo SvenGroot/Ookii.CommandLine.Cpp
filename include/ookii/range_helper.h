@@ -57,7 +57,7 @@ namespace ookii::details
         private:
             void next_value(bool check_current)
             {
-                if (_current == _end || check_current && (!_filter || _filter(*_current)))
+                if (_current == _end || (check_current && (!_filter || _filter(*_current))))
                 {
                     return;
                 }

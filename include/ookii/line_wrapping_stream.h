@@ -252,7 +252,7 @@ namespace ookii
             if (!is_eof(ch))
             {
                 // If the buffer is still full, try to grow it.
-                if (this->pptr() > this->epptr() && !grow_buffer())
+                if (this->pptr() == this->epptr() && !grow_buffer())
                 {
                     return traits_type::eof();
                 }
@@ -332,7 +332,7 @@ namespace ookii
                 if (traits_type::eq(*current, vt_helper_type::c_escape))
                 {
                     auto vt_end = vt_helper_type::find_sequence_end(current + 1, end, locale);
-                    if (current == nullptr)
+                    if (vt_end == nullptr)
                     {
                         // Incomplete VT sequence, so we can't flush until the end is found.
                         break;
