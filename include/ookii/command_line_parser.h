@@ -163,7 +163,7 @@ namespace ookii
         template<typename Range>
         basic_command_line_parser(const Range &arguments, storage_type &&storage, bool case_sensitive)
             : _storage{std::move(storage)},
-              _arguments{string_less{case_sensitive, storage.locale}}
+              _arguments{string_less{case_sensitive, _storage.locale}}
         {
             if (_storage.string_provider == nullptr)
             {

@@ -48,6 +48,16 @@
 
 #endif
 
+#ifndef OOKII_CONSOLE_NOT_INLINE
+#define OOKII_CONSOLE_FUNC(decl) inline decl
+#define OOKII_CONSOLE_FUNC_HAS_BODY
+#elif defined(OOKII_CONSOLE_DEFINITION)
+#define OOKII_CONSOLE_FUNC(decl) decl
+#define OOKII_CONSOLE_FUNC_HAS_BODY
+#else
+#define OOKII_CONSOLE_FUNC(decl) decl;
+#endif
+
 namespace ookii
 {
     //! \brief Determines the width of the console.
@@ -56,13 +66,8 @@ namespace ookii
     //! to a file, it's platform dependent whether the width is still returned.
     //! 
     //! \param default_width The width to assume if the actual width can't be determined.
-#ifndef OOKII_CONSOLE_NOT_INLINE
-    inline
-#endif
-        short get_console_width(short default_width = 80) noexcept
-#if defined(OOKII_CONSOLE_NOT_INLINE) && !defined(OOKII_CONSOLE_DEFINITION)
-        ;
-#else
+    OOKII_CONSOLE_FUNC(short get_console_width(short default_width = 80) noexcept)
+#ifdef OOKII_CONSOLE_FUNC_HAS_BODY
     {
 #if _WIN32
 
