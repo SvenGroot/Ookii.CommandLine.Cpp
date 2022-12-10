@@ -7,6 +7,22 @@
 
 namespace ookii
 {
+    //! \brief Provides custom localized strings.
+    //!
+    //! You can derive from this class and override its members to provide customized or localized
+    //! strings. A custom string provider can be provided to the
+    //! command_line_builder::command_line_builder() constructor.
+    //!
+    //! Two typedefs for common character types are provided:
+    //! 
+    //! Type                                | Definition
+    //! ----------------------------------- | -------------------------------------
+    //! `ookii::localized_string_provider`  | `ookii::basic_localized_string_provider<char>`
+    //! `ookii::wlocalized_string_provider` | `ookii::basic_localized_string_provider<wchar_t>`
+    //! 
+    //! \tparam CharType The character type used for strings.
+    //! \tparam Traits The character traits to use for strings. Defaults to `std::char_traits<CharType>`.
+    //! \tparam Alloc The allocator to use for strings. Defaults to `std::allocator<CharType>`.
     template<typename CharType, typename Traits = std::char_traits<CharType>, typename Alloc = std::allocator<CharType>>
     class basic_localized_string_provider
     {
@@ -16,36 +32,48 @@ namespace ookii
         //! \brief The concrete string_view type used.
         using string_view_type = std::basic_string_view<CharType, Traits>;
 
+        //! \brief Gets the error message for parse_error::invalid_value.
+        //! \param argument_name The name of the argument.
         virtual string_type invalid_value(string_view_type argument_name) const
         {
             return OOKII_FMT_NS format(defaults::invalid_value_format.data(), argument_name);
         }
 
+        //! \brief Gets the error message for parse_error::unknown_argument.
+        //! \param argument_name The name of the argument.
         virtual string_type unknown_argument(string_view_type argument_name) const
         {
             return OOKII_FMT_NS format(defaults::unknown_argument_format.data(), argument_name);
         }
 
+        //! \brief Gets the error message for parse_error::missing_value.
+        //! \param argument_name The name of the argument.
         virtual string_type missing_value(string_view_type argument_name) const
         {
             return OOKII_FMT_NS format(defaults::missing_value_format.data(), argument_name);
         }
 
+        //! \brief Gets the error message for parse_error::duplicate_argument.
+        //! \param argument_name The name of the argument.
         virtual string_type duplicate_argument(string_view_type argument_name) const
         {
             return OOKII_FMT_NS format(defaults::duplicate_argument_format.data(), argument_name);
         }
 
+        //! \brief Gets the error message for parse_error::too_many_arguments.
         virtual string_type too_many_arguments() const
         {
             return defaults::too_many_arguments.data();
         }
 
+        //! \brief Gets the error message for parse_error::missing_required_argument.
+        //! \param argument_name The name of the argument.
         virtual string_type missing_required_argument(string_view_type argument_name) const
         {
             return OOKII_FMT_NS format(defaults::missing_required_argument_format.data(), argument_name);
         }
 
+        //! \brief Gets the error message for parse_error::unknown.
         virtual string_type unknown_error() const
         {
             return defaults::unknown.data();
@@ -64,9 +92,9 @@ namespace ookii
         };
     };
 
-    //! \brief Typedef for basic_usage_writer using `char` as the character type.
+    //! \brief Typedef for basic_localized_string_provider using `char` as the character type.
     using localized_string_provider = basic_localized_string_provider<char>;
-    //! \brief Typedef for basic_usage_writer using `wchar_t` as the character type.
+    //! \brief Typedef for basic_localized_string_provider using `wchar_t` as the character type.
     using wlocalized_string_provider = basic_localized_string_provider<wchar_t>;
 
 }

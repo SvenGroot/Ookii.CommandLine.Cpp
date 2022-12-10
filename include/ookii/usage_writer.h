@@ -50,8 +50,7 @@ namespace ookii
     //! `ookii::usage_writer`  | `ookii::basic_usage_writer<char>`
     //! `ookii::wusage_writer` | `ookii::basic_usage_writer<wchar_t>`
     //! 
-    //! \tparam CharType The character type used for arguments and other strings. Only `char` and
-    //!         `wchar_t` are supported.
+    //! \tparam CharType The character type used for strings.
     //! \tparam Traits The character traits to use for strings. Defaults to `std::char_traits<CharType>`.
     //! \tparam Alloc The allocator to use for strings. Defaults to `std::allocator<CharType>`.
     template<typename CharType, typename Traits = std::char_traits<CharType>, typename Alloc = std::allocator<CharType>>
@@ -1043,22 +1042,22 @@ namespace ookii
         {
             if (!_use_color)
             {
-                auto support = vt::enable_color(standard_stream::output);
+                auto support = vt::virtual_terminal_support::enable_color(standard_stream::output);
                 _use_color = support.is_supported();
                 return support;
             }
 
-            return {standard_stream::output, vt_result::failed};
+            return {};
         }
 
         [[nodiscard]] vt::virtual_terminal_support enable_error_color()
         {
             if (!_use_color)
             {
-                return vt::enable_color(standard_stream::error);
+                return vt::virtual_terminal_support::enable_color(standard_stream::error);
             }
 
-            return {standard_stream::error, vt_result::failed};
+            return {};
         }
 
         const parser_type *_parser{};

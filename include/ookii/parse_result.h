@@ -74,10 +74,12 @@ namespace ookii
     {
         //! \brief The concrete string type used by this structure.
         using string_type = std::basic_string<CharType, Traits, Alloc>;
+        //! \brief The specialized type of basic_localized_string_provider used.
         using string_provider_type = basic_localized_string_provider<CharType, Traits, Alloc>;
 
         //! \brief Initializes a new instance of the parse_result structure.
         //! 
+        //! \param string_provider The basic_localized_string_provider to use for error messages.
         //! \param error The type of error that occurred, or parse_error::none to indicate no
         //!        error.
         //! \param error_arg_name The name of the argument that caused the error, or a blank string
@@ -89,6 +91,7 @@ namespace ookii
         {
         }
 
+        //! \brief The string provider used to get error messages.
         string_provider_type *string_provider;
 
         //! \brief The type of error that occurred, or parse_error::none to indicate no error.

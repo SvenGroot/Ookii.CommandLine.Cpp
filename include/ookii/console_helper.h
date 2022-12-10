@@ -222,12 +222,12 @@ namespace ookii
     //! \brief Indicates the result of the set_console_vt_support operation.
     enum class vt_result
     {
-        //! \brief Virtual terminal sequences were successfully enabled.
-        success,
+        //! \brief Virtual terminal sequences could not be enabled.
+        failed,
         //! \brief No action was taken, because the value already matched the requested setting.
         no_change,
-        //! \brief Virtual terminal sequences could not be enabled.
-        failed
+        //! \brief Virtual terminal sequences were successfully enabled.
+        success
     };
 
     //! \brief Enables or disables console support for virtual terminal sequences.

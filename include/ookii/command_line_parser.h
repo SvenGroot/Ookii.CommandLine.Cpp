@@ -110,6 +110,7 @@ namespace ookii
         using storage_type = details::parser_storage<CharType, Traits, Alloc>;
         //! \brief The callback function type for on_parsed().
         using on_parsed_callback = std::function<on_parsed_action(argument_base_type &, string_view_type value)>;
+        //! \brief The specialized type of basic_localized_string_provider used.
         using string_provider_type = basic_localized_string_provider<CharType, Traits, Alloc>;
 
         //! \brief The specialized type of command_line_argument used.

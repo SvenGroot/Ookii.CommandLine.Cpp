@@ -265,19 +265,28 @@ namespace ookii::vt
         static constexpr std::string_view bright_background_white = "\x1b[107m";
     }
 
+    //! \brief Handles the lifetime of virtual terminal support.
+    //!
+    //! On Windows, this restores the terminal mode to its previous value when destructed. On other
+    //! platforms, this does nothing.
+    //!
+    //! To create an instance of this class, you should use the enable_virtual_terminal_sequences()
+    //! or enable_color() function.
     class virtual_terminal_support
     {
     public:
-        virtual_terminal_support(standard_stream stream, vt_result result) noexcept
-            : _stream{stream},
-              _result{result}
-        {
-        }
+        //! \brief Initializes a new instance of the virtual_terminal_support class.
+        //!
+        //! An instance created this way will indicate virtual terminal sequences are not supported
+        //! and will not do anything when destructed.
+        virtual_terminal_support() = default;
 
         virtual_terminal_support(const virtual_terminal_support &) = delete;
         virtual_terminal_support &operator=(const virtual_terminal_support &) = delete;
 
+        //! \brief Move constructor for virtual_terminal_support.
         virtual_terminal_support(virtual_terminal_support &&) = default;
+        //! \brief Move assignment operator for virtual_terminal_support.
         virtual_terminal_support &operator=(virtual_terminal_support &&) = default;
 
         ~virtual_terminal_support() noexcept
@@ -285,16 +294,84 @@ namespace ookii::vt
             reset();
         }
 
+        //! \brief Enables virtual terminal sequences for the console attached to the specified
+        //! stream.
+        //!
+        //! Virtual terminal sequences are supported if the specified stream is a terminal according
+        //! to `isatty()`, and the TERM environment variable is not set to "dumb". On Windows,
+        //! enabling VT support has to succeed. On non-Windows platforms, VT support is assumed if
+        //! the TERM environment variable is defined.
+        //!
+        //! \param stream The standard_stream to enable VT sequences for.
+        //! \return An instance of the virtual_terminal_support class that will disable virtual terminal
+        //! support when destructed, if the value was change. Use the
+        //! virtual_terminal_support::is_supported() method to check if virtual terminal sequences are
+        //! supported.
+        [[nodiscard]] static virtual_terminal_support enable(standard_stream stream)
+        {
+            if ((stream != standard_stream::output && stream != standard_stream::error) ||
+                !ookii::details::is_console(stream))
+            {
+                return {};
+            }
+
+            // If "TERM=dumb" is set, assume no support.
+            auto term = getenv("TERM");
+            if (term != nullptr && strcmp(term, "dumb") == 0)
+            {
+                return {};
+            }
+
+#ifndef _WIN32
+            // Except on Windows, TERM not set is assumed to mean no support.
+            if (term == nullptr)
+            {
+                return {};
+            }
+#endif
+
+            return {stream, set_console_vt_support(stream, true)};
+        }
+
+        //! \brief Enables color support using virtual terminal sequences for the console attached
+        //! to the specified stream.
+        //!
+        //! If an environment variable named "NO_COLOR" exists, this function will not enable VT
+        //! sequences. Otherwise, this function calls the enable_virtual_terminal_sequences()
+        //! function and returns its result.
+        //!
+        //! \param stream The standard_stream to enable VT sequences for.
+        //! \return An instance of the virtual_terminal_support class that will disable virtual
+        //! terminal support when destructed, if the value was change. Use the
+        //! virtual_terminal_support::is_supported() method to check if virtual terminal sequences
+        //! are supported.
+        [[nodiscard]] static virtual_terminal_support enable_color(standard_stream stream)
+        {
+            if (getenv("NO_COLOR") != nullptr)
+            {
+                return {stream, vt_result::failed};
+            }
+
+            return enable(stream);
+        }
+
+        //! \brief Gets a value that indicates whether the stream supports virtual terminal
+        //! sequences.
         bool is_supported() const noexcept
         {
             return _result != vt_result::failed;
         }
 
+        //! \brief Gets a value that indicates whether the stream supports virtual terminal
+        //! sequences.
         operator bool() const noexcept
         {
             return is_supported();
         }
 
+        //! \brief Restores the console mode to its previous value, if it had been changed.
+        //!
+        //! On non-Windows platforms, this does nothing.
         void reset() noexcept
         {
             if (_result == vt_result::success)
@@ -308,45 +385,15 @@ namespace ookii::vt
         }
 
     private:
+        virtual_terminal_support(standard_stream stream, vt_result result) noexcept
+            : _stream{stream},
+              _result{result}
+        {
+        }
+
         standard_stream _stream;
         vt_result _result;
     };
-
-    [[nodiscard]] inline virtual_terminal_support enable_virtual_terminal_sequences(standard_stream stream)
-    {
-        if ((stream != standard_stream::output && stream != standard_stream::error) ||
-            !ookii::details::is_console(stream))
-        {
-            return {stream, vt_result::failed};
-        }
-
-        // If "TERM=dumb" is set, assume no support.
-        auto term = getenv("TERM");
-        if (term != nullptr && strcmp(term, "dumb") == 0)
-        {
-            return {stream, vt_result::failed};
-        }
-
-#ifndef _WIN32
-        // Except on Windows, TERM not set is assumed to mean no support.
-        if (term == nullptr)
-        {
-            return {stream, vt_result::failed};
-        }
-#endif
-
-        return {stream, set_console_vt_support(stream, true)};
-    }
-
-    [[nodiscard]] inline virtual_terminal_support enable_color(standard_stream stream)
-    {
-        if (getenv("NO_COLOR") != nullptr)
-        {
-            return {stream, vt_result::failed};
-        }
-
-        return enable_virtual_terminal_sequences(stream);
-    }
 }
 
 #endif
