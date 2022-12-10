@@ -125,11 +125,19 @@ public:
             .add_command<Command2>()
             .add_command<Command3>(TEXT("LastCommand"), TEXT("Foo"));
 
-        tstringstream stream;
-        tline_wrapping_stream wrap_stream{stream, 40};
-        basic_usage_writer<tchar_t> usage{wrap_stream};
-        manager.write_usage(&usage);
-        VERIFY_EQUAL(c_usageExpected, stream.str());
+        {
+            tline_wrapping_ostringstream stream{40};
+            basic_usage_writer<tchar_t> usage{stream};
+            manager.write_usage(&usage);
+            VERIFY_EQUAL(c_usageExpected, stream.str());
+        }
+
+        {
+            tline_wrapping_ostringstream stream{40};
+            basic_usage_writer<tchar_t> usage{stream, true};
+            manager.write_usage(&usage);
+            VERIFY_EQUAL(c_usageExpectedColor, stream.str());
+        }
     }
 
     TEST_METHOD(TestCreate)
@@ -197,6 +205,22 @@ The following commands are available:
     Command1
 
     LastCommand
+        Foo
+
+)");
+
+    static constexpr tstring_view c_usageExpectedColor = TEXT(R"([36mUsage:[0m TestApp <command> [arguments]
+
+The following commands are available:
+
+    [32mAnotherCommand[0m
+        This is a very long description
+        that probably needs to be
+        wrapped.
+
+    [32mCommand1[0m
+
+    [32mLastCommand[0m
         Foo
 
 )");

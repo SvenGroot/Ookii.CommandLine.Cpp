@@ -478,11 +478,19 @@ public:
             .add_multi_value_argument(multiArg, TEXT("MultiArg")).description(TEXT("Multi-value argument description.")).alias(TEXT("multi")).alias(TEXT("m"))
             .build();
         
-        std::basic_ostringstream<tchar_t> stream;
-        tline_wrapping_stream wrapStream{stream, 40};
-        basic_usage_writer<tchar_t> usage{wrapStream};
-        parser.write_usage(&usage);
-        VERIFY_EQUAL(c_usageExpected, stream.str());
+        {
+            tline_wrapping_ostringstream stream{40};
+            basic_usage_writer<tchar_t> usage{stream};
+            parser.write_usage(&usage);
+            VERIFY_EQUAL(c_usageExpected, stream.view());        
+        }
+
+        {
+            tline_wrapping_ostringstream stream{40};
+            basic_usage_writer<tchar_t> usage{stream, true};
+            parser.write_usage(&usage);
+            VERIFY_EQUAL(c_usageExpectedColor, stream.view());        
+        }
     }
 
     TEST_METHOD(TestWindowsOptionPrefix)
@@ -736,6 +744,34 @@ Usage: TestCommand [-StringArg] <string>
 
 )");
 
+    static constexpr tstring_view c_usageExpectedColor = TEXT(R"(Application description.
+
+[36mUsage:[0m TestCommand [-StringArg] <string>
+   -IntArg <int> [-FloatArg <number>]
+   [-MultiArg <string>...]
+   [-OptionalSwitchArg] [-SwitchArg]
+
+    [32m-StringArg <string>[0m
+        String argument description.
+
+    [32m-FloatArg <number>[0m
+        Float argument description that
+        is really quite long and
+        probably needs to be wrapped.
+        Default value: 10.
+
+    [32m-MultiArg <string> (-multi, -m)[0m
+        Multi-value argument
+        description.
+
+    [32m-OptionalSwitchArg [<bool>][0m
+        Optional switch argument.
+
+    [32m-SwitchArg [<bool>] (-s)[0m
+        Switch argument description.
+        With a new line.
+
+)");
 };
 
 TEST_CLASS_REGISTRATION(CommandLineParserTests);
