@@ -236,7 +236,7 @@ namespace ookii
         //!
         //! With the base implementation, only the "Usage:" portion of the string has color; the
         //! executable name does not.
-        std::string_view usage_prefix_color{vt::text_format::foreground_cyan};
+        const char *usage_prefix_color{vt::text_format::foreground_cyan};
 
         //! \brief The color applied by the base implementation of the
         //! write_argument_description_header() method.
@@ -252,7 +252,7 @@ namespace ookii
         //! The portion of the string that has color will end with the value of color_reset.
         //!
         //! With the base implementation, only the description header has color.
-        std::string_view argument_description_color{vt::text_format::foreground_green};
+        const char *argument_description_color{vt::text_format::foreground_green};
 
         //! \brief The color applied by the base implementation of the
         //! write_command_description_header() method.
@@ -268,7 +268,7 @@ namespace ookii
         //! The portion of the string that has color will end with the value of color_reset.
         //!
         //! With the base implementation, only the description header has color.
-        std::string_view command_description_color{vt::text_format::foreground_green};
+        const char *command_description_color{vt::text_format::foreground_green};
 
         //! \brief The color applied by the write_error() method.
         //!
@@ -281,18 +281,18 @@ namespace ookii
         //! be included in the output, but only when the use_color() method returns `true`.
         //!
         //! The portion of the string that has color will end with the value of color_reset.
-        std::string_view error_color{vt::text_format::foreground_red};
+        const char *error_color{vt::text_format::foreground_red};
 
         //! \brief The sequence used to reset color applied a usage help element.
         //!
         //! This is the virtual terminal sequence used to reset color. The default value is
-        //! ookii::vt::text_format::default.
+        //! ookii::vt::text_format::default_format.
         //!
         //! This value will only be used if the use_color() method returns `true`.
         //!
         //! If the string contains anything other than virtual terminal sequences, those parts will
         //! be included in the output, but only when the use_color() method returns `true`.
-        std::string_view color_reset{vt::text_format::default_format};
+        const char *color_reset{vt::text_format::default_format};
 
         //! \brief Creates usage help for the specified parser.
         //!
@@ -997,7 +997,7 @@ namespace ookii
 
         //! \brief Writes the specified color virtual terminal sequence, if color is enabled.
         //! \param color One or more virtual terminal sequences for colors.
-        void set_color(std::string_view color)
+        void set_color(const char *color)
         {
             if (use_color())
             {

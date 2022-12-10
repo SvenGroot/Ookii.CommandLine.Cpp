@@ -173,7 +173,7 @@ namespace ookii
             stream.unsetf(std::ios::dec);
             stream.unsetf(std::ios::oct);
             stream.unsetf(std::ios::hex);
-            T result;
+            T result{};
             stream >> result;
             if (!stream || !stream.eof())
                 return {};

@@ -102,167 +102,167 @@ namespace ookii::vt
         /// <summary>
         /// Resets the text format to the settings before modification.
         /// </summary>
-        static constexpr std::string_view default_format = "\x1b[0m";
+        static constexpr const char *default_format = "\x1b[0m";
         /// <summary>
         /// Applies the brightness/intensity flag to the foreground color.
         /// </summary>
-        static constexpr std::string_view bold_bright = "\x1b[1m";
+        static constexpr const char *bold_bright = "\x1b[1m";
         /// <summary>
         /// Removes the brightness/intensity flag to the foreground color.
         /// </summary>
-        static constexpr std::string_view no_bold_bright = "\x1b[22m";
+        static constexpr const char *no_bold_bright = "\x1b[22m";
         /// <summary>
         /// Adds underline.
         /// </summary>
-        static constexpr std::string_view underline = "\x1b[4m";
+        static constexpr const char *underline = "\x1b[4m";
         /// <summary>
         /// Removes underline.
         /// </summary>
-        static constexpr std::string_view no_underline = "\x1b[24m";
+        static constexpr const char *no_underline = "\x1b[24m";
         /// <summary>
         /// Swaps foreground and background colors.
         /// </summary>
-        static constexpr std::string_view negative = "\x1b[7m";
+        static constexpr const char *negative = "\x1b[7m";
         /// <summary>
         /// Returns foreground and background colors to normal.
         /// </summary>
-        static constexpr std::string_view positive = "\x1b[27m";
+        static constexpr const char *positive = "\x1b[27m";
         /// <summary>
         /// Sets the foreground color to Black.
         /// </summary>
-        static constexpr std::string_view foreground_black = "\x1b[30m";
+        static constexpr const char *foreground_black = "\x1b[30m";
         /// <summary>
         /// Sets the foreground color to Red.
         /// </summary>
-        static constexpr std::string_view foreground_red = "\x1b[31m";
+        static constexpr const char *foreground_red = "\x1b[31m";
         /// <summary>
         /// Sets the foreground color to Green.
         /// </summary>
-        static constexpr std::string_view foreground_green = "\x1b[32m";
+        static constexpr const char *foreground_green = "\x1b[32m";
         /// <summary>
         /// Sets the foreground color to Yellow.
         /// </summary>
-        static constexpr std::string_view foreground_yellow = "\x1b[33m";
+        static constexpr const char *foreground_yellow = "\x1b[33m";
         /// <summary>
         /// Sets the foreground color to Blue.
         /// </summary>
-        static constexpr std::string_view foreground_blue = "\x1b[34m";
+        static constexpr const char *foreground_blue = "\x1b[34m";
         /// <summary>
         /// Sets the foreground color to Magenta.
         /// </summary>
-        static constexpr std::string_view foreground_magenta = "\x1b[35m";
+        static constexpr const char *foreground_magenta = "\x1b[35m";
         /// <summary>
         /// Sets the foreground color to Cyan.
         /// </summary>
-        static constexpr std::string_view foreground_cyan = "\x1b[36m";
+        static constexpr const char *foreground_cyan = "\x1b[36m";
         /// <summary>
         /// Sets the foreground color to White.
         /// </summary>
-        static constexpr std::string_view foreground_white = "\x1b[37m";
+        static constexpr const char *foreground_white = "\x1b[37m";
         /// <summary>
         /// Sets the foreground color to Default.
         /// </summary>
-        static constexpr std::string_view foreground_default = "\x1b[39m";
+        static constexpr const char *foreground_default = "\x1b[39m";
         /// <summary>
         /// Sets the background color to Black.
         /// </summary>
-        static constexpr std::string_view background_black = "\x1b[40m";
+        static constexpr const char *background_black = "\x1b[40m";
         /// <summary>
         /// Sets the background color to Red.
         /// </summary>
-        static constexpr std::string_view background_red = "\x1b[41m";
+        static constexpr const char *background_red = "\x1b[41m";
         /// <summary>
         /// Sets the background color to Green.
         /// </summary>
-        static constexpr std::string_view background_green = "\x1b[42m";
+        static constexpr const char *background_green = "\x1b[42m";
         /// <summary>
         /// Sets the background color to Yellow.
         /// </summary>
-        static constexpr std::string_view background_yellow = "\x1b[43m";
+        static constexpr const char *background_yellow = "\x1b[43m";
         /// <summary>
         /// Sets the background color to Blue.
         /// </summary>
-        static constexpr std::string_view background_blue = "\x1b[44m";
+        static constexpr const char *background_blue = "\x1b[44m";
         /// <summary>
         /// Sets the background color to Magenta.
         /// </summary>
-        static constexpr std::string_view background_magenta = "\x1b[45m";
+        static constexpr const char *background_magenta = "\x1b[45m";
         /// <summary>
         /// Sets the background color to Cyan.
         /// </summary>
-        static constexpr std::string_view background_cyan = "\x1b[46m";
+        static constexpr const char *background_cyan = "\x1b[46m";
         /// <summary>
         /// Sets the background color to White.
         /// </summary>
-        static constexpr std::string_view background_white = "\x1b[47m";
+        static constexpr const char *background_white = "\x1b[47m";
         /// <summary>
         /// Sets the background color to Default.
         /// </summary>
-        static constexpr std::string_view background_default = "\x1b[49m";
+        static constexpr const char *background_default = "\x1b[49m";
         /// <summary>
         /// Sets the foreground color to bright Black.
         /// </summary>
-        static constexpr std::string_view bright_foreground_black = "\x1b[90m";
+        static constexpr const char *bright_foreground_black = "\x1b[90m";
         /// <summary>
         /// Sets the foreground color to bright Red.
         /// </summary>
-        static constexpr std::string_view bright_foreground_red = "\x1b[91m";
+        static constexpr const char *bright_foreground_red = "\x1b[91m";
         /// <summary>
         /// Sets the foreground color to bright Green.
         /// </summary>
-        static constexpr std::string_view bright_foreground_green = "\x1b[92m";
+        static constexpr const char *bright_foreground_green = "\x1b[92m";
         /// <summary>
         /// Sets the foreground color to bright Yellow.
         /// </summary>
-        static constexpr std::string_view bright_foreground_yellow = "\x1b[93m";
+        static constexpr const char *bright_foreground_yellow = "\x1b[93m";
         /// <summary>
         /// Sets the foreground color to bright Blue.
         /// </summary>
-        static constexpr std::string_view bright_foreground_blue = "\x1b[94m";
+        static constexpr const char *bright_foreground_blue = "\x1b[94m";
         /// <summary>
         /// Sets the foreground color to bright Magenta.
         /// </summary>
-        static constexpr std::string_view bright_foreground_magenta = "\x1b[95m";
+        static constexpr const char *bright_foreground_magenta = "\x1b[95m";
         /// <summary>
         /// Sets the foreground color to bright Cyan.
         /// </summary>
-        static constexpr std::string_view bright_foreground_cyan = "\x1b[96m";
+        static constexpr const char *bright_foreground_cyan = "\x1b[96m";
         /// <summary>
         /// Sets the foreground color to bright White.
         /// </summary>
-        static constexpr std::string_view bright_foreground_white = "\x1b[97m";
+        static constexpr const char *bright_foreground_white = "\x1b[97m";
         /// <summary>
         /// Sets the background color to bright Black.
         /// </summary>
-        static constexpr std::string_view bright_background_black = "\x1b[100m";
+        static constexpr const char *bright_background_black = "\x1b[100m";
         /// <summary>
         /// Sets the background color to bright Red.
         /// </summary>
-        static constexpr std::string_view bright_background_red = "\x1b[101m";
+        static constexpr const char *bright_background_red = "\x1b[101m";
         /// <summary>
         /// Sets the background color to bright Green.
         /// </summary>
-        static constexpr std::string_view bright_background_green = "\x1b[102m";
+        static constexpr const char *bright_background_green = "\x1b[102m";
         /// <summary>
         /// Sets the background color to bright Yellow.
         /// </summary>
-        static constexpr std::string_view bright_background_yellow = "\x1b[103m";
+        static constexpr const char *bright_background_yellow = "\x1b[103m";
         /// <summary>
         /// Sets the background color to bright Blue.
         /// </summary>
-        static constexpr std::string_view bright_background_blue = "\x1b[104m";
+        static constexpr const char *bright_background_blue = "\x1b[104m";
         /// <summary>
         /// Sets the background color to bright Magenta.
         /// </summary>
-        static constexpr std::string_view bright_background_magenta = "\x1b[105m";
+        static constexpr const char *bright_background_magenta = "\x1b[105m";
         /// <summary>
         /// Sets the background color to bright Cyan.
         /// </summary>
-        static constexpr std::string_view bright_background_cyan = "\x1b[106m";
+        static constexpr const char *bright_background_cyan = "\x1b[106m";
         /// <summary>
         /// Sets the background color to bright White.
         /// </summary>
-        static constexpr std::string_view bright_background_white = "\x1b[107m";
+        static constexpr const char *bright_background_white = "\x1b[107m";
     }
 
     //! \brief Handles the lifetime of virtual terminal support.
@@ -315,16 +315,27 @@ namespace ookii::vt
                 return {};
             }
 
-            // If "TERM=dumb" is set, assume no support.
+            bool has_term = false;
+#ifdef _WIN32
+            char term[10]{};
+            size_t required;
+            // If the buffer is too small, it can't be equal to "dumb", so we don't care.
+            getenv_s(&required, term, "TERM");
+            has_term = required > 0;
+#else
             auto term = getenv("TERM");
-            if (term != nullptr && strcmp(term, "dumb") == 0)
+            has_term = term != nullptr;
+#endif
+
+            // If "TERM=dumb" is set, assume no support.
+            if (has_term && strcmp(term, "dumb") == 0)
             {
                 return {};
             }
 
 #ifndef _WIN32
             // Except on Windows, TERM not set is assumed to mean no support.
-            if (term == nullptr)
+            if (!has_term)
             {
                 return {};
             }
@@ -347,7 +358,15 @@ namespace ookii::vt
         //! are supported.
         static virtual_terminal_support enable_color(standard_stream stream)
         {
-            if (getenv("NO_COLOR") != nullptr)
+            bool has_env;
+#ifdef _WIN32
+            size_t required;
+            getenv_s(&required, nullptr, 0, "NO_COLOR");
+            has_env = required > 0;
+#else
+            has_env = getenv("NO_COLOR") != nullptr;
+#endif
+            if (has_env)
             {
                 return {stream, vt_result::failed};
             }

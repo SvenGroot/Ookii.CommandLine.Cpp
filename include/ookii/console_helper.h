@@ -175,8 +175,8 @@ namespace ookii
         }
 
 #ifdef _WIN32
-        OOKII_CONSOLE_FUNC(HANDLE get_stream_handle(standard_stream stream))
 #ifdef OOKII_CONSOLE_FUNC_HAS_BODY
+        OOKII_CONSOLE_FUNC(HANDLE get_stream_handle(standard_stream stream))
         {
             switch (stream)
             {
@@ -244,10 +244,10 @@ namespace ookii
     //! \param enable `true` to enable VT support, otherwise, `false`.
     //! \return One of the values of the vt_result enumeration.
 #ifdef _WIN32
-    OOKII_CONSOLE_FUNC(vt_result set_console_vt_support(standard_stream stream, bool enable)) noexcept
+    OOKII_CONSOLE_FUNC(vt_result set_console_vt_support(standard_stream stream, bool enable) noexcept)
 #ifdef OOKII_CONSOLE_FUNC_HAS_BODY
     {
-        auto handle = get_stream_handle();
+        auto handle = details::get_stream_handle(stream);
         DWORD mode;
         if (!GetConsoleMode(handle, &mode))
         {
