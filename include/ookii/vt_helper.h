@@ -272,7 +272,7 @@ namespace ookii::vt
     //!
     //! To create an instance of this class, you should use the enable_virtual_terminal_sequences()
     //! or enable_color() function.
-    class virtual_terminal_support
+    class [[nodiscard]] virtual_terminal_support
     {
     public:
         //! \brief Initializes a new instance of the virtual_terminal_support class.
@@ -307,7 +307,7 @@ namespace ookii::vt
         //! support when destructed, if the value was change. Use the
         //! virtual_terminal_support::is_supported() method to check if virtual terminal sequences are
         //! supported.
-        [[nodiscard]] static virtual_terminal_support enable(standard_stream stream)
+        static virtual_terminal_support enable(standard_stream stream)
         {
             if ((stream != standard_stream::output && stream != standard_stream::error) ||
                 !ookii::details::is_console(stream))
@@ -345,7 +345,7 @@ namespace ookii::vt
         //! terminal support when destructed, if the value was change. Use the
         //! virtual_terminal_support::is_supported() method to check if virtual terminal sequences
         //! are supported.
-        [[nodiscard]] static virtual_terminal_support enable_color(standard_stream stream)
+        static virtual_terminal_support enable_color(standard_stream stream)
         {
             if (getenv("NO_COLOR") != nullptr)
             {

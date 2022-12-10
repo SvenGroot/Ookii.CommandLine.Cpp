@@ -1038,7 +1038,7 @@ namespace ookii
             }
         }
 
-        [[nodiscard]] vt::virtual_terminal_support enable_color()
+        vt::virtual_terminal_support enable_color()
         {
             if (!_use_color)
             {
@@ -1050,7 +1050,7 @@ namespace ookii
             return {};
         }
 
-        [[nodiscard]] vt::virtual_terminal_support enable_error_color()
+        vt::virtual_terminal_support enable_error_color()
         {
             if (!_use_color)
             {

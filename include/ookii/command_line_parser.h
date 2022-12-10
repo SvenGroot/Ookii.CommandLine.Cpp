@@ -329,7 +329,7 @@ namespace ookii
         //! 
         //! \return A parse_result that indicates whether the operation was successful.
         template<typename Iterator>
-        [[nodiscard]] result_type parse(Iterator begin, Iterator end)
+        result_type parse(Iterator begin, Iterator end)
         {
             for (auto &arg : _arguments)
                 arg.second->reset();
