@@ -612,11 +612,11 @@ namespace ookii
                 {
                     if (usage == nullptr)
                     {
-                        usage_writer_type{}.error << result.get_error_message() << std::endl << std::endl;
+                        usage_writer_type{}.write_error(result.get_error_message());
                     }
                     else
                     {
-                        usage->error << result.get_error_message() << std::endl << std::endl;
+                        usage->write_error(result.get_error_message());
                     }
                 }
 

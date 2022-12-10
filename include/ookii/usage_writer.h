@@ -95,11 +95,16 @@ namespace ookii
         //!
         //! This instance will write to a line_wrapping_ostream for the standard output stream
         //! and the standard input stream.
-        basic_usage_writer()
+        //!
+        //! \param use_color `true` to enable color output using virtual terminal sequences, `false`
+        //!        to disable it, and `std::nullopt` to automatically enable it if supported using
+        //!        the ookii::vt::enable_color() method.
+        basic_usage_writer(std::optional<bool> use_color = {})
             : _owned_output{line_wrapping_stream_type::for_cout()},
               _owned_error{line_wrapping_stream_type::for_cerr()},
               output{*_owned_output},
-              error{*_owned_error}
+              error{*_owned_error},
+              _use_color{use_color}
         {
         }
 
@@ -108,9 +113,12 @@ namespace ookii
         //! This instance will write both errors and usage to the same stream.
         //!
         //! \param output The stream used for usage help and errors.
-        basic_usage_writer(stream_type &output)
+        //! \param use_color `true` to enable color output using virtual terminal sequences, or
+        //!        `false` to disable it.
+        basic_usage_writer(stream_type &output, bool use_color = false)
             : output{output},
-              error{output}
+              error{output},
+              _use_color{use_color}
         {
         }
 
@@ -119,9 +127,12 @@ namespace ookii
         //!
         //! \param output The stream used for usage help.
         //! \param error The stream used for errors.
-        basic_usage_writer(stream_type &output, stream_type &error)
+        //! \param use_color `true` to enable color output using virtual terminal sequences, or
+        //!        `false` to disable it.
+        basic_usage_writer(stream_type &output, stream_type &error, bool use_color = false)
             : output{output},
-              error{error}
+              error{error},
+              _use_color{use_color}
         {
         }
 
@@ -211,6 +222,79 @@ namespace ookii
         //! The default value is `true`.
         bool blank_line_after_command_description{true};
 
+        //! \brief The color applied by the base implementation of the write_usage_syntax_prefix
+        //! method.
+        //!
+        //! This should be the virtual terminal sequence for a color. The default value is
+        //! ookii::vt::text_format::foreground_cyan.
+        //!
+        //! The color will only be used if the use_color() method returns `true`.
+        //!
+        //! If the string contains anything other than virtual terminal sequences, those parts will
+        //! be included in the output, but only when the use_color() method returns `true`.
+        //!
+        //! The portion of the string that has color will end with the value of color_reset.
+        //!
+        //! With the base implementation, only the "Usage:" portion of the string has color; the
+        //! executable name does not.
+        std::string_view usage_prefix_color{vt::text_format::foreground_cyan};
+
+        //! \brief The color applied by the base implementation of the
+        //! write_argument_description_header() method.
+        //!
+        //! This should be the virtual terminal sequence for a color. The default value is
+        //! ookii::vt::text_format::foreground_green.
+        //!
+        //! The color will only be used if the use_color() method returns `true`.
+        //!
+        //! If the string contains anything other than virtual terminal sequences, those parts will
+        //! be included in the output, but only when the use_color() method returns `true`.
+        //!
+        //! The portion of the string that has color will end with the value of color_reset.
+        //!
+        //! With the base implementation, only the description header has color.
+        std::string_view argument_description_color{vt::text_format::foreground_green};
+
+        //! \brief The color applied by the base implementation of the
+        //! write_command_description_header() method.
+        //!
+        //! This should be the virtual terminal sequence for a color. The default value is
+        //! ookii::vt::text_format::foreground_green.
+        //!
+        //! The color will only be used if the use_color() method returns `true`.
+        //!
+        //! If the string contains anything other than virtual terminal sequences, those parts will
+        //! be included in the output, but only when the use_color() method returns `true`.
+        //!
+        //! The portion of the string that has color will end with the value of color_reset.
+        //!
+        //! With the base implementation, only the description header has color.
+        std::string_view command_description_color{vt::text_format::foreground_green};
+
+        //! \brief The color applied by the write_error() method.
+        //!
+        //! This should be the virtual terminal sequence for a color. The default value is
+        //! ookii::vt::text_format::foreground_red.
+        //!
+        //! The color will only be used if the use_color() method returns `true`.
+        //!
+        //! If the string contains anything other than virtual terminal sequences, those parts will
+        //! be included in the output, but only when the use_color() method returns `true`.
+        //!
+        //! The portion of the string that has color will end with the value of color_reset.
+        std::string_view error_color{vt::text_format::foreground_red};
+
+        //! \brief The sequence used to reset color applied a usage help element.
+        //!
+        //! This is the virtual terminal sequence used to reset color. The default value is
+        //! ookii::vt::text_format::default.
+        //!
+        //! This value will only be used if the use_color() method returns `true`.
+        //!
+        //! If the string contains anything other than virtual terminal sequences, those parts will
+        //! be included in the output, but only when the use_color() method returns `true`.
+        std::string_view color_reset{vt::text_format::default_format};
+
         //! \brief Creates usage help for the specified parser.
         //!
         //! \param parser The basic_command_line_parser.
@@ -227,6 +311,24 @@ namespace ookii
         {
             _command_manager = &manager;
             write_usage_internal(manager.locale());
+        }
+
+        //! \brief Writes an error message to the error stream, using color if enabled.
+        void write_error(string_view_type message)
+        {
+            auto support = enable_error_color();
+            if (support)
+            {
+                error << error_color;
+            }
+
+            error << message;
+            if (support)
+            {
+                error << color_reset;
+            }
+
+            error << std::endl << std::endl;
         }
 
     protected:
@@ -303,13 +405,19 @@ namespace ookii
         //! The base implementation returns a string like "Usage: executable" or "Usage: executable
         //! command"
         //!
+        //! If color is enabled, this uses the usage_prefix_color for the "Usage:" portion of the
+        //! string.
+        //!
         //! This method is called by the base implementation of the write_parser_usage_syntax()
         //! method.
         //!
         //! \param command_name The name of the executable or command.
         virtual void write_usage_syntax_prefix(string_view_type command_name)
         {
-            output << "Usage: " << command_name;
+            set_color(usage_prefix_color);
+            output << "Usage:";
+            set_color(color_reset);
+            output << " " << command_name;
         }
 
         //! \brief Writes the string used to indicate there are more arguments if the usage syntax
@@ -518,6 +626,8 @@ namespace ookii
         //! with a new line. Which elements are included can be influenced using the fields of this
         //! class.
         //!
+        //! If color is enabled, the base implementation will use the argument_description_color.
+        //!
         //! This method is called by the base implementation of the write_argument_description()
         //! method.
         //!
@@ -526,6 +636,7 @@ namespace ookii
         {
             output << reset_indent;
             write_spacing(argument_description_indent / 2);
+            set_color(argument_description_color);
             auto prefix = parser().prefixes()[0];
             write_argument_name_for_description(arg.name(), prefix);
             output << ' ';
@@ -543,6 +654,7 @@ namespace ookii
                 write_aliases(arg.aliases(), prefix);
             }
 
+            set_color(color_reset);
             output << std::endl;
         }
 
@@ -787,6 +899,8 @@ namespace ookii
         //!
         //! The base implementation writes the command's name.
         //!
+        //! If color is enabled, the base implementation will use the command_description_color.
+        //!
         //! This method is called by the base implementation of the write_command_description()
         //! method.
         //!
@@ -795,7 +909,9 @@ namespace ookii
         {
             output << reset_indent;
             write_spacing(command_description_indent / 2);
+            set_color(command_description_color);
             write_command_name(command.name());
+            set_color(color_reset);
             output << std::endl;
         }
 
@@ -871,6 +987,25 @@ namespace ookii
             return *_command_manager;
         }
 
+        //! \brief Gets a value that indicates whether color virtual terminal sequences can be used
+        //! in the output.
+        //!
+        //! \return `true` if color output is allowed; otherwise, `false`.
+        bool use_color() const
+        {
+            return _use_color && *_use_color;
+        }
+
+        //! \brief Writes the specified color virtual terminal sequence, if color is enabled.
+        //! \param color One or more virtual terminal sequences for colors.
+        void set_color(std::string_view color)
+        {
+            if (use_color())
+            {
+                output << color;
+            }
+        }
+
     private:
         void write_usage_internal(const std::locale &loc)
         {
@@ -893,6 +1028,7 @@ namespace ookii
                 old_error_loc = error.imbue(loc);
             }
 
+            auto color = enable_color();
             if (_parser != nullptr)
             {
                 write_parser_usage_core();
@@ -903,8 +1039,31 @@ namespace ookii
             }
         }
 
+        [[nodiscard]] vt::virtual_terminal_support enable_color()
+        {
+            if (!_use_color)
+            {
+                auto support = vt::enable_color(standard_stream::output);
+                _use_color = support.is_supported();
+                return support;
+            }
+
+            return {standard_stream::output, vt_result::failed};
+        }
+
+        [[nodiscard]] vt::virtual_terminal_support enable_error_color()
+        {
+            if (!_use_color)
+            {
+                return vt::enable_color(standard_stream::error);
+            }
+
+            return {standard_stream::error, vt_result::failed};
+        }
+
         const parser_type *_parser{};
         const command_manager_type *_command_manager;
+        std::optional<bool> _use_color;
 
         static constexpr char c_optionalStart = '[';
         static constexpr char c_optionalEnd = ']';
