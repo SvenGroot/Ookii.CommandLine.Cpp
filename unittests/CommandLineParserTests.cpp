@@ -42,9 +42,11 @@ public:
     {
         tstring arg1;
         tstring arg2;
+        bool arg3;
         auto parser = basic_parser_builder<tchar_t>{TEXT("TestCommand")}
             .add_argument(arg1, TEXT("Arg1"))
             .add_argument(arg2, TEXT("Arg2"))
+            .add_argument(arg3, TEXT("Arg3"))
             .build();
 
         VERIFY_TRUE(parser.allow_white_space_separator());
@@ -110,6 +112,9 @@ public:
 
         // Duplicate.
         VerifyParseResult(parser.parse({ TEXT("-Arg1"), TEXT("Value"), TEXT("-Arg1"), TEXT("Value") }), parse_error::duplicate_argument, TEXT("Arg1"));
+
+        // Duplicate switch.
+        VerifyParseResult(parser.parse({ TEXT("-Arg3"), TEXT("-Arg3") }), parse_error::duplicate_argument, TEXT("Arg3"));
     }
 
     TEST_METHOD(TestPositional)

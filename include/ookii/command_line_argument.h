@@ -387,6 +387,7 @@ namespace ookii
         std::enable_if_t<details::is_switch<T2>::value, bool> set_switch_value_core()
         {
             _storage.value = true;
+            base_type::set_value();
             return true;
         }
 
@@ -525,6 +526,7 @@ namespace ookii
         std::enable_if_t<details::is_switch<T2>::value, bool> set_switch_value_core()
         {
             _storage.value.push_back(true);
+            base_type::set_value();
             return true;
         }
 

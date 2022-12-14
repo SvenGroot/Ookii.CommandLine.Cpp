@@ -645,18 +645,23 @@ namespace ookii
         }
 
         template<typename Iterator>
-        result_type parse_named_argument(string_view_type arg, Iterator &current, Iterator end)
+        result_type parse_named_argument(string_view_type arg_string, Iterator &current, Iterator end)
         {
-            auto [name, value] = split_once(arg, _storage.argument_value_separator);
+            auto [name, value] = split_once(arg_string, _storage.argument_value_separator);
             auto it = this->_arguments.find(name);
             if (it == this->_arguments.end())
                 return {*_storage.string_provider, parse_error::unknown_argument, string_type{name}};
 
+            auto &arg = *it->second;
             if (!value)
             {
-                if (it->second->set_switch_value())
+                if (arg.is_switch())
                 {
-                    return post_process_argument(*it->second, {});
+                    if (!_storage.allow_duplicate_arguments && !arg.is_multi_value() && arg.has_value())
+                        return {*_storage.string_provider, parse_error::duplicate_argument, arg.name()};
+
+                    arg.set_switch_value();
+                    return post_process_argument(arg, {});
                 }
 
                 auto value_it = current;
@@ -673,14 +678,14 @@ namespace ookii
 
             if (value)
             {
-                if (!_storage.allow_duplicate_arguments && !it->second->is_multi_value() && it->second->has_value())
-                    return {*_storage.string_provider, parse_error::duplicate_argument, it->second->name()};
+                if (!_storage.allow_duplicate_arguments && !arg.is_multi_value() && arg.has_value())
+                    return {*_storage.string_provider, parse_error::duplicate_argument, arg.name()};
 
-                return set_argument_value(*it->second, *value);
+                return set_argument_value(arg, *value);
             }
             else
             {
-                return {*_storage.string_provider, parse_error::missing_value, it->second->name()};
+                return {*_storage.string_provider, parse_error::missing_value, arg.name()};
             }
         }
 
