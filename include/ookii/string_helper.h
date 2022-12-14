@@ -308,6 +308,30 @@ namespace ookii
         CharType _separator;
     };
 
+    template<typename CharType, typename Traits>
+    std::optional<std::basic_string_view<CharType, Traits>> strip_prefix(std::basic_string_view<CharType, Traits> value,
+        std::basic_string_view<CharType, Traits> prefix)
+    {
+        if (value.starts_with(prefix))
+        {
+            return value.substr(prefix.length());
+        }
+
+        return {};
+    }
+
+    template<typename CharType, typename Traits>
+    std::tuple<std::basic_string_view<CharType, Traits>, std::optional<std::basic_string_view<CharType, Traits>>> split_once(
+        std::basic_string_view<CharType, Traits> value, CharType separator)
+    {
+        auto index = value.find(separator);
+        if (index == std::basic_string_view<CharType, Traits>::npos)
+        {
+            return {value, {}};
+        }
+
+        return {value.substr(0, index), value.substr(index + 1)};
+    }
 }
 
 #endif

@@ -338,11 +338,11 @@ namespace ookii
             for (auto current = begin; current != end; ++current)
             {
                 auto arg = *current;
-                auto prefix_length = check_prefix(arg);
-                if (prefix_length > 0)
+                auto without_prefix = check_prefix(arg);
+                if (without_prefix)
                 {
                     // Current is updated if parsing used the next argument for a value.
-                    auto result = parse_named_argument(arg, current, end, prefix_length);
+                    auto result = parse_named_argument(*without_prefix, current, end);
                     if (!result)
                         return result;
                 }
@@ -625,45 +625,34 @@ namespace ookii
             }
         }
 
-        size_t check_prefix(string_view_type argument)
+        std::optional<string_view_type> check_prefix(string_view_type argument)
         {
-            // Even if the named argument switch is '-', we treat a '-' followed by a digit as a value, because it could denote a negative number.
+            // Even if the named argument switch is '-', we treat a '-' followed by a digit as a
+            // value, because it could denote a negative number.
             if (argument.length() >= 2 && argument[0] == '-' && std::isdigit(argument[1], _storage.locale))
-                return 0;
+                return {};
 
             for (auto &prefix : _storage.prefixes)
             {
-                if (argument.starts_with(prefix))
-                    return prefix.length();
+                auto stripped = strip_prefix(argument, string_view_type{prefix});
+                if (stripped)
+                {
+                    return stripped;
+                }
             }
 
-            return 0;
+            return {};
         }
 
         template<typename Iterator>
-        result_type parse_named_argument(string_view_type arg, Iterator &current, Iterator end, size_t prefix_length)
+        result_type parse_named_argument(string_view_type arg, Iterator &current, Iterator end)
         {
-            string_view_type name;
-            string_view_type value;
-            bool has_value = false;
-
-            auto separator_index = arg.find(_storage.argument_value_separator);
-            if (separator_index == string_view_type::npos)
-            {
-                name = arg.substr(prefix_length);
-            }
-            else
-            {
-                name = arg.substr(prefix_length, separator_index - prefix_length);
-                value = arg.substr(separator_index + 1);
-                has_value = true;
-            }
-
+            auto [name, value] = split_once(arg, _storage.argument_value_separator);
             auto it = this->_arguments.find(name);
             if (it == this->_arguments.end())
                 return {*_storage.string_provider, parse_error::unknown_argument, string_type{name}};
 
-            if (!has_value)
+            if (!value)
             {
                 if (it->second->set_switch_value())
                 {
@@ -674,18 +663,20 @@ namespace ookii
                 if (_storage.allow_white_space_separator && ++value_it != end)
                 {
                     current = value_it;
-                    value = *current;
                     // If the next argument looks like an argument name, don't use it as value.
-                    has_value = check_prefix(value) == 0;
+                    if (!check_prefix(*current))
+                    {
+                        value = *current;
+                    }
                 }
             }
 
-            if (has_value)
+            if (value)
             {
                 if (!_storage.allow_duplicate_arguments && !it->second->is_multi_value() && it->second->has_value())
                     return {*_storage.string_provider, parse_error::duplicate_argument, it->second->name()};
 
-                return set_argument_value(*it->second, value);
+                return set_argument_value(*it->second, *value);
             }
             else
             {
