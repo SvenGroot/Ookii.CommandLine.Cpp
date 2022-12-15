@@ -101,7 +101,7 @@ namespace ookii
 
             //! \brief Converts the argument_builder_base into a command_line_argument_base that
             //!        can be used by the basic_command_line_parser.
-            virtual owned_or_borrowed_ptr<argument_base_type> to_argument() = 0;
+            virtual std::unique_ptr<argument_base_type> to_argument() = 0;
 
         protected:
             //! \brief Initializes a new instance of the argument_builder_base class.
@@ -295,12 +295,12 @@ namespace ookii
             }
 
         private:
-            virtual owned_or_borrowed_ptr<argument_base_type> to_argument() override
+            virtual std::unique_ptr<argument_base_type> to_argument() override
             {
                 if (this->storage().value_description.empty())
                     this->storage().value_description = ::ookii::value_description<element_type, CharType, Traits, Alloc>::get();
 
-                return make_owned_ptr<ArgumentType>(std::move(this->storage()), std::move(_typed_storage));
+                return make_unique<ArgumentType>(std::move(this->storage()), std::move(_typed_storage));
             }
 
             typed_storage_type _typed_storage;

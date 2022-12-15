@@ -13,7 +13,6 @@
 #include "command_line_argument.h"
 #include "usage_writer.h"
 #include "parse_result.h"
-#include "owned_or_borrowed_ptr.h"
 #include "range_helper.h"
 
 //! \brief Namespace containing the core Ookii.CommandLine.Cpp types.
@@ -164,46 +163,68 @@ namespace ookii
         template<typename Range>
         basic_command_line_parser(const Range &arguments, storage_type &&storage, bool case_sensitive)
             : _storage{std::move(storage)},
-              _arguments{string_less{case_sensitive, _storage.locale}}
+              _arguments_by_name{string_less{case_sensitive, _storage.locale}}
         {
             if (_storage.string_provider == nullptr)
             {
                 _storage.string_provider = &_default_string_provider;
             }
 
-            for (const auto &argument : arguments)
+            for (const auto &argument_builder : arguments)
             {
-                auto actual_arg = argument->to_argument();
-                auto name = actual_arg->name();
-                const auto [it, success] = _arguments.insert(std::pair{name, std::move(actual_arg)});
+                auto argument = argument_builder->to_argument();
+                auto name = argument->name();
+                const auto [it, success] = _arguments_by_name.insert(std::pair{name, argument.get()});
                 if (!success)
                     throw std::logic_error("Duplicate argument name.");
 
-                if (it->second->position())
-                {
-                    // Usually, positional arguments should be in order in the builder, but it's
-                    // technically possible for the caller to have stored references to the argument
-                    // builders and called positional() on them in a different order than they were
-                    // created, so make sure the resulting list is ordered correctly regardless.
-                    const auto pos = std::lower_bound(_positional_arguments.begin(),
-                        _positional_arguments.end(),
-                        it->second,
-                        [](const auto &left, const auto &right)
-                        {
-                            return *left->position() < *right->position();
-                        });
-
-                    _positional_arguments.insert(pos, it->second.get());
-                }
-
-                for (const auto &alias : it->second->aliases())
+                for (const auto &alias : argument->aliases())
                 {
                     // Add the aliases to the arguments list using borrowed pointers.
-                    const auto [alias_it, alias_success] = _arguments.insert(std::pair{alias, it->second.as_borrowed()});
+                    const auto [alias_it, alias_success] = _arguments_by_name.insert(std::pair{alias, argument.get()});
                     if (!alias_success)
                         throw std::logic_error("Duplicate argument name.");
                 }
+
+                if (argument->position())
+                {
+                    ++_positional_argument_count;
+                }
+
+                _arguments.push_back(std::move(argument));
             }
+
+            // Sort the full argument list.
+            std::sort(_arguments.begin(), _arguments.end(), [this](const auto &left, const auto &right)
+                {
+                    // Positional arguments come before non-positional ones, and must be sorted by
+                    // position.
+                    if (left->position())
+                    {
+                        return right->position()
+                            ? *left->position() < *right->position()
+                            : true;
+                    }
+                    else if (right->position())
+                    {
+                        return false;
+                    }
+
+                    // Non-positional required arguments come before optional arguments.
+                    if (left->is_required())
+                    {
+                        if (!right->is_required())
+                        {
+                            return true;
+                        }
+                    }
+                    else if (right->is_required())
+                    {
+                        return false;
+                    }
+
+                    return _arguments_by_name.key_comp()(left->name(), right->name());
+                });
         }
 
         //! \brief Returns the command name used when generating usage help.
@@ -266,21 +287,17 @@ namespace ookii
 
         //! \brief Gets a view of all the arguments defined by the parser.
         //!
-        //! \warning On some versions of Clang, calling this function may cause compiler errors.
-        //! 
         //! The arguments will be returned in alphabetical order.
         auto arguments() const
         {
-            return details::range_filter<const argument_base_type&, typename std::map<string_type, owned_or_borrowed_ptr<argument_base_type>, string_less>::const_iterator>{_arguments.begin(), _arguments.end(),
+            return details::range_filter<const argument_base_type&, typename std::vector<std::unique_ptr<argument_base_type>>::const_iterator>{
+                _arguments.begin(),
+                _arguments.end(),
                 [](const auto &a) -> auto&
                 {
-                    return *a.second;
+                    return *a;
                 },
-                [](const auto &a)
-                {
-                    // Borrowed pointers are aliases and shouldn't be returned here.
-                    return a.second.is_owned();
-                }
+                {}
             };
         }
 
@@ -289,7 +306,7 @@ namespace ookii
         //! Positional arguments are created using basic_parser_builder::argument_builder::positional().
         size_t positional_argument_count() const
         {
-            return _positional_arguments.size();
+            return _positional_argument_count;
         }
 
         //! \brief Gets an argument by position.
@@ -303,7 +320,12 @@ namespace ookii
         //! \exception std::out_of_range There is no argument at the specified position.
         const argument_base_type &get_argument(size_t pos) const
         {
-            return *_positional_arguments.at(pos);
+            if (pos >= _positional_argument_count)
+            {
+                throw std::out_of_range("pos");
+            }
+
+            return *_arguments.at(pos);
         }
 
         //! \brief Gets an argument by name.
@@ -315,7 +337,7 @@ namespace ookii
         //! \exception std::out_of_range There is no argument with the specified name or alias.
         const argument_base_type &get_argument(const string_type &name) const
         {
-            return *_arguments.at(name);
+            return *_arguments_by_name.at(name);
         }
 
         //! \brief Parses the arguments in the range specified by the iterators.
@@ -332,7 +354,7 @@ namespace ookii
         result_type parse(Iterator begin, Iterator end)
         {
             for (auto &arg : _arguments)
-                arg.second->reset();
+                arg->reset();
 
             size_t position = 0;
             for (auto current = begin; current != end; ++current)
@@ -350,17 +372,17 @@ namespace ookii
                 {
                     // If this is a multi-value argument then we're on the last argument, otherwise search for the next argument without a value
                     // Skip positional arguments that have already been specified by name
-                    while (position < _positional_arguments.size() && 
-                        !_positional_arguments[position]->is_multi_value() &&
-                        _positional_arguments[position]->has_value())
+                    while (position < _positional_argument_count && 
+                        !_arguments[position]->is_multi_value() &&
+                        _arguments[position]->has_value())
                     {
                         ++position;
                     }
 
-                    if (position >= _positional_arguments.size())
+                    if (position >= _positional_argument_count)
                         return {*_storage.string_provider, parse_error::too_many_arguments};
 
-                    auto result = set_argument_value(*_positional_arguments[position], arg);
+                    auto result = set_argument_value(*_arguments[position], arg);
                     if (!result)
                         return result;
                 }
@@ -551,33 +573,11 @@ namespace ookii
         bool for_each_argument_in_usage_order(Func f) const
         {
             // First the positional arguments
-            for (auto &arg : _positional_arguments)
+            for (auto &arg : _arguments)
             {
                 auto result = f(*arg);
                 if (!result)
                     return result;
-            }
-
-            // Then required non-positional arguments
-            for (auto &arg : _arguments)
-            {
-                if (arg.second.is_owned() && !arg.second->position() && arg.second->is_required())
-                {
-                    auto result = f(*arg.second);
-                    if (!result)
-                        return result;
-                }
-            }
-
-            // Then the optional non-positional arguments
-            for (auto &arg : _arguments)
-            {
-                if (arg.second.is_owned() && !arg.second->position() && !arg.second->is_required())
-                {
-                    auto result = f(*arg.second);
-                    if (!result)
-                        return result;
-                }
             }
 
             return true;
@@ -648,8 +648,8 @@ namespace ookii
         result_type parse_named_argument(string_view_type arg_string, Iterator &current, Iterator end)
         {
             auto [name, value] = split_once(arg_string, _storage.argument_value_separator);
-            auto it = this->_arguments.find(name);
-            if (it == this->_arguments.end())
+            auto it = this->_arguments_by_name.find(name);
+            if (it == this->_arguments_by_name.end())
                 return {*_storage.string_provider, parse_error::unknown_argument, string_type{name}};
 
             auto &arg = *it->second;
@@ -715,10 +715,11 @@ namespace ookii
         storage_type _storage;
         string_provider_type _default_string_provider;
 
-        // _positional_arguments contains pointers to items owned by _arguments. Since the two
+        // _arguments_by_name contains pointers to items owned by _arguments. Since the two
         // have the same lifetime, this is okay.
-        std::map<string_type, owned_or_borrowed_ptr<argument_base_type>, string_less> _arguments;
-        std::vector<argument_base_type *> _positional_arguments;
+        std::map<string_type, argument_base_type *, string_less> _arguments_by_name;
+        std::vector<std::unique_ptr<argument_base_type>> _arguments;
+        size_t _positional_argument_count{};
         on_parsed_callback _on_parsed_callback;
     };
 

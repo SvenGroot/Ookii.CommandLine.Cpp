@@ -249,8 +249,6 @@ namespace ookii
         }
 
         //! \brief Gets a view of all the commands.
-        //! 
-        //! \warning Calling this function may cause build errors on certain versions of clang.
         auto commands() const noexcept
         {
             return details::range_filter<const info_type &, typename std::map<string_type, info_type, string_less>::const_iterator>{
