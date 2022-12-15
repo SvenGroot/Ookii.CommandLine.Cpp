@@ -101,7 +101,8 @@ namespace ookii
 
             //! \brief Converts the argument_builder_base into a command_line_argument_base that
             //!        can be used by the basic_command_line_parser.
-            virtual std::unique_ptr<argument_base_type> to_argument() = 0;
+            //! \param mode The command line argument parsing rules used by the parser.
+            virtual std::unique_ptr<argument_base_type> to_argument(parsing_mode mode) = 0;
 
         protected:
             //! \brief Initializes a new instance of the argument_builder_base class.
@@ -151,6 +152,27 @@ namespace ookii
                 : BaseType{basic_parser_builder, name},
                   _typed_storage{value}
             {
+            }
+
+            argument_builder &short_name(bool has_short_name)
+            {
+                this->storage().short_name = has_short_name
+                    ? this->storage().name[0]
+                    : '\0';
+
+                return *this;
+            }
+
+            argument_builder &short_name(CharType short_name)
+            {
+                this->storage().short_name = short_name;
+                return *this;
+            }
+
+            argument_builder &long_name(bool has_long_name)
+            {
+                this->storage().has_long_name = has_long_name;
+                return *this;
             }
 
             //! \brief Sets the value description for the argument.
@@ -276,6 +298,12 @@ namespace ookii
                 return *this;
             }
 
+            argument_builder &short_alias(CharType alias)
+            {
+                this->storage().short_aliases.push_back(alias);
+                return *this;
+            }
+
             //! \brief Indicates that supplying this argument will cancel parsing.
             //!
             //! If set, if this argument is supplied, argument parsing will immediately return with
@@ -295,12 +323,12 @@ namespace ookii
             }
 
         private:
-            virtual std::unique_ptr<argument_base_type> to_argument() override
+            virtual std::unique_ptr<argument_base_type> to_argument(parsing_mode mode) override
             {
                 if (this->storage().value_description.empty())
                     this->storage().value_description = ::ookii::value_description<element_type, CharType, Traits, Alloc>::get();
 
-                return make_unique<ArgumentType>(std::move(this->storage()), std::move(_typed_storage));
+                return make_unique<ArgumentType>(std::move(this->storage()), std::move(_typed_storage), mode);
             }
 
             typed_storage_type _typed_storage;
@@ -421,6 +449,18 @@ namespace ookii
             if (_storage.prefixes.empty())
                 _storage.prefixes = parser_type::get_default_prefixes();
 
+            if (_storage.mode == parsing_mode::long_short)
+            {
+                if (_storage.long_prefix.empty())
+                {
+                    _storage.long_prefix = c_default_long_prefix.data();
+                }
+            }
+            else
+            {
+                _storage.long_prefix.clear();
+            }
+
             return parser_type{_arguments, std::move(_storage), _case_sensitive};
         }
 
@@ -446,6 +486,17 @@ namespace ookii
         basic_parser_builder &locale(std::locale loc)
         {
             _storage.locale = loc;
+            return *this;
+        }
+
+        basic_parser_builder &mode(parsing_mode mode)
+        {
+            if (mode < parsing_mode::default_mode || mode > parsing_mode::long_short)
+            {
+                throw std::invalid_argument("mode");
+            }
+
+            _storage.mode = mode;
             return *this;
         }
 
@@ -489,6 +540,12 @@ namespace ookii
         basic_parser_builder &prefixes(std::initializer_list<T> prefixes)
         {
             return this->prefixes<std::initializer_list<T>>(prefixes);
+        }
+
+        basic_parser_builder &long_prefix(string_type prefix)
+        {
+            _storage.long_prefix = prefix;
+            return *this;
         }
 
         //! \brief Sets a value that indicates whether argument names and values can be separated
@@ -560,6 +617,8 @@ namespace ookii
         bool _case_sensitive{};
         
         parser_storage_type _storage;
+
+        static constexpr auto c_default_long_prefix = literal_cast<CharType>("--");
     };
 
     //! \brief Typedef for basic_command using `char` as the character type.

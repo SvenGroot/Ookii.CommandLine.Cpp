@@ -10,6 +10,7 @@
 
 #include <functional>
 #include "command_line_switch.h"
+#include "parsing_mode.h"
 
 namespace ookii
 {
@@ -30,9 +31,12 @@ namespace ookii
             string_type description;
             std::optional<size_t> position;
             std::vector<string_type> aliases;
+            std::vector<CharType> short_aliases;
             bool is_required{};
             bool cancel_parsing{};
+            bool has_long_name{true};
             CharType multi_value_separator{};
+            CharType short_name{};
         };
 
         template<class T, typename Element, typename CharType, typename Traits>
@@ -96,6 +100,21 @@ namespace ookii
             return _storage.name;
         }
 
+        CharType short_name() const noexcept
+        {
+            return _storage.short_name;
+        }
+
+        bool has_short_name() const noexcept
+        {
+            return _storage.short_name != '\0';
+        }
+
+        bool has_long_name() const noexcept
+        {
+            return _storage.has_long_name;
+        }
+
         //! \brief Gets a list of aliases that can be used instead of the argument's name.
         //!
         //! An argument may not have any aliases.
@@ -104,6 +123,11 @@ namespace ookii
         const std::vector<string_type> &aliases() const noexcept
         {
             return _storage.aliases;
+        }
+
+        const std::vector<CharType> &short_aliases() const noexcept
+        {
+            return _storage.short_aliases;
         }
 
         //! \brief Gets the value description for the argument.
@@ -270,10 +294,35 @@ namespace ookii
             return _storage;
         }
 
-        //! \brief Move constructor for command_line_argument_base.
-        command_line_argument_base(storage_type &&storage)
+        //! \brief Constructs a command line argument base from a command_line_argument_storage.
+        command_line_argument_base(storage_type &&storage, parsing_mode mode)
             : _storage{std::move(storage)}
         {
+            // Normalize elements based on parsing mode.
+            if (mode == parsing_mode::long_short)
+            {
+                if (!_storage.has_long_name)
+                {
+                    if (_storage.short_name == '\0')
+                    {
+                        throw std::logic_error("Argument has neither a long nor a short name.");
+                    }
+
+                    _storage.name = _storage.short_name;
+                    _storage.aliases.clear();
+                }
+
+                if (_storage.short_name == '\0')
+                {
+                    _storage.short_aliases.clear();
+                }
+            }
+            else
+            {
+                _storage.short_name = static_cast<CharType>('\0');
+                _storage.has_long_name = true;
+                _storage.short_aliases.clear();
+            }
         }
 
     private:
@@ -301,7 +350,7 @@ namespace ookii
         using value_type = T;
         //! \brief The type of the argument's elements, which equals `T`.
         //!
-        //! The element type will be differnt from value_type only for multi-value arguments and
+        //! The element type will be different from value_type only for multi-value arguments and
         //! arguments that use `std::optional<T>`.
         using element_type = typename details::element_type<T>::type;
         //! \copydoc base_type::string_type
@@ -314,11 +363,12 @@ namespace ookii
         //! \brief Initializes a new instance of the command_line_argument class.
         //! \param storage Storage containing the argument's information.
         //! \param typed_storage Storage containing information that depends on the argument's type.
+        //! \param mode The command line argument parsing rules used by the parser.
         //! 
         //! You do not normally construct instances of this class manually. Instead, use the
         //! basic_parser_builder.
-        command_line_argument(typename base_type::storage_type &&storage, typed_storage_type &&typed_storage)
-            : base_type{std::move(storage)},
+        command_line_argument(typename base_type::storage_type &&storage, typed_storage_type &&typed_storage, parsing_mode mode)
+            : base_type{std::move(storage), mode},
               _storage{std::move(typed_storage)}
         {
         }
@@ -429,11 +479,13 @@ namespace ookii
         //! \brief Initializes a new instance of the multi_value_command_line_argument class.
         //! \param storage Storage containing the argument's information.
         //! \param typed_storage Storage containing information that depends on the argument's type.
+        //! \param mode The command line argument parsing rules used by the parser.
         //! 
         //! You do not normally construct instances of this class manually. Instead, use the
         //! basic_parser_builder.
-        multi_value_command_line_argument(typename base_type::storage_type &&storage, typed_storage_type &&typed_storage)
-            : base_type{std::move(storage)},
+        multi_value_command_line_argument(typename base_type::storage_type &&storage, typed_storage_type &&typed_storage,
+                                          parsing_mode mode)
+            : base_type{std::move(storage), mode},
               _storage{std::move(typed_storage)}
         {
         }

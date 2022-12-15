@@ -24,7 +24,7 @@ namespace ookii
         //! \brief Indicates that this function accepts any type and uses perfect forwarding.
         using is_transparent = int;
 
-        //! \brief Initializes a new instance of the StringLess class.
+        //! \brief Initializes a new instance of the string_less class.
         //! \param case_sensitive `true` to perform case sensitive comparisons; `false` to perform
         //!        case insensitive comparisons.
         //! \param loc The locale to use for case insensitive comparisons. This is not used for
@@ -57,6 +57,48 @@ namespace ookii
                     {
                         return std::toupper(left, _locale) < std::toupper(right, _locale); 
                     });
+            }
+        }
+
+    private:
+        bool _case_sensitive;
+        std::locale _locale;
+    };
+
+    //! \brief A version of the std::less predicate for characters that supports case insensitive
+    //!        comparison.
+    struct char_less
+    {
+    public:
+        //! \brief Indicates that this function accepts any type and uses perfect forwarding.
+        using is_transparent = int;
+
+        //! \brief Initializes a new instance of the char_less class.
+        //! \param case_sensitive `true` to perform case sensitive comparisons; `false` to perform
+        //!        case insensitive comparisons.
+        //! \param loc The locale to use for case insensitive comparisons. This is not used for
+        //!        case sensitive comparisons.
+        char_less(bool case_sensitive = true, std::locale loc = {})
+            : _case_sensitive{case_sensitive},
+              _locale{loc}
+        {
+        }
+
+        //! \brief Compares two characters.
+        //! \tparam CharType The type of the characters.
+        //! \param left The first character.
+        //! \param right The second character.
+        //! \return `true` if left is less than right; otherwise, `false`.
+        template<typename CharType>
+        bool operator()(CharType &&left, CharType &&right) const
+        {
+            if (_case_sensitive)
+            {
+                return left < right;
+            }
+            else
+            {
+                return std::toupper(left, _locale) < std::toupper(right, _locale); 
             }
         }
 

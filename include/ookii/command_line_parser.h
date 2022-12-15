@@ -45,11 +45,13 @@ namespace ookii
             string_type command_name;
             string_type description;
             std::vector<string_type> prefixes;
+            string_type long_prefix;
             std::locale locale;
+            string_provider_type *string_provider;
+            parsing_mode mode{};
             CharType argument_value_separator{':'};
             bool allow_white_space_separator{true};
             bool allow_duplicate_arguments{false};
-            string_provider_type *string_provider;
         };
     }
 
@@ -163,7 +165,8 @@ namespace ookii
         template<typename Range>
         basic_command_line_parser(const Range &arguments, storage_type &&storage, bool case_sensitive)
             : _storage{std::move(storage)},
-              _arguments_by_name{string_less{case_sensitive, _storage.locale}}
+              _arguments_by_name{string_less{case_sensitive, _storage.locale}},
+              _arguments_by_short_name{char_less{case_sensitive, _storage.locale}}
         {
             if (_storage.string_provider == nullptr)
             {
@@ -172,18 +175,35 @@ namespace ookii
 
             for (const auto &argument_builder : arguments)
             {
-                auto argument = argument_builder->to_argument();
-                auto name = argument->name();
-                const auto [it, success] = _arguments_by_name.insert(std::pair{name, argument.get()});
-                if (!success)
-                    throw std::logic_error("Duplicate argument name.");
-
-                for (const auto &alias : argument->aliases())
+                auto argument = argument_builder->to_argument(_storage.mode);
+                if (argument->has_long_name())
                 {
-                    // Add the aliases to the arguments list using borrowed pointers.
-                    const auto [alias_it, alias_success] = _arguments_by_name.insert(std::pair{alias, argument.get()});
-                    if (!alias_success)
+                    auto name = argument->name();
+                    const auto [it, success] = _arguments_by_name.insert(std::pair{name, argument.get()});
+                    if (!success)
                         throw std::logic_error("Duplicate argument name.");
+
+                    for (const auto &alias : argument->aliases())
+                    {
+                        const auto [alias_it, alias_success] = _arguments_by_name.insert(std::pair{alias, argument.get()});
+                        if (!alias_success)
+                            throw std::logic_error("Duplicate argument name.");
+                    }
+                }
+
+                if (argument->has_short_name())
+                {
+                    auto name = argument->short_name();
+                    const auto [it, success] = _arguments_by_short_name.insert(std::pair{name, argument.get()});
+                    if (!success)
+                        throw std::logic_error("Duplicate short argument name.");
+
+                    for (const auto &alias : argument->short_aliases())
+                    {
+                        const auto [alias_it, alias_success] = _arguments_by_short_name.insert(std::pair{alias, argument.get()});
+                        if (!alias_success)
+                            throw std::logic_error("Duplicate short argument name.");
+                    }
                 }
 
                 if (argument->position())
@@ -195,7 +215,8 @@ namespace ookii
             }
 
             // Sort the full argument list.
-            std::sort(_arguments.begin(), _arguments.end(), [this](const auto &left, const auto &right)
+            std::sort(_arguments.begin(), _arguments.end(),
+                [this](const auto &left, const auto &right)
                 {
                     // Positional arguments come before non-positional ones, and must be sorted by
                     // position.
@@ -225,6 +246,29 @@ namespace ookii
 
                     return _arguments_by_name.key_comp()(left->name(), right->name());
                 });
+
+            // Build the prefix info.
+            if (_storage.mode == parsing_mode::long_short)
+            {
+                _sorted_prefixes.push_back(prefix_info { _storage.long_prefix, false });
+            }
+
+            std::transform(_storage.prefixes.begin(), _storage.prefixes.end(), std::back_inserter(_sorted_prefixes),
+                [this](const auto &prefix)
+                {
+                    return prefix_info{ prefix, _storage.mode == parsing_mode::long_short };
+                });
+
+            std::sort(_sorted_prefixes.begin(), _sorted_prefixes.end(),
+                [](const auto &left, const auto &right)
+                {
+                    return left.prefix.size() > right.prefix.size();
+                });
+        }
+
+        parsing_mode mode() const noexcept
+        {
+            return _storage.mode;
         }
 
         //! \brief Returns the command name used when generating usage help.
@@ -275,6 +319,11 @@ namespace ookii
         const std::vector<string_type> &prefixes() const noexcept
         {
             return _storage.prefixes;
+        }
+
+        const std::string &long_prefix() const noexcept
+        {
+            return _storage.long_prefix;
         }
 
         //! \brief Gets the locale used to parse argument values and to format strings.
@@ -340,6 +389,18 @@ namespace ookii
             return *_arguments_by_name.at(name);
         }
 
+        //! \brief Gets an argument by short name.
+        //! 
+        //! \param name The argument's short name or alias.
+        //!
+        //! Both the argument's main short name and any of its short aliases can be used.
+        //! 
+        //! \exception std::out_of_range There is no argument with the specified name or alias.
+        const argument_base_type &get_short_argument(CharType name) const
+        {
+            return *_arguments_by_short_name.at(name);
+        }
+
         //! \brief Parses the arguments in the range specified by the iterators.
         //!
         //! \warning The range indicated by begin, end should *not* include the application name.
@@ -360,11 +421,13 @@ namespace ookii
             for (auto current = begin; current != end; ++current)
             {
                 auto arg = *current;
-                auto without_prefix = check_prefix(arg);
-                if (without_prefix)
+                auto prefix = check_prefix(arg);
+                if (prefix)
                 {
+                    auto [without_prefix, is_short] = *prefix;
+
                     // Current is updated if parsing used the next argument for a value.
-                    auto result = parse_named_argument(*without_prefix, current, end);
+                    auto result = parse_named_argument(without_prefix, is_short, current, end);
                     if (!result)
                         return result;
                 }
@@ -603,6 +666,12 @@ namespace ookii
         }
 
     private:
+        struct prefix_info
+        {
+            string_type prefix;
+            bool is_short;
+        };
+
         void handle_error(const result_type &result, usage_writer_type *usage)
         {
             if (!result)
@@ -625,19 +694,19 @@ namespace ookii
             }
         }
 
-        std::optional<string_view_type> check_prefix(string_view_type argument)
+        std::optional<std::tuple<string_view_type, bool>> check_prefix(string_view_type argument) const
         {
             // Even if the named argument switch is '-', we treat a '-' followed by a digit as a
             // value, because it could denote a negative number.
             if (argument.length() >= 2 && argument[0] == '-' && std::isdigit(argument[1], _storage.locale))
                 return {};
 
-            for (auto &prefix : _storage.prefixes)
+            for (const auto &prefix : _sorted_prefixes)
             {
-                auto stripped = strip_prefix(argument, string_view_type{prefix});
+                auto stripped = strip_prefix(argument, string_view_type{prefix.prefix});
                 if (stripped)
                 {
-                    return stripped;
+                    return make_tuple(*stripped, prefix.is_short);
                 }
             }
 
@@ -645,23 +714,24 @@ namespace ookii
         }
 
         template<typename Iterator>
-        result_type parse_named_argument(string_view_type arg_string, Iterator &current, Iterator end)
+        result_type parse_named_argument(string_view_type arg_string, bool is_short, Iterator &current, Iterator end)
         {
             auto [name, value] = split_once(arg_string, _storage.argument_value_separator);
-            auto it = this->_arguments_by_name.find(name);
-            if (it == this->_arguments_by_name.end())
+            auto arg = find_argument(name, is_short);
+            if (arg == nullptr)
+            {
                 return {*_storage.string_provider, parse_error::unknown_argument, string_type{name}};
-
-            auto &arg = *it->second;
+            }
+            
             if (!value)
             {
-                if (arg.is_switch())
+                if (arg->is_switch())
                 {
-                    if (!_storage.allow_duplicate_arguments && !arg.is_multi_value() && arg.has_value())
-                        return {*_storage.string_provider, parse_error::duplicate_argument, arg.name()};
+                    if (!_storage.allow_duplicate_arguments && !arg->is_multi_value() && arg->has_value())
+                        return {*_storage.string_provider, parse_error::duplicate_argument, arg->name()};
 
-                    arg.set_switch_value();
-                    return post_process_argument(arg, {});
+                    arg->set_switch_value();
+                    return post_process_argument(*arg, {});
                 }
 
                 auto value_it = current;
@@ -678,15 +748,39 @@ namespace ookii
 
             if (value)
             {
-                if (!_storage.allow_duplicate_arguments && !arg.is_multi_value() && arg.has_value())
-                    return {*_storage.string_provider, parse_error::duplicate_argument, arg.name()};
+                if (!_storage.allow_duplicate_arguments && !arg->is_multi_value() && arg->has_value())
+                    return {*_storage.string_provider, parse_error::duplicate_argument, arg->name()};
 
-                return set_argument_value(arg, *value);
+                return set_argument_value(*arg, *value);
             }
             else
             {
-                return {*_storage.string_provider, parse_error::missing_value, arg.name()};
+                return {*_storage.string_provider, parse_error::missing_value, arg->name()};
             }
+        }
+
+        argument_base_type *find_argument(string_view_type name, bool is_short)
+        {
+            if (is_short)
+            {
+                // TODO: Handle combined short arguments.
+                if (name.length() != 1)
+                {
+                    throw std::runtime_error("Not supported.");
+                }
+
+                auto it = this->_arguments_by_short_name.find(name[0]);
+                if (it == this->_arguments_by_short_name.end())
+                    return nullptr;
+
+                return it->second;
+            }
+
+            auto it = this->_arguments_by_name.find(name);
+            if (it == this->_arguments_by_name.end())
+                return nullptr;
+
+            return it->second;
         }
 
         result_type set_argument_value(argument_base_type &arg, string_view_type value)
@@ -714,11 +808,13 @@ namespace ookii
 
         storage_type _storage;
         string_provider_type _default_string_provider;
+        std::vector<prefix_info> _sorted_prefixes;
 
-        // _arguments_by_name contains pointers to items owned by _arguments. Since the two
-        // have the same lifetime, this is okay.
-        std::map<string_type, argument_base_type *, string_less> _arguments_by_name;
+        // _arguments_by_name and _argument_by_short_nane contain pointers to items owned by
+        // _arguments. Since they all have the same lifetime, this is okay.
         std::vector<std::unique_ptr<argument_base_type>> _arguments;
+        std::map<string_type, argument_base_type *, string_less> _arguments_by_name;
+        std::map<CharType, argument_base_type *, char_less> _arguments_by_short_name;
         size_t _positional_argument_count{};
         on_parsed_callback _on_parsed_callback;
     };

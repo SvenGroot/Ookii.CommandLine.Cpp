@@ -435,6 +435,14 @@ namespace details
         OOKII_TEST_THROW_FAILED_IF(!success);
     }
 
+    template<typename T1, typename T2>
+    void VerifyReferenceEqual(const T1 &expected, const T2 &actual, const tchar_t *expectedName, const tchar_t *actualName, const VerifyInfo &info)
+    {
+        bool success = (std::addressof(expected) == std::addressof(actual));
+        LogVerify(info, success, TEXT("std::addressof({}) == std::addressof({})"), expectedName, actualName);
+        OOKII_TEST_THROW_FAILED_IF(!success);
+    }
+
     inline void VerifyExpectedException(bool thrown, const tchar_t *exceptionType, const tchar_t *operation, const VerifyInfo &info)
     {
         LogVerify(info, thrown, TEXT("Operation {} throws exception {}"), operation, exceptionType);
@@ -518,6 +526,9 @@ namespace details
 
 #define VERIFY_MEMORY_EQUAL(expected, actual, size) \
     ::ookii::test::details::VerifyMemoryEqual((expected), (actual), (size), TEXT(#expected), TEXT(#actual), OOKII_TEST_VERIFY_INFO)
+
+#define VERIFY_REFERENCE_EQUAL(expected, actual) \
+    ::ookii::test::details::VerifyReferenceEqual((expected), (actual), TEXT(#expected), TEXT(#actual), OOKII_TEST_VERIFY_INFO)
 
 #define VERIFY_THROWS(operation, expectedException)                                                                             \
     {                                                                                                                           \

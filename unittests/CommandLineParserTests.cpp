@@ -2,6 +2,7 @@
 #include "framework.h"
 #include <ookii/command_line.h>
 #include "custom_types.h"
+#include "argument_types.h"
 using namespace std;
 using namespace ookii;
 
@@ -692,6 +693,22 @@ public:
         VERIFY_TRUE(called);
         VERIFY_FALSE(sw);
         VERIFY_EQUAL(5, arg);
+    }
+
+    TEST_METHOD(TestLongShortMode)
+    {
+        LongShortArguments args{};
+        auto parser = args.create_parser();
+        VERIFY_TRUE(parsing_mode::long_short == parser.mode());
+        VERIFY_EQUAL(TEXT("--"), parser.long_prefix());
+        vector<tstring> expected = parser.get_default_prefixes();
+        VERIFY_RANGE_EQUAL(expected, parser.prefixes());
+        VERIFY_REFERENCE_EQUAL(parser.get_argument(TEXT("foo")), parser.get_short_argument(TEXT('f')));
+        VERIFY_REFERENCE_EQUAL(parser.get_argument(TEXT("arg2")), parser.get_short_argument(TEXT('a')));
+        VERIFY_REFERENCE_EQUAL(parser.get_argument(TEXT("switch1")), parser.get_short_argument(TEXT('s')));
+        VERIFY_REFERENCE_EQUAL(parser.get_argument(TEXT("switch2")), parser.get_short_argument(TEXT('k')));
+        VERIFY_THROWS(parser.get_argument(TEXT("switch3")), std::out_of_range);
+        VERIFY_EQUAL(TEXT("u"), parser.get_short_argument(TEXT('u')).name());
     }
 
 private:
