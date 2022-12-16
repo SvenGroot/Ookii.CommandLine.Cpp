@@ -498,7 +498,7 @@ namespace ookii
                     }
 
                     if (position >= _positional_argument_count)
-                        return {*_storage.string_provider, parse_error::too_many_arguments};
+                        return create_result(parse_error::too_many_arguments);
 
                     auto result = set_argument_value(*_arguments[position], arg);
                     if (!result)
@@ -780,7 +780,7 @@ namespace ookii
             auto arg = find_argument(name, is_short);
             if (arg == nullptr)
             {
-                return {*_storage.string_provider, parse_error::unknown_argument, string_type{name}};
+                return create_result(parse_error::unknown_argument, string_type{name});
             }
             
             if (!value && !arg->is_switch())
@@ -788,7 +788,7 @@ namespace ookii
                 auto value_it = current;
                 if (!_storage.allow_white_space_separator || ++value_it == end || check_prefix(*value_it))
                 {
-                    return {*_storage.string_provider, parse_error::missing_value, arg->name()};
+                    return create_result(parse_error::missing_value, arg->name());
                 }
 
                 current = value_it;
@@ -805,12 +805,12 @@ namespace ookii
                 auto arg = get_short_argument(ch);
                 if (arg == nullptr)
                 {
-                    return {*_storage.string_provider, parse_error::unknown_argument, string_type{ch}};
+                    return create_result(parse_error::unknown_argument, string_type{ch});
                 }
 
                 if (!arg->is_switch())
                 {
-                    return {*_storage.string_provider, parse_error::combined_short_name_non_switch, string_type{name}};
+                    return create_result(parse_error::combined_short_name_non_switch, string_type{name});
                 }
 
                 auto result = set_argument_value(*arg, value);
@@ -820,7 +820,7 @@ namespace ookii
                 }
             }
 
-            return {*_storage.string_provider, parse_error::none};
+            return create_result(parse_error::none);
         }
 
         argument_base_type *find_argument(string_view_type name, bool is_short) noexcept
@@ -837,7 +837,7 @@ namespace ookii
         result_type set_argument_value(argument_base_type &arg, std::optional<string_view_type> value)
         {
             if (!_storage.allow_duplicate_arguments && !arg.is_multi_value() && arg.has_value())
-                return {*_storage.string_provider, parse_error::duplicate_argument, arg.name()};
+                return create_result(parse_error::duplicate_argument, arg.name());
 
             if (!value)
             {
@@ -846,7 +846,7 @@ namespace ookii
             }
             else if (!arg.set_value(*value, _storage.locale))
             {
-                return {*_storage.string_provider, parse_error::invalid_value, arg.name()};
+                return create_result(parse_error::invalid_value, arg.name());
             }
 
             return post_process_argument(arg, value);
@@ -861,10 +861,15 @@ namespace ookii
             if (action == on_parsed_action::cancel_parsing || 
                 (arg.cancel_parsing() && action != on_parsed_action::always_continue))
             {
-                return {*_storage.string_provider, parse_error::parsing_cancelled, arg.name()};
+                return create_result(parse_error::parsing_cancelled, arg.name());
             }
 
-            return {*_storage.string_provider, parse_error::none};
+            return create_result(parse_error::none);
+        }
+
+        result_type create_result(parse_error error, string_type arg_name = {}) const
+        {
+            return {*_storage.string_provider, error, arg_name};
         }
 
         storage_type _storage;

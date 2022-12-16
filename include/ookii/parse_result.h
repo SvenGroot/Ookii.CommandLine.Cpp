@@ -87,7 +87,7 @@ namespace ookii
         //!        error.
         //! \param error_arg_name The name of the argument that caused the error, or a blank string
         //!        if there was no error or the error doesn't relate to a specific argument.
-        parse_result(string_provider_type &string_provider, parse_error error = parse_error::none, string_type error_arg_name = {})
+        parse_result(const string_provider_type &string_provider, parse_error error = parse_error::none, string_type error_arg_name = {})
             : string_provider{&string_provider},
               error{error},
               error_arg_name{error_arg_name}
@@ -95,7 +95,7 @@ namespace ookii
         }
 
         //! \brief The string provider used to get error messages.
-        string_provider_type *string_provider;
+        const string_provider_type *string_provider;
 
         //! \brief The type of error that occurred, or parse_error::none to indicate no error.
         parse_error error;
