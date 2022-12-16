@@ -3,6 +3,7 @@
 #include <ookii/command_line.h>
 #include "custom_types.h"
 #include "argument_types.h"
+#include "expected_usage.h"
 using namespace std;
 using namespace ookii;
 
@@ -488,15 +489,61 @@ public:
             tline_wrapping_ostringstream stream{40};
             basic_usage_writer<tchar_t> usage{stream};
             parser.write_usage(&usage);
-            VERIFY_EQUAL(c_usageExpected, stream.view());        
+            VERIFY_EQUAL(c_usageExpected, stream.view());
         }
 
         {
             tline_wrapping_ostringstream stream{40};
             basic_usage_writer<tchar_t> usage{stream, true};
             parser.write_usage(&usage);
-            VERIFY_EQUAL(c_usageExpectedColor, stream.view());        
+            VERIFY_EQUAL(c_usageExpectedColor, stream.view());
         }
+    }
+
+    TEST_METHOD(TestUsageLongShort)
+    {
+        LongShortArguments args{};
+        auto parser = args.create_parser();
+
+        tline_wrapping_ostringstream stream{0};
+        basic_usage_writer<tchar_t> usage{stream};
+        parser.write_usage(&usage);
+        VERIFY_EQUAL(c_usageExpectedLongShort, stream.view());
+    }
+
+    TEST_METHOD(TestUsageLongShortColor)
+    {
+        LongShortArguments args{};
+        auto parser = args.create_parser();
+
+        tline_wrapping_ostringstream stream{0};
+        basic_usage_writer<tchar_t> usage{stream, true};
+        parser.write_usage(&usage);
+        VERIFY_EQUAL(c_usageExpectedLongShortColor, stream.view());
+    }
+
+    TEST_METHOD(TestUsageLongShortSyntaxShortName)
+    {
+        LongShortArguments args{};
+        auto parser = args.create_parser();
+
+        tline_wrapping_ostringstream stream{0};
+        basic_usage_writer<tchar_t> usage{stream};
+        usage.use_short_names_for_syntax = true;
+        parser.write_usage(&usage);
+        VERIFY_EQUAL(c_usageExpectedLongShortSyntaxShortName, stream.view());
+    }
+
+    TEST_METHOD(TestUsageLongShortAbbreviated)
+    {
+        LongShortArguments args{};
+        auto parser = args.create_parser();
+
+        tline_wrapping_ostringstream stream{0};
+        basic_usage_writer<tchar_t> usage{stream};
+        usage.use_abbreviated_syntax = true;
+        parser.write_usage(&usage);
+        VERIFY_EQUAL(c_usageExpectedLongShortAbbreviated, stream.view());
     }
 
     TEST_METHOD(TestWindowsOptionPrefix)
@@ -770,64 +817,6 @@ private:
         VERIFY_EQUAL((int)expected_error, (int)result.error);
         VERIFY_EQUAL(expected_arg, result.error_arg_name);
     }
-
-    static constexpr tstring_view c_usageExpected = TEXT(R"(Application description.
-
-Usage: TestCommand [-StringArg] <string>
-   -IntArg <int> [-FloatArg <number>]
-   [-MultiArg <string>...]
-   [-OptionalSwitchArg] [-SwitchArg]
-
-    -StringArg <string>
-        String argument description.
-
-    -FloatArg <number>
-        Float argument description that
-        is really quite long and
-        probably needs to be wrapped.
-        Default value: 10.
-
-    -MultiArg <string> (-multi, -m)
-        Multi-value argument
-        description.
-
-    -OptionalSwitchArg [<bool>]
-        Optional switch argument.
-
-    -SwitchArg [<bool>] (-s)
-        Switch argument description.
-        With a new line.
-
-)");
-
-    static constexpr tstring_view c_usageExpectedColor = TEXT(R"(Application description.
-
-[36mUsage:[0m TestCommand [-StringArg] <string>
-   -IntArg <int> [-FloatArg <number>]
-   [-MultiArg <string>...]
-   [-OptionalSwitchArg] [-SwitchArg]
-
-    [32m-StringArg <string>[0m
-        String argument description.
-
-    [32m-FloatArg <number>[0m
-        Float argument description that
-        is really quite long and
-        probably needs to be wrapped.
-        Default value: 10.
-
-    [32m-MultiArg <string> (-multi, -m)[0m
-        Multi-value argument
-        description.
-
-    [32m-OptionalSwitchArg [<bool>][0m
-        Optional switch argument.
-
-    [32m-SwitchArg [<bool>] (-s)[0m
-        Switch argument description.
-        With a new line.
-
-)");
 };
 
 TEST_CLASS_REGISTRATION(CommandLineParserTests);

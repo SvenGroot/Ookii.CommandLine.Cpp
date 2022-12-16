@@ -199,6 +199,8 @@ namespace ookii
         //! The default value is `true`.
         bool blank_line_after_syntax{true};
 
+        bool use_short_names_for_syntax{};
+
         //! \brief Indicates whether to add a blank line after each argument's description.
         //! 
         //! The default value is `true`.
@@ -455,18 +457,33 @@ namespace ookii
         //! \param arg The argument.
         virtual void write_argument_syntax(const argument_type &arg)
         {
-            const auto &prefix = parser().prefixes()[0];
+            string_view_type name;
+            CharType short_name;
+            if (arg.has_short_name() && use_short_names_for_syntax)
+            {
+                short_name = arg.short_name();
+                name = string_view_type(&short_name, 1);
+            }
+            else
+            {
+                name = arg.name();
+            }
+
+            const auto &prefix = parser().mode() != parsing_mode::long_short || (arg.has_short_name() && (use_short_names_for_syntax || !arg.has_long_name()))
+                ? parser().prefixes()[0]
+                : parser().long_prefix();
+
             std::optional<CharType> separator = parser().allow_white_space_separator() && use_white_space_value_separator
                 ? std::nullopt
                 : std::optional<CharType>(parser().argument_value_separator());
 
             if (arg.position())
             {
-                write_positional_argument_name(arg.name(), prefix, separator);
+                write_positional_argument_name(name, prefix, separator);
             }
             else
             {
-                write_argument_name(arg.name(), prefix);
+                write_argument_name(name, prefix);
             }
 
             if (!arg.is_switch())
@@ -563,7 +580,14 @@ namespace ookii
         //! method.
         virtual void write_argument_descriptions()
         {
-            output << set_indent(argument_description_indent);
+            auto indent = argument_description_indent;
+            if (parser().mode() == parsing_mode::long_short)
+            {
+                // For long/short mode, increase the indentation by the size of the short argument.
+                indent += parser().prefixes()[0].length() + name_separator.length() + 1;
+            }
+
+            output << set_indent(indent);
             bool first = true;
             parser().for_each_argument_in_usage_order([this, &first](const auto &arg)
                 {
@@ -635,9 +659,38 @@ namespace ookii
         {
             output << reset_indent;
             write_spacing(argument_description_indent / 2);
+            const auto &short_prefix = parser().prefixes()[0];
+            const auto &prefix = parser().long_prefix().length() == 0
+                ? short_prefix
+                : parser().long_prefix();
+
             set_color(argument_description_color);
-            auto prefix = parser().prefixes()[0];
-            write_argument_name_for_description(arg.name(), prefix);
+            if (parser().mode() == parsing_mode::long_short)
+            {
+                if (arg.has_short_name())
+                {
+                    auto short_name = arg.short_name();
+                    write_argument_name_for_description(string_view_type{&short_name, 1}, short_prefix);
+                    if (arg.has_long_name())
+                    {
+                        output << name_separator;
+                    }
+                }
+                else
+                {
+                    write_spacing(short_prefix.length() + name_separator.length() + 1);
+                }
+
+                if (arg.has_long_name())
+                {
+                    write_argument_name_for_description(arg.name(), prefix);
+                }
+            }
+            else
+            {
+                write_argument_name_for_description(arg.name(), prefix);
+            }
+
             output << ' ';
             if (arg.is_switch())
             {
@@ -650,7 +703,7 @@ namespace ookii
 
             if (include_aliases_in_description)
             {
-                write_aliases(arg.aliases(), prefix);
+                write_aliases(arg.aliases(), arg.short_aliases(), prefix, short_prefix);
             }
 
             set_color(color_reset);
@@ -742,9 +795,25 @@ namespace ookii
         //!
         //! \param aliases A list of the aliases.
         //! \param prefix The argument name prefix to use.
-        virtual void write_aliases(const std::vector<string_type> &aliases, string_view_type prefix)
+        virtual void write_aliases(const std::vector<string_type> &aliases, const std::vector<CharType> &short_aliases,
+            string_view_type prefix, string_view_type short_prefix)
         {
             bool first = true;
+            for (const auto &alias : short_aliases)
+            {
+                if (first)
+                {
+                    output << " (";
+                    first = false;
+                }
+                else
+                {
+                    output << name_separator;
+                }
+
+                write_alias(string_view_type{&alias, 1}, short_prefix);
+            }
+
             for (const auto &alias : aliases)
             {
                 if (first)

@@ -14,8 +14,8 @@ struct LongShortArguments
     {
         return ookii::basic_parser_builder<ookii::tchar_t>{TEXT("TestCommand")}
             .mode(ookii::parsing_mode::long_short)
-            .add_argument(foo, TEXT("foo")).short_name(true).default_value(0).description(TEXT("Foo description."))
-            .add_argument(bar, TEXT("bar")).default_value(0).description(TEXT("Bar description."))
+            .add_argument(foo, TEXT("foo")).short_name(true).positional().default_value(0).description(TEXT("Foo description."))
+            .add_argument(bar, TEXT("bar")).default_value(0).positional().description(TEXT("Bar description."))
             .add_argument(arg1, TEXT("Arg1")).short_alias(TEXT('c')).description(TEXT("Arg1 description."))
             .add_argument(arg2, TEXT("Arg2")).short_name(TEXT('a')).positional().short_alias(TEXT('b')).alias(TEXT("Baz")).description(TEXT("Arg2 description."))
             .add_argument(switch1, TEXT("Switch1")).short_name(true).description(TEXT("Switch1 description."))
