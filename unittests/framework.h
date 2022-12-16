@@ -435,11 +435,25 @@ namespace details
         OOKII_TEST_THROW_FAILED_IF(!success);
     }
 
-    template<typename T1, typename T2>
+    template<typename T>
+    concept NotPointer = requires(T param)
+    {
+        requires !std::is_pointer_v<T>;
+    };
+
+    template<NotPointer T1, NotPointer T2>
     void VerifyReferenceEqual(const T1 &expected, const T2 &actual, const tchar_t *expectedName, const tchar_t *actualName, const VerifyInfo &info)
     {
         bool success = (std::addressof(expected) == std::addressof(actual));
         LogVerify(info, success, TEXT("std::addressof({}) == std::addressof({})"), expectedName, actualName);
+        OOKII_TEST_THROW_FAILED_IF(!success);
+    }
+
+    template<typename T1, typename T2>
+    void VerifyReferenceEqual(const T1 *expected, const T2 *actual, const tchar_t *expectedName, const tchar_t *actualName, const VerifyInfo &info)
+    {
+        bool success = (expected == actual);
+        LogVerify(info, success, TEXT("{} == {}"), expectedName, actualName);
         OOKII_TEST_THROW_FAILED_IF(!success);
     }
 

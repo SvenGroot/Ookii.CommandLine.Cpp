@@ -110,7 +110,7 @@ namespace ookii
         //! \brief The specialized type of parser parameter storage used. For internal use.
         using storage_type = details::parser_storage<CharType, Traits, Alloc>;
         //! \brief The callback function type for on_parsed().
-        using on_parsed_callback = std::function<on_parsed_action(argument_base_type &, string_view_type value)>;
+        using on_parsed_callback = std::function<on_parsed_action(argument_base_type &, std::optional<string_view_type> value)>;
         //! \brief The specialized type of basic_localized_string_provider used.
         using string_provider_type = basic_localized_string_provider<CharType, Traits, Alloc>;
 
@@ -321,7 +321,7 @@ namespace ookii
             return _storage.prefixes;
         }
 
-        const std::string &long_prefix() const noexcept
+        const string_type &long_prefix() const noexcept
         {
             return _storage.long_prefix;
         }
@@ -377,28 +377,83 @@ namespace ookii
             return *_arguments.at(pos);
         }
 
+        //! \brief Gets an argument by position.
+        //! 
+        //! \param pos The argument's position.
+        //!
+        //! Only positional arguments can be retrieved using this method.
+        //! 
+        //! Positional arguments are created using basic_parser_builder::argument_builder::positional().
+        //! 
+        //! \exception std::out_of_range There is no argument at the specified position.
+        argument_base_type &get_argument(size_t pos)
+        {
+            if (pos >= _positional_argument_count)
+            {
+                throw std::out_of_range("pos");
+            }
+
+            return *_arguments.at(pos);
+        }
+
         //! \brief Gets an argument by name.
         //! 
-        //! \param name The argument's name or alias.
-        //!
         //! Both the argument's main name and any of its aliases can be used.
         //! 
-        //! \exception std::out_of_range There is no argument with the specified name or alias.
-        const argument_base_type &get_argument(const string_type &name) const
+        //! \param name The argument's name or alias.
+        //! \return A pointer to the argument, or `nullptr` if the argument was not found.
+        const argument_base_type *get_argument(string_view_type name) const noexcept
         {
-            return *_arguments_by_name.at(name);
+            auto it = this->_arguments_by_name.find(name);
+            if (it == this->_arguments_by_name.end())
+                return nullptr;
+
+            return it->second;
+        }
+
+        //! \brief Gets an argument by name.
+        //! 
+        //! Both the argument's main name and any of its aliases can be used.
+        //! 
+        //! \param name The argument's name or alias.
+        //! \return A pointer to the argument, or `nullptr` if the argument was not found.
+        argument_base_type *get_argument(string_view_type name) noexcept
+        {
+            auto it = this->_arguments_by_name.find(name);
+            if (it == this->_arguments_by_name.end())
+                return nullptr;
+
+            return it->second;
         }
 
         //! \brief Gets an argument by short name.
         //! 
-        //! \param name The argument's short name or alias.
-        //!
         //! Both the argument's main short name and any of its short aliases can be used.
         //! 
-        //! \exception std::out_of_range There is no argument with the specified name or alias.
-        const argument_base_type &get_short_argument(CharType name) const
+        //! \param name The argument's short name or alias.
+        //! \return A pointer to the argument, or `nullptr` if the argument was not found.
+        const argument_base_type *get_short_argument(CharType name) const noexcept
         {
-            return *_arguments_by_short_name.at(name);
+            auto it = this->_arguments_by_short_name.find(name);
+            if (it == this->_arguments_by_short_name.end())
+                return nullptr;
+
+            return it->second;
+        }
+
+        //! \brief Gets an argument by short name.
+        //! 
+        //! Both the argument's main short name and any of its short aliases can be used.
+        //! 
+        //! \param name The argument's short name or alias.
+        //! \return A pointer to the argument, or `nullptr` if the argument was not found.
+        argument_base_type *get_short_argument(CharType name) noexcept
+        {
+            auto it = this->_arguments_by_short_name.find(name);
+            if (it == this->_arguments_by_short_name.end())
+                return nullptr;
+
+            return it->second;
         }
 
         //! \brief Parses the arguments in the range specified by the iterators.
@@ -717,81 +772,87 @@ namespace ookii
         result_type parse_named_argument(string_view_type arg_string, bool is_short, Iterator &current, Iterator end)
         {
             auto [name, value] = split_once(arg_string, _storage.argument_value_separator);
+            if (is_short && name.length() > 1)
+            {
+                return parse_combined_short_argument(name, value);
+            }
+
             auto arg = find_argument(name, is_short);
             if (arg == nullptr)
             {
                 return {*_storage.string_provider, parse_error::unknown_argument, string_type{name}};
             }
             
-            if (!value)
+            if (!value && !arg->is_switch())
             {
-                if (arg->is_switch())
-                {
-                    if (!_storage.allow_duplicate_arguments && !arg->is_multi_value() && arg->has_value())
-                        return {*_storage.string_provider, parse_error::duplicate_argument, arg->name()};
-
-                    arg->set_switch_value();
-                    return post_process_argument(*arg, {});
-                }
-
                 auto value_it = current;
-                if (_storage.allow_white_space_separator && ++value_it != end)
+                if (!_storage.allow_white_space_separator || ++value_it == end || check_prefix(*value_it))
                 {
-                    current = value_it;
-                    // If the next argument looks like an argument name, don't use it as value.
-                    if (!check_prefix(*current))
-                    {
-                        value = *current;
-                    }
+                    return {*_storage.string_provider, parse_error::missing_value, arg->name()};
                 }
+
+                current = value_it;
+                value = *current;
             }
 
-            if (value)
-            {
-                if (!_storage.allow_duplicate_arguments && !arg->is_multi_value() && arg->has_value())
-                    return {*_storage.string_provider, parse_error::duplicate_argument, arg->name()};
-
-                return set_argument_value(*arg, *value);
-            }
-            else
-            {
-                return {*_storage.string_provider, parse_error::missing_value, arg->name()};
-            }
+            return set_argument_value(*arg, value);
         }
 
-        argument_base_type *find_argument(string_view_type name, bool is_short)
+        result_type parse_combined_short_argument(string_view_type name, std::optional<string_view_type> value)
+        {
+            for (CharType ch : name)
+            {
+                auto arg = get_short_argument(ch);
+                if (arg == nullptr)
+                {
+                    return {*_storage.string_provider, parse_error::unknown_argument, string_type{ch}};
+                }
+
+                if (!arg->is_switch())
+                {
+                    return {*_storage.string_provider, parse_error::combined_short_name_non_switch, string_type{name}};
+                }
+
+                auto result = set_argument_value(*arg, value);
+                if (!result)
+                {
+                    return result;
+                }
+            }
+
+            return {*_storage.string_provider, parse_error::none};
+        }
+
+        argument_base_type *find_argument(string_view_type name, bool is_short) noexcept
         {
             if (is_short)
             {
-                // TODO: Handle combined short arguments.
-                if (name.length() != 1)
-                {
-                    throw std::runtime_error("Not supported.");
-                }
-
-                auto it = this->_arguments_by_short_name.find(name[0]);
-                if (it == this->_arguments_by_short_name.end())
-                    return nullptr;
-
-                return it->second;
+                assert(name.length() == 1);
+                return get_short_argument(name[0]);
             }
 
-            auto it = this->_arguments_by_name.find(name);
-            if (it == this->_arguments_by_name.end())
-                return nullptr;
-
-            return it->second;
+            return get_argument(name);
         }
 
-        result_type set_argument_value(argument_base_type &arg, string_view_type value)
+        result_type set_argument_value(argument_base_type &arg, std::optional<string_view_type> value)
         {
-            if (!arg.set_value(value, _storage.locale))
+            if (!_storage.allow_duplicate_arguments && !arg.is_multi_value() && arg.has_value())
+                return {*_storage.string_provider, parse_error::duplicate_argument, arg.name()};
+
+            if (!value)
+            {
+                assert(arg.is_switch());
+                arg.set_switch_value();
+            }
+            else if (!arg.set_value(*value, _storage.locale))
+            {
                 return {*_storage.string_provider, parse_error::invalid_value, arg.name()};
+            }
 
             return post_process_argument(arg, value);
         }
 
-        result_type post_process_argument(argument_base_type &arg, string_view_type value)
+        result_type post_process_argument(argument_base_type &arg, std::optional<string_view_type> value)
         {
             auto action = on_parsed_action::none;
             if (_on_parsed_callback)

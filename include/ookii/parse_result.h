@@ -54,7 +54,10 @@ namespace ookii
         too_many_arguments,
 
         //! \brief One of the required arguments was not supplied.
-        missing_required_argument
+        missing_required_argument,
+
+        //! \brief A combined short argument contains an argument that is not a switch.
+        combined_short_name_non_switch
     };
 
     //! \brief Provides the result, success or error, of a command line argument parsing operation.
@@ -139,6 +142,9 @@ namespace ookii
 
             case parse_error::missing_required_argument:
                 return string_provider->missing_required_argument(error_arg_name);
+
+            case parse_error::combined_short_name_non_switch:
+                return string_provider->combined_short_name_non_switch(error_arg_name);
 
             default:
                 return string_provider->unknown_error();

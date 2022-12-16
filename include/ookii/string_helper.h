@@ -319,7 +319,7 @@ namespace ookii
 
             value_type _value;
             value_type _remaining;
-            CharType _separator;
+            CharType _separator{};
         };
 
     public:

@@ -73,6 +73,13 @@ namespace ookii
             return OOKII_FMT_NS format(defaults::missing_required_argument_format.data(), argument_name);
         }
 
+        //! \brief Gets the error message for parse_error::combined_short_name_non_switch.
+        //! \param argument_name The name of the argument.
+        virtual string_type combined_short_name_non_switch(string_view_type argument_name) const
+        {
+            return OOKII_FMT_NS format(defaults::combined_short_name_non_switch.data(), argument_name);
+        }
+
         //! \brief Gets the error message for parse_error::unknown.
         virtual string_type unknown_error() const
         {
@@ -88,6 +95,7 @@ namespace ookii
             static constexpr auto duplicate_argument_format = literal_cast<CharType>("The argument '{}' was supplied more than once.");
             static constexpr auto too_many_arguments = literal_cast<CharType>("Too many arguments were supplied.");
             static constexpr auto missing_required_argument_format = literal_cast<CharType>("The required argument '{}' was not supplied.");
+            static constexpr auto combined_short_name_non_switch = literal_cast<CharType>("The combined short argument '{}' contains an argument that is not a switch.");
             static constexpr auto unknown = literal_cast<CharType>("An unknown error has occurred.");
         };
     };

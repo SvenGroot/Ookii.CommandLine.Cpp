@@ -559,8 +559,8 @@ public:
 
         VerifyArgument(parser, TEXT("Arg1"), false, false, false, {});
         VerifyArgument(parser, TEXT("Arg2"), false, false, false, {});
-        VERIFY_EQUAL(TEXT("Arg1"), parser.get_argument(TEXT("a1")).name());
-        VERIFY_EQUAL(TEXT("Arg2"), parser.get_argument(TEXT("a2")).name());
+        VERIFY_EQUAL(TEXT("Arg1"), parser.get_argument(TEXT("a1"))->name());
+        VERIFY_EQUAL(TEXT("Arg2"), parser.get_argument(TEXT("a2"))->name());
 
         VerifyParseResult(parser.parse({ TEXT("-a1"), TEXT("5"), TEXT("-Arg2"), TEXT("6") }));
         VERIFY_EQUAL(5, arg1);
@@ -617,8 +617,8 @@ public:
         VerifyParseResult(parser.parse({ TEXT("-Arg"), TEXT("5") }));
         VERIFY_EQUAL(5, arg);
         VerifyParseResult(parser.parse({ TEXT("-arg"), TEXT("5") }), parse_error::unknown_argument, TEXT("arg"));
-        VERIFY_EQUAL(TEXT("Arg"), parser.get_argument(TEXT("Arg")).name());
-        VERIFY_THROWS(parser.get_argument(TEXT("arg")), std::out_of_range);
+        VERIFY_EQUAL(TEXT("Arg"), parser.get_argument(TEXT("Arg"))->name());
+        VERIFY_NULL(parser.get_argument(TEXT("arg")));
     }
 
     TEST_METHOD(TestCancelParsing)
@@ -641,7 +641,7 @@ public:
             {
                 if (arg.name() == TEXT("Switch"))
                 {
-                    VERIFY_EQUAL(TEXT(""), value);
+                    VERIFY_FALSE(value);
                     called = true;
                 }
 
@@ -660,7 +660,7 @@ public:
             {
                 if (arg.name() == TEXT("Switch"))
                 {
-                    VERIFY_EQUAL(TEXT(""), value);
+                    VERIFY_FALSE(value);
                     called = true;
                     return on_parsed_action::always_continue;
                 }
@@ -681,7 +681,7 @@ public:
             {
                 if (arg.name() == TEXT("Arg"))
                 {
-                    VERIFY_EQUAL(TEXT("5"), value);
+                    VERIFY_EQUAL(TEXT("5"), *value);
                     called = true;
                     return on_parsed_action::cancel_parsing;
                 }
@@ -707,14 +707,48 @@ public:
         VERIFY_REFERENCE_EQUAL(parser.get_argument(TEXT("arg2")), parser.get_short_argument(TEXT('a')));
         VERIFY_REFERENCE_EQUAL(parser.get_argument(TEXT("switch1")), parser.get_short_argument(TEXT('s')));
         VERIFY_REFERENCE_EQUAL(parser.get_argument(TEXT("switch2")), parser.get_short_argument(TEXT('k')));
-        VERIFY_THROWS(parser.get_argument(TEXT("switch3")), std::out_of_range);
-        VERIFY_EQUAL(TEXT("u"), parser.get_short_argument(TEXT('u')).name());
+        VERIFY_NULL(parser.get_argument(TEXT("switch3")));
+        VERIFY_EQUAL(TEXT("u"), parser.get_short_argument(TEXT('u'))->name());
+        VERIFY_FALSE(parser.get_short_argument(TEXT('u'))->has_long_name());
+        VERIFY_EQUAL(TEXT('f'), parser.get_argument(TEXT("foo"))->short_name());
+        VERIFY_TRUE(parser.get_argument(TEXT("foo"))->has_short_name());
+        VERIFY_EQUAL(TEXT('\0'), parser.get_argument(TEXT("bar"))->short_name());
+        VERIFY_FALSE(parser.get_argument(TEXT("bar"))->has_short_name());
+
+        VerifyParseResult(parser.parse({ TEXT("-f"), TEXT("5"), TEXT("--bar"), TEXT("6"), TEXT("-a"), TEXT("7"), TEXT("--arg1"), TEXT("8"), TEXT("-s") }));
+        VERIFY_EQUAL(5, args.foo);
+        VERIFY_EQUAL(6, args.bar);
+        VERIFY_EQUAL(7, args.arg2);
+        VERIFY_EQUAL(8, args.arg1);
+        VERIFY_TRUE(args.switch1);
+        VERIFY_FALSE(args.switch2);
+        VERIFY_FALSE(args.switch3);
+
+        // Combine switches.
+        args = {};
+        VerifyParseResult(parser.parse({ TEXT("-su") }));
+        VERIFY_TRUE(args.switch1);
+        VERIFY_FALSE(args.switch2);
+        VERIFY_TRUE(args.switch3);
+
+        // Use a short alias.
+        VerifyParseResult(parser.parse({ TEXT("-b"), TEXT("5") }));
+        VERIFY_EQUAL(5, args.arg2);
+
+        // Can't use long argument prefix with short names.
+        VerifyParseResult(parser.parse({ TEXT("--s") }), parse_error::unknown_argument, TEXT("s"));;
+
+        // And vice versa.
+        VerifyParseResult(parser.parse({ TEXT("-Switch1") }), parse_error::unknown_argument, TEXT("w"));
+
+        // Short alias is ignored on an argument without a short name.
+        VerifyParseResult(parser.parse({ TEXT("-c") }), parse_error::unknown_argument, TEXT("c"));;
     }
 
 private:
     static void VerifyArgument(const basic_command_line_parser<tchar_t> &parser, const tstring &name, bool required, bool is_switch, bool multi_value, std::optional<size_t> position)
     {
-        const auto &arg = parser.get_argument(name);
+        const auto &arg = *parser.get_argument(name);
         VERIFY_EQUAL(name, arg.name());
         VERIFY_EQUAL(required, arg.is_required());
         VERIFY_EQUAL(is_switch, arg.is_switch());

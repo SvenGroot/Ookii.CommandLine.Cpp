@@ -1061,7 +1061,7 @@ namespace ookii
         }
 
         const parser_type *_parser{};
-        const command_manager_type *_command_manager;
+        const command_manager_type *_command_manager{};
         std::optional<bool> _use_color;
 
         static constexpr char c_optionalStart = '[';
