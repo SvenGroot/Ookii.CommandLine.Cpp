@@ -80,11 +80,25 @@ namespace ookii
                 return _parser_builder.add_argument(value, name);
             }
 
+            //! \copydoc basic_parser_builder::add_argument()
+            template<typename T>
+            argument_builder<typed_argument_type<T>, argument_builder_base> &add_argument(T &value, CharType short_name)
+            {
+                return _parser_builder.add_argument(value, short_name);
+            }
+
             //! \copydoc basic_parser_builder::add_multi_value_argument()
             template<typename T>
             typename multi_value_argument_builder<T>::builder_type &add_multi_value_argument(T &value, string_type name)
             {
                 return _parser_builder.add_multi_value_argument(value, name);
+            }
+
+            //! \copydoc basic_parser_builder::add_multi_value_argument()
+            template<typename T>
+            typename multi_value_argument_builder<T>::builder_type &add_multi_value_argument(T &value, CharType short_name)
+            {
+                return _parser_builder.add_multi_value_argument(value, short_name);
             }
 
             //! \copydoc basic_parser_builder::build()
@@ -112,6 +126,17 @@ namespace ookii
                 : _storage{name},
                   _parser_builder{basic_parser_builder}
             {
+            }
+
+            //! \brief Initializes a new instance of the argument_builder_base class.
+            //! \param basic_parser_builder A reference to the basic_parser_builder used to build this argument.
+            //! \param short_name The short name of the argument.
+            argument_builder_base(basic_parser_builder &basic_parser_builder, CharType short_name)
+                : _storage{string_type{short_name}},
+                  _parser_builder{basic_parser_builder}
+            {
+                _storage.short_name = short_name;
+                _storage.has_long_name = false;
             }
 
             //! \brief Provides access to the argument's options storage.
@@ -154,24 +179,25 @@ namespace ookii
             {
             }
 
-            argument_builder &short_name(bool has_short_name)
+            //! \brief Initializes a new instance of the argument_builder class.
+            //! \param basic_parser_builder A reference to the basic_parser_builder used to build this argument.
+            //! \param short_name The short name of the argument.
+            //! \param value A reference where the argument's value will be stored.
+            argument_builder(basic_parser_builder &basic_parser_builder, CharType short_name, value_type &value)
+                : BaseType{basic_parser_builder, short_name},
+                  _typed_storage{value}
             {
-                this->storage().short_name = has_short_name
-                    ? this->storage().name[0]
-                    : '\0';
+            }
 
+            argument_builder &short_name()
+            {
+                this->storage().short_name = this->storage().name[0];
                 return *this;
             }
 
             argument_builder &short_name(CharType short_name)
             {
                 this->storage().short_name = short_name;
-                return *this;
-            }
-
-            argument_builder &long_name(bool has_long_name)
-            {
-                this->storage().has_long_name = has_long_name;
                 return *this;
             }
 
@@ -363,13 +389,7 @@ namespace ookii
             }
 
         protected:
-            //! \brief Initializes a new instance of the multi_value_argument_builder class.
-            //! \param basic_parser_builder A reference to the basic_parser_builder used to build this argument.
-            //! \param name The name of the argument.
-            multi_value_argument_builder(basic_parser_builder &basic_parser_builder, string_type name)
-                : argument_builder_base{basic_parser_builder, name}
-            {
-            }
+            using argument_builder_base::argument_builder_base;
         };
 
         //! \brief Initializes a new instance of the basic_parser_builder class.
@@ -418,6 +438,48 @@ namespace ookii
             return *static_cast<argument_builder<typed_argument_type<T>, argument_builder_base>*>(_arguments.back().get());
         }
 
+        //! \brief Adds a new argument, and returns an argument_builder that can be used to
+        //!        further customize it.
+        //! \tparam T The type of the argument.
+        //! \param value A reference to the storage for the argument's value. When the argument
+        //!              is supplied, the converted value will be written to this reference.
+        //! \param name The short name of the argument, used to supply it on the command line.
+        //! 
+        //! When using long/short mode, this method adds an argument that only has a short name.
+        //! It cannot be given a long name afterwards.
+        //! 
+        //! When not using long/short mode, this method is identical to the string version with a
+        //! single character name.
+        //! 
+        //! Any type T can be used as an argument type, as long as it meets the following
+        //! criteria:
+        //! 
+        //! - It must be possible to convert a string to type T, either using stream extraction
+        //!   (`operator>>`), or by a specialization of the lexical_convert template.
+        //! - It must be possible to convert type T to a string using `std::format` (or libfmt
+        //!   if \<format> is not available).
+        //! 
+        //! For custom argument types, you must provide either a stream extractor (`operator>>`)
+        //! or specialize lexical_convert, and you must provide a specialization of
+        //! `std::formatter` (`fmt::formatter` if libfmt is being used).
+        //! 
+        //! Providing an `std::formatter` is required so default values can be displayed in
+        //! the usage help. A formatter must be provided even if you don't plan to set a
+        //! default value, to prevent compiler errors (in that case, you could of course
+        //! provide a non-functional, empty formatter).
+        //! 
+        //! Of the argument is of type `std::optional<T>`, the requirements apply to the contained
+        //! type, not the `std::optional<T>` itself.
+        //! 
+        //! If type T is either `bool` or `std::optional<bool>`, the resulting argument will
+        //! be a switch argument.
+        template<typename T>
+        argument_builder<typed_argument_type<T>, argument_builder_base> &add_argument(T &value, CharType short_name)
+        {
+            _arguments.push_back(std::make_unique<argument_builder<typed_argument_type<T>, argument_builder_base>>(*this, short_name, value));
+            return *static_cast<argument_builder<typed_argument_type<T>, argument_builder_base>*>(_arguments.back().get());
+        }
+
         //! \brief Adds a new multi-value argument, and returns an argument_builder that can
         //!        be used to further customize it.
         //! \tparam T The type of the argument's container.
@@ -435,6 +497,32 @@ namespace ookii
         typename multi_value_argument_builder<T>::builder_type &add_multi_value_argument(T &value, string_type name)
         {
             _arguments.push_back(std::make_unique<typename multi_value_argument_builder<T>::builder_type>(*this, name, value));
+            return *static_cast<typename multi_value_argument_builder<T>::builder_type*>(_arguments.back().get());
+        }
+
+        //! \brief Adds a new multi-value argument, and returns an argument_builder that can
+        //!        be used to further customize it.
+        //! \tparam T The type of the argument's container.
+        //! \param value A reference to the container for the argument's values. When the
+        //!              argument is supplied, the converted value will be added to this
+        //!              container.
+        //! \param short_name The short name of the argument, used to supply it on the command line.
+        //! 
+        //! When using long/short mode, this method adds an argument that only has a short name.
+        //! It cannot be given a long name afterwards.
+        //! 
+        //! When not using long/short mode, this method is identical to the string version with a
+        //! single character name.
+        //! 
+        //! Any container type T can be used, provided it meets the following requirements.
+        //! 
+        //! - It defines a type T::value_type that meets the requirements outlined in the
+        //!   documentation for add_argument().
+        //! - It defines the methods T::push_back() and T::clear()
+        template<typename T>
+        typename multi_value_argument_builder<T>::builder_type &add_multi_value_argument(T &value, CharType short_name)
+        {
+            _arguments.push_back(std::make_unique<typename multi_value_argument_builder<T>::builder_type>(*this, short_name, value));
             return *static_cast<typename multi_value_argument_builder<T>::builder_type*>(_arguments.back().get());
         }
 
