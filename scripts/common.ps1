@@ -16,6 +16,12 @@ enum NameTransformMode {
     Trim
 }
 
+enum ParsingMode {
+    Unspecified
+    Default
+    LongShort
+}
+
 class AttributeInfo {
     AttributeInfo([string]$Name, [string]$Value = $null) {
         $this.Name = $Name
@@ -28,12 +34,16 @@ class AttributeInfo {
 
 class ArgumentInfo {
     [string] $Name
+    [char] $ShortName
+    [bool] $HasShortName
+    [bool] $HasLongName = $true
     [bool] $Required
     [bool] $Positional
     [bool] $MultiValue
     [bool] $CancelParsing
     [string] $ValueDescription
     [string[]] $Aliases
+    [char[]] $ShortAliases
     [string] $DefaultValue
     [string] $Description
     [string] $FieldName
@@ -54,6 +64,11 @@ class ArgumentInfo {
                     $this.Aliases += $_.Trim()
                 }
             }
+            "short_alias" {
+                $attribute.Value.Split(",") | ForEach-Object {
+                    $this.ShortAliases += $_.Trim()
+                }
+            }
             "default" {
                 $this.DefaultValue = $attribute.Value
             }
@@ -63,8 +78,17 @@ class ArgumentInfo {
             "cancel_parsing" {
                 $this.CancelParsing = $true
             }
+            "short_name" {
+                $this.HasShortName = $true
+                if ($attribute.Value) {
+                    $this.ShortName = $attribute.Value
+                }
+            }
+            "no_long_name" {
+                $this.HasLongName = $false
+            }
             default {
-                Write-Warning "Unexpected attribute $($attribute.Name)"
+                Write-Warning "Unexpected field attribute $($attribute.Name)"
             }
         }
     }
@@ -84,7 +108,26 @@ class ArgumentInfo {
             $method = "add_argument"
         }
 
-        $result = "        .$method($FieldPrefix$($this.FieldName), $StringPrefix`"$($this.Name)`")"
+        if (-not $this.HasLongName) {
+            if (-not $this.HasShortName) {
+                throw "Argument for field $($this.FieldName) has neither a short nor a long name."
+            }
+
+            $primaryName = "'$($this.ShortName)'"
+        }
+        else {
+            $primaryName = "`"$($this.Name)`""
+        }
+
+        $result = "        .$method($FieldPrefix$($this.FieldName), $StringPrefix$primaryName)"
+        if ($this.HasLongName -and $this.HasShortName) {
+            if ($this.ShortName) {
+                $result += ".short_name($StringPrefix'$($this.ShortName)')"
+            } else {
+                $result += ".short_name()"
+            }
+        }
+
         if ($this.Required) {
             $result += ".required()"
         }
@@ -109,6 +152,10 @@ class ArgumentInfo {
             $result += ".alias($StringPrefix`"$alias`")"
         }
 
+        foreach ($alias in $this.ShortAliases) {
+            $result += ".short_alias($StringPrefix'$alias')"
+        }
+
         if ($this.Description) {
             $result += ".description($StringPrefix`"$($this.Description)`")"
         }
@@ -119,29 +166,31 @@ class ArgumentInfo {
 
     [void] GenerateName([NameTransformMode]$Transform) {
         # Don't alter an explicitly specified name.
-        if ($this.Name) {
-            return
+        if (-not $this.Name) {
+            switch ($Transform) {
+                PascalCase {
+                    $this.Name = [ArgumentInfo]::ToPascalOrCamelCase($this.FieldName, $true)
+                }
+                CamelCase {
+                    $this.Name = [ArgumentInfo]::ToPascalOrCamelCase($this.FieldName, $false)
+                }
+                SnakeCase {
+                    $this.Name = [ArgumentInfo]::ToSnakeOrDashCase($this.FieldName, '_')
+                }
+                DashCase {
+                    $this.Name = [ArgumentInfo]::ToSnakeOrDashCase($this.FieldName, '-')
+                }
+                Trim {
+                    $this.Name = $this.FieldName.Trim('_')
+                }
+                default {
+                    $this.Name = $this.FieldName
+                }
+            }
         }
 
-        switch ($Transform) {
-            PascalCase {
-                $this.Name = [ArgumentInfo]::ToPascalOrCamelCase($this.FieldName, $true)
-            }
-            CamelCase {
-                $this.Name = [ArgumentInfo]::ToPascalOrCamelCase($this.FieldName, $false)
-            }
-            SnakeCase {
-                $this.Name = [ArgumentInfo]::ToSnakeOrDashCase($this.FieldName, '_')
-            }
-            DashCase {
-                $this.Name = [ArgumentInfo]::ToSnakeOrDashCase($this.FieldName, '-')
-            }
-            Trim {
-                $this.Name = $this.FieldName.Trim('_')
-            }
-            default {
-                $this.Name = $this.FieldName
-            }
+        if ((-not $this.HasLongName) -and $this.HasShortName -and (-not $this.ShortName)) {
+            $this.ShortName = $this.Name[0]
         }
     }
 
@@ -196,6 +245,7 @@ class CommandInfo {
     [bool] $AllowWhiteSpaceSeparator = $true
     [bool] $AllowDuplicateArguments
     [char] $Separator
+    [ParsingMode] $ParsingMode
     [ArgumentInfo[]] $Arguments
 
     [bool] NeedFileSystem() {
@@ -233,8 +283,21 @@ class CommandInfo {
             "allow_duplicate_arguments" {
                 $this.AllowDuplicateArguments = $true
             }
+            "mode" {
+                switch ($attribute.Value) {
+                    "default" {
+                        $this.ParsingMode = [ParsingMode]::Default
+                    }
+                    "long_short" {
+                        $this.ParsingMode = [ParsingMode]::LongShort
+                    }
+                    default {
+                        throw "Unknown parsing mode $($attribute.Value)"
+                    }
+                }
+            }
             default {
-                Write-Warning "Unexpected attribute $($attribute.Name)"
+                Write-Warning "Unexpected command attribute $($attribute.Name)"
             }
         }
     }
@@ -276,6 +339,15 @@ class CommandInfo {
 
     [string[]] GenerateParserAttributes([string]$StringPrefix) {
         $result = @()
+        switch ($this.Mode) {
+            [ParsingMode]::Default {
+                $result += "        .mode(ookii::parsing_mode::default)"
+            }
+            [ParsingMode]::LongShort {
+                $result += "        .mode(ookii::parsing_mode::long_short)"
+            }
+        }
+
         if ($this.Prefixes.Length -gt 0) {
             $prefixList = $this.Prefixes -join "`", $StringPrefix`""
             $result += "        .prefixes({ $StringPrefix`"$prefixList`" })"
@@ -410,7 +482,7 @@ function Convert-Arguments([string[]]$contents, [string]$argumentsAttributeName 
                             $state = [ParseState]::StructAttributes
                             $newParagraph = $false
                         } else {
-                            Write-Warning "Unexpected attribute: $($attribute.Name)"
+                            Write-Warning "Unexpected global attribute: $($attribute.Name)"
                         }
                     } else {
                         # The state was changed to StructAttributes above during this loop
@@ -459,7 +531,7 @@ function Convert-Arguments([string[]]$contents, [string]$argumentsAttributeName 
                                 $currentArg.Name = $attribute.Value
                                 $state = [ParseState]::ArgumentAttributes
                             } else {
-                                Write-Warning "Unexpected attribute: $($attribute.Name)"
+                                Write-Warning "Unexpected attribute in struct: $($attribute.Name)"
                             }
                         } else {
                             # The state was changed to ArgumentAttributes above during this loop

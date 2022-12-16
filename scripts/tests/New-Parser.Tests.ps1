@@ -38,6 +38,16 @@ Describe "New-Parser" {
         &$scriptPath $input1 -OutputPath $output -NameTransform PascalCase -EntryPoint "my_entry" -WideChar
         Compare-Files $output "expected_wmain.cpp"
     }
+    It "Generates long short mode" {
+        $output = Join-Path $outputPath "actual_long_short.cpp"
+        &$scriptPath (Join-Path $inputPath "long_short.h") -OutputPath $output -NameTransform DashCase
+        Compare-Files $output "expected_long_short.cpp"
+    }
+    It "Generates long short mode with wide characters" {
+        $output = Join-Path $outputPath "actual_long_short_wide.cpp"
+        &$scriptPath (Join-Path $inputPath "long_short.h") -OutputPath $output -NameTransform DashCase -WideChar
+        Compare-Files $output "expected_long_short_wide.cpp"
+    }
     It "Can use additional headers" {
         $output = Join-Path $outputPath "actual_headers.cpp"
         &$scriptPath $inputs -OutputPath $output -NameTransform PascalCase -AdditionalHeaders "foo.h","bar.h"
