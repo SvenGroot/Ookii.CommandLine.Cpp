@@ -7,6 +7,8 @@
 using namespace std;
 using namespace ookii;
 
+int ActionArguments::action_value = 0;
+
 class CommandLineParserTests : public test::TestClass
 {
 public:
@@ -790,6 +792,17 @@ public:
 
         // Short alias is ignored on an argument without a short name.
         VerifyParseResult(parser.parse({ TEXT("-c") }), parse_error::unknown_argument, TEXT("c"));;
+    }
+
+    TEST_METHOD(TestActionArguments)
+    {
+        ActionArguments args{};
+        auto parser = args.create_parser();
+        VerifyParseResult(parser.parse({ TEXT("-StaticAction"), TEXT("42") }));
+        VERIFY_EQUAL(42, ActionArguments::action_value);
+
+        VerifyParseResult(parser.parse({ TEXT("-Action") }), parse_error::parsing_cancelled, TEXT("Action"));
+        VERIFY_TRUE(args.called);
     }
 
 private:

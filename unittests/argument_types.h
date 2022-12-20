@@ -26,3 +26,33 @@ struct LongShortArguments
             .build();
     }
 };
+
+struct ActionArguments
+{
+    static int action_value;
+    bool called{};
+
+    static bool static_action(int value, ookii::basic_command_line_parser<ookii::tchar_t> &)
+    {
+        action_value = value;
+        return true;
+    }
+
+    bool action(bool)
+    {
+        called = true;
+        return false;
+    }
+
+    auto create_parser()
+    {
+        return ookii::basic_parser_builder<ookii::tchar_t>{TEXT("TestCommand")}
+            .add_action_argument(&ActionArguments::static_action, TEXT("StaticAction"))
+            .add_action_argument([this](bool value, ookii::basic_command_line_parser<ookii::tchar_t> &)
+                {
+                    return action(value);
+                },
+                TEXT("Action"))
+            .build();
+    }
+};

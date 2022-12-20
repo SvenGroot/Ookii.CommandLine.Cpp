@@ -127,13 +127,13 @@ namespace ookii
         //! \brief Gets the basic_command_line_parser for this argument.
         parser_type &parser() noexcept
         {
-            return _parser;
+            return *_parser;
         }
 
         //! \brief Gets the basic_command_line_parser for this argument.
         const parser_type &parser() const noexcept
         {
-            return _parser;
+            return *_parser;
         }
 
         //! \brief Gets the name of the argument.
@@ -708,7 +708,7 @@ namespace ookii
                 return set_value_result::error;
 
             base_type::set_value();
-            return invoke_action(converted);
+            return invoke_action(*converted);
         }
 
         //! \copydoc base_type::set_switch_value()
@@ -720,27 +720,20 @@ namespace ookii
         //! \copydoc base_type::apply_default_value()
         void apply_default_value() override
         {
-            if (!this->has_value() && _storage.default_value)
-            {
-                _storage.value = *_storage.default_value;
-            }
+            // Does nothing; action arguments cannot have a default value.
         }
 
         //! \copydoc base_type::write_default_value()
         typename base_type::stream_type &write_default_value(typename base_type::stream_type &stream) const override
         {
-            if (_storage.default_value)
-            {
-                stream << *_storage.default_value;
-            }
-
+            // Does nothing; action arguments cannot have a default value.
             return stream;
         }
 
         //! \copydoc base_type::has_default_value()
         bool has_default_value() const noexcept override
         {
-            return _storage.default_value.has_value();
+            return false;
         }
 
     private:
