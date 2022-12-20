@@ -3,12 +3,12 @@
 #include <ookii/command_line.h>
 #include "../input/long_short.h"
     
-std::optional<my_arguments> my_arguments::parse(int argc, const char *const argv[], ookii::basic_usage_writer<char> *options)
+std::optional<my_arguments> my_arguments::parse(int argc, const char *const argv[], ookii::basic_usage_writer<char> *options, ookii::basic_localized_string_provider<char> *string_provider)
 {
     std::basic_string<char> name;
     if (argc > 0) { name = std::filesystem::path{argv[0]}.filename().string(); }
     my_arguments args{};
-    auto parser = ookii::basic_parser_builder<char>{name}
+    auto parser = ookii::basic_parser_builder<char>{name, string_provider}
         .mode(ookii::parsing_mode::long_short)
         .case_sensitive(true)
         .add_argument(args.test_arg, "test-arg").short_name().required().positional()

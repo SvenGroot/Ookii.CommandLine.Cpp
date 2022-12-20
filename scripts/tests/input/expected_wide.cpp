@@ -4,11 +4,11 @@
 #include "../input/arguments.h"
 #include "../input/arguments2.h"
     
-std::optional<my_arguments> my_arguments::parse(int argc, const wchar_t *const argv[], ookii::basic_usage_writer<wchar_t> *options)
+std::optional<my_arguments> my_arguments::parse(int argc, const wchar_t *const argv[], ookii::basic_usage_writer<wchar_t> *options, ookii::basic_localized_string_provider<wchar_t> *string_provider)
 {
     auto name = L"name";
     my_arguments args{};
-    auto parser = ookii::basic_parser_builder<wchar_t>{name}
+    auto parser = ookii::basic_parser_builder<wchar_t>{name, string_provider}
         .description(L"Description of the arguments with a line break.\n\nAnd a paragraph.")
         .add_argument(args.test_arg, L"TestArg").required().positional().description(L"Argument description with a line break.\n\nAnd another paragraph.")
         .add_argument(args.__test__arg2__, L"TestArg2").positional().default_value(1).value_description(L"desc").alias(L"test").description(L"Short description.")
@@ -25,12 +25,12 @@ std::optional<my_arguments> my_arguments::parse(int argc, const wchar_t *const a
     return {};
 }
 
-std::optional<other_arguments> other_arguments::parse(int argc, const wchar_t *const argv[], ookii::basic_usage_writer<wchar_t> *options)
+std::optional<other_arguments> other_arguments::parse(int argc, const wchar_t *const argv[], ookii::basic_usage_writer<wchar_t> *options, ookii::basic_localized_string_provider<wchar_t> *string_provider)
 {
     std::basic_string<wchar_t> name;
     if (argc > 0) { name = std::filesystem::path{argv[0]}.filename().wstring(); }
     other_arguments args{};
-    auto parser = ookii::basic_parser_builder<wchar_t>{name}
+    auto parser = ookii::basic_parser_builder<wchar_t>{name, string_provider}
         .prefixes({ L"--", L"-" })
         .case_sensitive(true)
         .allow_whitespace_separator(false)
@@ -47,12 +47,12 @@ std::optional<other_arguments> other_arguments::parse(int argc, const wchar_t *c
     return {};
 }
 
-std::optional<third_arguments> third_arguments::parse(int argc, const wchar_t *const argv[], ookii::basic_usage_writer<wchar_t> *options)
+std::optional<third_arguments> third_arguments::parse(int argc, const wchar_t *const argv[], ookii::basic_usage_writer<wchar_t> *options, ookii::basic_localized_string_provider<wchar_t> *string_provider)
 {
     std::basic_string<wchar_t> name;
     if (argc > 0) { name = std::filesystem::path{argv[0]}.filename().wstring(); }
     third_arguments args{};
-    auto parser = ookii::basic_parser_builder<wchar_t>{name}
+    auto parser = ookii::basic_parser_builder<wchar_t>{name, string_provider}
         .add_argument(args.other_arg, L"OtherArg")
         .build();
 

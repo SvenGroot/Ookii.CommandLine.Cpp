@@ -326,7 +326,7 @@ class CommandInfo {
         }
 
         $result += "    $($this.TypeName) args{};"
-        $result += "    auto parser = ookii::basic_parser_builder<$CharType>{name}"
+        $result += "    auto parser = ookii::basic_parser_builder<$CharType>{name, string_provider}"
         if ($this.Description) {
             $result += "        .description($StringPrefix`"$($this.Description)`")"
         }
