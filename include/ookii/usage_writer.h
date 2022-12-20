@@ -67,6 +67,8 @@ namespace ookii
         {
             //! \brief Default value for basic_usage_writer::name_separator.
             static constexpr auto name_separator = literal_cast<CharType>(", ");
+            //! \brief Default value for basic_usage_writer::application_description_indent.
+            static constexpr size_t application_description_indent = 0;
             //! \brief Default value for basic_usage_writer::syntax_indent.
             static constexpr size_t syntax_indent = 3;
             //! \brief Default value for basic_usage_writer::argument_description_indent.
@@ -144,6 +146,13 @@ namespace ookii
 
         //! \brief The stream used to write errors to.
         stream_type &error;
+
+        //! \brief The level of indentation to use when writing the application description.
+        //!
+        //! Note that the first line of the description is not indented.
+        //!
+        //! This value has no effect if the output stream is not using a line_wrapping_streambuf.
+        size_t application_description_indent{defaults::application_description_indent};
 
         //! \brief The level of indentation to use when writing the usage syntax.
         //!
@@ -362,6 +371,7 @@ namespace ookii
         //! `true`.
         virtual void write_application_description(string_view_type description)
         {
+            output << set_indent(application_description_indent);
             output << description << std::endl << std::endl;
         }
 
