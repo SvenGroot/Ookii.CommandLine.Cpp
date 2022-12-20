@@ -51,9 +51,14 @@ namespace ookii
         template<typename T>
         using typed_argument_type = command_line_argument<T, CharType, Traits, Alloc>;
 
+        //! \brief The specialized type of the multi_value_command_line_argument instances that will be built.
+        //! \tparam T The type of the argument's container.
+        template<typename T>
+        using multi_value_argument_type = multi_value_command_line_argument<T, CharType, Traits, Alloc>;
+
         class argument_builder_base;
 
-        template<typename ArgumentType, typename BaseType>
+        template<typename T>
         class argument_builder;
 
         template<typename T>
@@ -75,28 +80,28 @@ namespace ookii
 
             //! \copydoc basic_parser_builder::add_argument()
             template<typename T>
-            argument_builder<typed_argument_type<T>, argument_builder_base> &add_argument(T &value, string_type name)
+            argument_builder<T> &add_argument(T &value, string_type name)
             {
                 return _parser_builder.add_argument(value, name);
             }
 
             //! \copydoc basic_parser_builder::add_argument()
             template<typename T>
-            argument_builder<typed_argument_type<T>, argument_builder_base> &add_argument(T &value, CharType short_name)
+            argument_builder<T> &add_argument(T &value, CharType short_name)
             {
                 return _parser_builder.add_argument(value, short_name);
             }
 
             //! \copydoc basic_parser_builder::add_multi_value_argument()
             template<typename T>
-            typename multi_value_argument_builder<T>::builder_type &add_multi_value_argument(T &value, string_type name)
+            multi_value_argument_builder<T> &add_multi_value_argument(T &value, string_type name)
             {
                 return _parser_builder.add_multi_value_argument(value, name);
             }
 
             //! \copydoc basic_parser_builder::add_multi_value_argument()
             template<typename T>
-            typename multi_value_argument_builder<T>::builder_type &add_multi_value_argument(T &value, CharType short_name)
+            multi_value_argument_builder<T> &add_multi_value_argument(T &value, CharType short_name)
             {
                 return _parser_builder.add_multi_value_argument(value, short_name);
             }
@@ -156,49 +161,27 @@ namespace ookii
             basic_parser_builder &_parser_builder;
         };
 
-        //! \brief Specifies options for an argument under construction.
+        //! \brief Specifies options common to all argument types, for an argument under
+        //! construction.
         //!
-        //! This class inherits from argument_builder_base for arguments that are not multi-value,
-        //! and inherits from multi_value_argument_builder for arguments that are.
-        template<typename ArgumentType, typename BaseType>
-        class argument_builder : public BaseType
+        //! \tparam BuilderType The type of the the argument builder that is deriving from this
+        //!         class.
+        template<typename BuilderType>
+        class argument_builder_common : public argument_builder_base
         {
-            using typed_storage_type = typename ArgumentType::typed_storage_type;
-            using value_type = typename ArgumentType::value_type;
-            using element_type = typename ArgumentType::element_type;
-            using converter_type = typename typed_storage_type::converter_type;
-
         public:
-            //! \brief Initializes a new instance of the argument_builder class.
-            //! \param basic_parser_builder A reference to the basic_parser_builder used to build this argument.
-            //! \param name The name of the argument.
-            //! \param value A reference where the argument's value will be stored.
-            argument_builder(basic_parser_builder &basic_parser_builder, string_type name, value_type &value)
-                : BaseType{basic_parser_builder, name},
-                  _typed_storage{value}
-            {
-            }
+            using argument_builder_base::argument_builder_base;
 
-            //! \brief Initializes a new instance of the argument_builder class.
-            //! \param basic_parser_builder A reference to the basic_parser_builder used to build this argument.
-            //! \param short_name The short name of the argument.
-            //! \param value A reference where the argument's value will be stored.
-            argument_builder(basic_parser_builder &basic_parser_builder, CharType short_name, value_type &value)
-                : BaseType{basic_parser_builder, short_name},
-                  _typed_storage{value}
-            {
-            }
-
-            argument_builder &short_name()
+            BuilderType &short_name()
             {
                 this->storage().short_name = this->storage().name[0];
-                return *this;
+                return *static_cast<BuilderType*>(this);
             }
 
-            argument_builder &short_name(CharType short_name)
+            BuilderType &short_name(CharType short_name)
             {
                 this->storage().short_name = short_name;
-                return *this;
+                return *static_cast<BuilderType*>(this);
             }
 
             //! \brief Sets the value description for the argument.
@@ -221,10 +204,10 @@ namespace ookii
             //! 
             //! The default value description for a type can also be overridden by specializing the
             //! value_description template.
-            argument_builder &value_description(string_type value_description)
+            BuilderType &value_description(string_type value_description)
             {
                 this->storage().value_description = value_description;
-                return *this;
+                return *static_cast<BuilderType*>(this);
             }
 
             //! \brief Sets the long description for the argument.
@@ -236,10 +219,10 @@ namespace ookii
             //! 
             //! An argument without a description will not be included in the list of descriptions
             //! (but will still be included in the syntax).
-            argument_builder &description(string_type description)
+            BuilderType &description(string_type description)
             {
                 this->storage().description = description;
-                return *this;
+                return *static_cast<BuilderType*>(this);
             }
 
             //! \brief Indicates that the argument can be specified by position.
@@ -251,14 +234,14 @@ namespace ookii
             //! A positional argument can still be specified by name, as well as by position.
             //! 
             //! If the argument is already positional, this method has no effect.
-            argument_builder &positional()
+            BuilderType &positional()
             {
                 if (!this->storage().position)
                 {
                     this->storage().position = this->get_next_position();
                 }
 
-                return *this;
+                return *static_cast<BuilderType*>(this);
             }
 
             //! \brief Indicates that the argument is required.
@@ -267,10 +250,86 @@ namespace ookii
             //! required arguments should also be positional, but this is not mandatory.
             //! 
             //! If the argument is already required, this method has no effect.
-            argument_builder &required()
+            BuilderType &required()
             {
                 this->storage().is_required = true;
-                return *this;
+                return *static_cast<BuilderType*>(this);
+            }
+
+            //! \brief Adds an alias to the argument.
+            //! \param alias The alias to add.
+            //! 
+            //! An alias is an alternate, often shorter, name for an argument that can be used to
+            //! specify it on the command line. For example, an argument `-Verbose` might have the
+            //! alias `-v`.
+            //! 
+            //! An argument can have multiple aliases, which can be specified by invoking this
+            //! method multiple times.
+            BuilderType &alias(string_type alias)
+            {
+                this->storage().aliases.push_back(alias);
+                return *static_cast<BuilderType*>(this);
+            }
+
+            BuilderType &short_alias(CharType alias)
+            {
+                this->storage().short_aliases.push_back(alias);
+                return *static_cast<BuilderType*>(this);
+            }
+
+            //! \brief Indicates that supplying this argument will cancel parsing.
+            //!
+            //! If set, if this argument is supplied, argument parsing will immediately return with
+            //! parse_error::parsing_cancelled. Arguments after this one will not be evaluated.
+            //! 
+            //! This can be used, for example, to implement a `-Help` argument where usage help
+            //! should be shown when supplied even if the rest of the command line is valid.
+            //! 
+            //! Note that parsing will be cancelled regardless of the supplied value. So, e.g. for
+            //! a switch argument, `-Help:false` will still cancel parsing and display help. If
+            //! you want to conditionally cancel parsing, you can do so by using a callback with
+            //! the basic_command_line_parser::on_parsed() method.
+            BuilderType &cancel_parsing()
+            {
+                this->storage().cancel_parsing = true;
+                return *static_cast<BuilderType*>(this);
+            }
+        };
+
+        //! \brief Specifies options for a regular or multi-value argument under construction.
+        //!
+        //! \tparam ArgumentType The type of a class deriving from command_line_argument_base that
+        //!         is created by this builder.
+        //! \tparam BuilderType The type of the the argument builder that is deriving from this
+        //!         class.
+        template<typename ArgumentType, typename BuilderType>
+        class typed_argument_builder : public argument_builder_common<BuilderType>
+        {
+            using base_type = argument_builder_common<BuilderType>;
+            using typed_storage_type = typename ArgumentType::typed_storage_type;
+            using value_type = typename ArgumentType::value_type;
+            using element_type = typename ArgumentType::element_type;
+            using converter_type = typename typed_storage_type::converter_type;
+
+        public:
+            //! \brief Initializes a new instance of the argument_builder class.
+            //! \param basic_parser_builder A reference to the basic_parser_builder used to build this argument.
+            //! \param name The name of the argument.
+            //! \param value A reference where the argument's value will be stored.
+            typed_argument_builder(basic_parser_builder &basic_parser_builder, string_type name, value_type &value)
+                : base_type{basic_parser_builder, name},
+                  _typed_storage{value}
+            {
+            }
+
+            //! \brief Initializes a new instance of the argument_builder class.
+            //! \param basic_parser_builder A reference to the basic_parser_builder used to build this argument.
+            //! \param short_name The short name of the argument.
+            //! \param value A reference where the argument's value will be stored.
+            typed_argument_builder(basic_parser_builder &basic_parser_builder, CharType short_name, value_type &value)
+                : base_type{basic_parser_builder, short_name},
+                  _typed_storage{value}
+            {
             }
 
             //! \brief Sets a default value for the argument, which will be used if the argument
@@ -287,10 +346,10 @@ namespace ookii
             //! 
             //! Setting a default value for a required argument is allowed, but the value will
             //! never be used.
-            argument_builder &default_value(element_type default_value)
+            BuilderType &default_value(element_type default_value)
             {
                 this->_typed_storage.default_value = default_value;
-                return *this;
+                return *static_cast<BuilderType*>(this);
             }
 
             //! \brief Supplies a custom function to convert strings to the argument's type.
@@ -303,49 +362,10 @@ namespace ookii
             //! extraction or a specialized lexical_convert template) must still be possible in
             //! order to avoid compiler errors. Use this method if a default conversion exists,
             //! but you wish to deviate from it for a specific argument.
-            argument_builder &converter(converter_type converter)
+            BuilderType &converter(converter_type converter)
             {
                 this->_typed_storage.converter = converter;
-                return *this;
-            }
-
-            //! \brief Adds an alias to the argument.
-            //! \param alias The alias to add.
-            //! 
-            //! An alias is an alternate, often shorter, name for an argument that can be used to
-            //! specify it on the command line. For example, an argument `-Verbose` might have the
-            //! alias `-v`.
-            //! 
-            //! An argument can have multiple aliases, which can be specified by invoking this
-            //! method multiple times.
-            argument_builder &alias(string_type alias)
-            {
-                this->storage().aliases.push_back(alias);
-                return *this;
-            }
-
-            argument_builder &short_alias(CharType alias)
-            {
-                this->storage().short_aliases.push_back(alias);
-                return *this;
-            }
-
-            //! \brief Indicates that supplying this argument will cancel parsing.
-            //!
-            //! If set, if this argument is supplied, argument parsing will immediately return with
-            //! parse_error::parsing_cancelled. Arguments after this one will not be evaluated.
-            //! 
-            //! This can be used, for example, to implement a `-Help` argument where usage help
-            //! should be shown when supplied even if the rest of the command line is valid.
-            //! 
-            //! Note that parsing will be cancelled regardless of the supplied value. So, e.g. for
-            //! a switch argument, `-Help:false` will still cancel parsing and display help. If
-            //! you want to conditionally cancel parsing, you can do so by using a callback with
-            //! the basic_command_line_parser::on_parsed() method.
-            argument_builder &cancel_parsing()
-            {
-                this->storage().cancel_parsing = true;
-                return *this;
+                return *static_cast<BuilderType*>(this);
             }
 
         private:
@@ -360,14 +380,28 @@ namespace ookii
             typed_storage_type _typed_storage;
         };
 
+        //! \brief Specifies options for an argument, other than a multi-value or action argument,
+        //! under construction.
+        //!
+        //! \tparam T The type of the argument's values.
+        template<typename T>
+        class argument_builder : public typed_argument_builder<typed_argument_type<T>, argument_builder<T>>
+        {
+            using base_type = typed_argument_builder<typed_argument_type<T>, argument_builder<T>>;
+
+        public:
+            using base_type::base_type;
+        };
+
         //! \brief Base class for argument_builder for multi-value arguments.
         //! \tparam T The type of the argument's container.
         template<typename T>
-        class multi_value_argument_builder : public argument_builder_base
+        class multi_value_argument_builder : public typed_argument_builder<multi_value_argument_type<T>, multi_value_argument_builder<T>>
         {
+            using base_type = typed_argument_builder<multi_value_argument_type<T>, multi_value_argument_builder<T>>;
+            
         public:
-            //! \brief The type of the argument_builder that derives from multi_value_argument_builder.
-            using builder_type = argument_builder<multi_value_command_line_argument<T, CharType, Traits, Alloc>, multi_value_argument_builder>;
+            using base_type::base_type;
 
             //! \brief Specifies a separator that separates multiple values in a single argument
             //!        value.
@@ -382,14 +416,11 @@ namespace ookii
             //!          be locale-dependent.
             //! 
             //! By default, no separator is used.
-            builder_type &separator(CharType separator)
+            multi_value_argument_builder &separator(CharType separator)
             {
                 this->storage().multi_value_separator = separator;
-                return *static_cast<builder_type*>(this);
+                return *this;
             }
-
-        protected:
-            using argument_builder_base::argument_builder_base;
         };
 
         //! \brief Initializes a new instance of the basic_parser_builder class.
@@ -432,10 +463,10 @@ namespace ookii
         //! If type T is either `bool` or `std::optional<bool>`, the resulting argument will
         //! be a switch argument.
         template<typename T>
-        argument_builder<typed_argument_type<T>, argument_builder_base> &add_argument(T &value, string_type name)
+        argument_builder<T> &add_argument(T &value, string_type name)
         {
-            _arguments.push_back(std::make_unique<argument_builder<typed_argument_type<T>, argument_builder_base>>(*this, name, value));
-            return *static_cast<argument_builder<typed_argument_type<T>, argument_builder_base>*>(_arguments.back().get());
+            _arguments.push_back(std::make_unique<argument_builder<T>>(*this, name, value));
+            return *static_cast<argument_builder<T>*>(_arguments.back().get());
         }
 
         //! \brief Adds a new argument, and returns an argument_builder that can be used to
@@ -474,10 +505,10 @@ namespace ookii
         //! If type T is either `bool` or `std::optional<bool>`, the resulting argument will
         //! be a switch argument.
         template<typename T>
-        argument_builder<typed_argument_type<T>, argument_builder_base> &add_argument(T &value, CharType short_name)
+        argument_builder<T> &add_argument(T &value, CharType short_name)
         {
-            _arguments.push_back(std::make_unique<argument_builder<typed_argument_type<T>, argument_builder_base>>(*this, short_name, value));
-            return *static_cast<argument_builder<typed_argument_type<T>, argument_builder_base>*>(_arguments.back().get());
+            _arguments.push_back(std::make_unique<argument_builder<T>>(*this, short_name, value));
+            return *static_cast<argument_builder<T>*>(_arguments.back().get());
         }
 
         //! \brief Adds a new multi-value argument, and returns an argument_builder that can
@@ -494,10 +525,10 @@ namespace ookii
         //!   documentation for add_argument().
         //! - It defines the methods T::push_back() and T::clear()
         template<typename T>
-        typename multi_value_argument_builder<T>::builder_type &add_multi_value_argument(T &value, string_type name)
+        multi_value_argument_builder<T> &add_multi_value_argument(T &value, string_type name)
         {
-            _arguments.push_back(std::make_unique<typename multi_value_argument_builder<T>::builder_type>(*this, name, value));
-            return *static_cast<typename multi_value_argument_builder<T>::builder_type*>(_arguments.back().get());
+            _arguments.push_back(std::make_unique<multi_value_argument_builder<T>>(*this, name, value));
+            return *static_cast<multi_value_argument_builder<T>*>(_arguments.back().get());
         }
 
         //! \brief Adds a new multi-value argument, and returns an argument_builder that can
@@ -520,10 +551,10 @@ namespace ookii
         //!   documentation for add_argument().
         //! - It defines the methods T::push_back() and T::clear()
         template<typename T>
-        typename multi_value_argument_builder<T>::builder_type &add_multi_value_argument(T &value, CharType short_name)
+        multi_value_argument_builder<T> &add_multi_value_argument(T &value, CharType short_name)
         {
-            _arguments.push_back(std::make_unique<typename multi_value_argument_builder<T>::builder_type>(*this, short_name, value));
-            return *static_cast<typename multi_value_argument_builder<T>::builder_type*>(_arguments.back().get());
+            _arguments.push_back(std::make_unique<multi_value_argument_builder<T>>(*this, short_name, value));
+            return *static_cast<multi_value_argument_builder<T>*>(_arguments.back().get());
         }
 
         //! \brief Creates a basic_command_line_parser using the current options and arguments.
