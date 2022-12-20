@@ -40,12 +40,12 @@ Describe "New-Parser" {
     }
     It "Generates long short mode" {
         $output = Join-Path $outputPath "actual_long_short.cpp"
-        &$scriptPath (Join-Path $inputPath "long_short.h") -OutputPath $output -NameTransform DashCase
+        &$scriptPath (Join-Path $inputPath "long_short.h") -OutputPath $output
         Compare-Files $output "expected_long_short.cpp"
     }
     It "Generates long short mode with wide characters" {
         $output = Join-Path $outputPath "actual_long_short_wide.cpp"
-        &$scriptPath (Join-Path $inputPath "long_short.h") -OutputPath $output -NameTransform DashCase -WideChar
+        &$scriptPath (Join-Path $inputPath "long_short.h") -OutputPath $output -WideChar
         Compare-Files $output "expected_long_short_wide.cpp"
     }
     It "Can use additional headers" {

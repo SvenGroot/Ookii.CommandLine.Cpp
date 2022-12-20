@@ -247,6 +247,7 @@ class CommandInfo {
     [char] $Separator
     [ParsingMode] $ParsingMode
     [ArgumentInfo[]] $Arguments
+    [Nullable[NameTransformMode]] $OverrideNameTransform = $null
 
     [bool] NeedFileSystem() {
         return -not ([bool]$this.CommandName)
@@ -296,6 +297,9 @@ class CommandInfo {
                     }
                 }
             }
+            "name_transform" {
+                $this.OverrideNameTransform = Convert-NameTransform $attribute.Value
+            }
             default {
                 Write-Warning "Unexpected command attribute $($attribute.Name)"
             }
@@ -303,6 +307,10 @@ class CommandInfo {
     }
 
     [string[]] GenerateParser([string]$StringPrefix, [string]$CharType, [NameTransformMode]$NameTransform) {
+        if ($null -ne $this.OverrideNameTransform) {
+            $NameTransform = $this.OverrideNameTransform
+        }
+
         $result = @()
         if ($this.CommandName) {
             $result += "    auto name = $StringPrefix`"$($this.CommandName)`";"
@@ -574,5 +582,16 @@ function Convert-Arguments([string[]]$contents, [string]$argumentsAttributeName 
             }
             Default {}
         }
+    }
+}
+
+function Convert-NameTransform([string]$value) {
+    switch ($value) {
+        "None" { [NameTransformMode]::None }
+        "PascalCase" { [NameTransformMode]::PascalCase }
+        "CamelCase" { [NameTransformMode]::CamelCase }
+        { $_ -eq "SnakeCase" -or $_ -eq "snake_case" } { [NameTransformMode]::SnakeCase }
+        { $_ -eq "DashCase" -or $_ -eq "dash-case" } { [NameTransformMode]::DashCase }
+        default { throw "Invalid name transform: $value" }
     }
 }

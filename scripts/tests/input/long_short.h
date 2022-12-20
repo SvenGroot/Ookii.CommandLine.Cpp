@@ -1,5 +1,6 @@
 // [arguments]
 // [case_sensitive, mode: long_short]
+// [name_transform: dash-case]
 struct my_arguments
 {
     // [argument, short_name, required, positional]
