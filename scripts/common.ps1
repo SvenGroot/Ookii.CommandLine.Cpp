@@ -18,7 +18,7 @@ enum NameTransformMode {
 
 enum ParsingMode {
     Unspecified
-    Default
+    DefaultMode
     LongShort
 }
 
@@ -287,7 +287,7 @@ class CommandInfo {
             "mode" {
                 switch ($attribute.Value) {
                     "default" {
-                        $this.ParsingMode = [ParsingMode]::Default
+                        $this.ParsingMode = [ParsingMode]::DefaultMode
                     }
                     "long_short" {
                         $this.ParsingMode = [ParsingMode]::LongShort
@@ -347,11 +347,11 @@ class CommandInfo {
 
     [string[]] GenerateParserAttributes([string]$StringPrefix) {
         $result = @()
-        switch ($this.Mode) {
-            [ParsingMode]::Default {
+        switch ($this.ParsingMode) {
+            DefaultMode {
                 $result += "        .mode(ookii::parsing_mode::default)"
             }
-            [ParsingMode]::LongShort {
+            LongShort {
                 $result += "        .mode(ookii::parsing_mode::long_short)"
             }
         }

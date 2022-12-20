@@ -9,6 +9,7 @@ std::optional<my_arguments> my_arguments::parse(int argc, const char *const argv
     if (argc > 0) { name = std::filesystem::path{argv[0]}.filename().string(); }
     my_arguments args{};
     auto parser = ookii::basic_parser_builder<char>{name}
+        .mode(ookii::parsing_mode::long_short)
         .case_sensitive(true)
         .add_argument(args.test_arg, "test-arg").short_name().required().positional()
         .add_argument(args.test_arg2, "test-arg2").short_name('s').short_alias('x').short_alias('y')

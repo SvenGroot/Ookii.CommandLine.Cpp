@@ -74,6 +74,7 @@ if (OOKIICL_SAMPLES)
     if (POWERSHELL_PATH)
         add_subdirectory("samples/generated_parser")
         add_subdirectory("samples/generated_subcommand")
+        add_subdirectory("samples/long_short")
     endif()
 endif()
 
