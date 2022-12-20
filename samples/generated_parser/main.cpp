@@ -26,6 +26,5 @@ int ookii_main(arguments args)
     std::cout << "Count: " << args.count << std::endl;
     std::cout << "Verbose: " << args.verbose << std::endl;
     std::cout << "Values: " << args.values << std::endl;
-    std::cout << "Help: " << args.help << std::endl;
     return 0;
 }

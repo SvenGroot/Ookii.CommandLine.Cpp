@@ -125,7 +125,10 @@ struct arguments
     // 
     // [argument, cancel_parsing, alias: ?]
     // Displays this help message.
-    bool help;
+    static bool help(bool, ookii::command_line_parser &)
+    {
+        return false;
+    }
 
     // Structs used with the New-Parser.ps1 struct must have a parse method, whose implementation
     // will be provided by the script. Use the OOKII_DECLARE_PARSE_METHOD macro as an easy way to

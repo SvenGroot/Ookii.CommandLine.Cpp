@@ -22,6 +22,12 @@ enum ParsingMode {
     LongShort
 }
 
+enum ArgumentKind {
+    Regular
+    MultiValue
+    Action
+}
+
 class AttributeInfo {
     AttributeInfo([string]$Name, [string]$Value = $null) {
         $this.Name = $Name
@@ -39,14 +45,16 @@ class ArgumentInfo {
     [bool] $HasLongName = $true
     [bool] $Required
     [bool] $Positional
-    [bool] $MultiValue
+    [ArgumentKind] $Kind
     [bool] $CancelParsing
     [string] $ValueDescription
     [string[]] $Aliases
     [char[]] $ShortAliases
     [string] $DefaultValue
     [string] $Description
-    [string] $FieldName
+    [string] $MemberName
+    [bool] $Static
+    [string] $ArgumentType
 
     [void] ProcessAttribute([AttributeInfo]$attribute) {
         switch ($attribute.Name) {
@@ -73,7 +81,7 @@ class ArgumentInfo {
                 $this.DefaultValue = $attribute.Value
             }
             "multi_value" {
-                $this.MultiValue = $true
+                $this.Kind = [ArgumentKind]::MultiValue
             }
             "cancel_parsing" {
                 $this.CancelParsing = $true
@@ -95,22 +103,36 @@ class ArgumentInfo {
 
     [void] ParseField([string]$line) {
         if ($line -match "(.*?)\s+(?<name>\w+)\s*[;{=]") {
-            $this.FieldName = $Matches.name
+            $this.MemberName = $Matches.name
+        } elseif ($line -match "(?<static>static\s+)?bool (?<name>\w+)\s*\((?<params>.*)\)") {
+            $this.MemberName = $Matches.name
+            $this.Kind = [ArgumentKind]::Action;
+            Write-Host $Matches.static
+            $this.Static = $null -ne $Matches.static
+            if ($this.Kind -eq [ArgumentKind]::MultiValue) {
+                Write-Warning "[multi_value] attribute ignored for action argument member $($this.MemberName)"
+            }
+
+            if ($this.DefaultValue) {
+                Write-Warning "[default_value] attribute ignored for action argument member $($this.MemberName)"
+            }
+
+            $this.ArgumentType = Get-ArgumentType $Matches.params
         } else {
             throw "Unrecognized field definition: $line"
         }
     }
 
-    [string] GenerateArgument([string]$StringPrefix, [string]$FieldPrefix) {
-        if ($this.MultiValue) {
-            $method = "add_multi_value_argument"
-        } else {
-            $method = "add_argument"
+    [string] GenerateArgument([string]$StringPrefix, [string]$CharType, [string]$FieldPrefix) {
+        $method = "add_argument"
+        switch ($this.Kind) {
+            MultiValue { $method = "add_multi_value_argument" }
+            Action { $method = "add_action_argument" }
         }
 
         if (-not $this.HasLongName) {
             if (-not $this.HasShortName) {
-                throw "Argument for field $($this.FieldName) has neither a short nor a long name."
+                throw "Argument for field $($this.MemberName) has neither a short nor a long name."
             }
 
             $primaryName = "'$($this.ShortName)'"
@@ -119,7 +141,22 @@ class ArgumentInfo {
             $primaryName = "`"$($this.Name)`""
         }
 
-        $result = "        .$method($FieldPrefix$($this.FieldName), $StringPrefix$primaryName)"
+        if ($this.Kind -eq [ArgumentKind]::Action) {
+            if ($this.Static) {
+                $target = $this.MemberName
+            } else {
+                if ($FieldPrefix.StartsWith("this")) {
+                    $capture = "this"
+                } else {
+                    $capture = "&$($FieldPrefix.Substring(0, $FieldPrefix.Length - 1))"
+                }
+                $target = "[$capture]($($this.ArgumentType) value, ookii::basic_command_line_parser<$CharType> &parser) { return $FieldPrefix$($this.MemberName)(value, parser); }"
+            }
+        } else {
+            $target = "$FieldPrefix$($this.MemberName)"
+        }
+
+        $result = "        .$method($target, $StringPrefix$primaryName)"
         if ($this.HasLongName -and $this.HasShortName) {
             if ($this.ShortName) {
                 $result += ".short_name($StringPrefix'$($this.ShortName)')"
@@ -169,22 +206,22 @@ class ArgumentInfo {
         if (-not $this.Name) {
             switch ($Transform) {
                 PascalCase {
-                    $this.Name = [ArgumentInfo]::ToPascalOrCamelCase($this.FieldName, $true)
+                    $this.Name = [ArgumentInfo]::ToPascalOrCamelCase($this.MemberName, $true)
                 }
                 CamelCase {
-                    $this.Name = [ArgumentInfo]::ToPascalOrCamelCase($this.FieldName, $false)
+                    $this.Name = [ArgumentInfo]::ToPascalOrCamelCase($this.MemberName, $false)
                 }
                 SnakeCase {
-                    $this.Name = [ArgumentInfo]::ToSnakeOrDashCase($this.FieldName, '_')
+                    $this.Name = [ArgumentInfo]::ToSnakeOrDashCase($this.MemberName, '_')
                 }
                 DashCase {
-                    $this.Name = [ArgumentInfo]::ToSnakeOrDashCase($this.FieldName, '-')
+                    $this.Name = [ArgumentInfo]::ToSnakeOrDashCase($this.MemberName, '-')
                 }
                 Trim {
-                    $this.Name = $this.FieldName.Trim('_')
+                    $this.Name = $this.MemberName.Trim('_')
                 }
                 default {
-                    $this.Name = $this.FieldName
+                    $this.Name = $this.MemberName
                 }
             }
         }
@@ -332,7 +369,7 @@ class CommandInfo {
         }
         
         $result += $this.GenerateParserAttributes($StringPrefix)
-        $result += $this.GenerateArguments($StringPrefix, "args.", $NameTransform)
+        $result += $this.GenerateArguments($StringPrefix, $CharType, "args.", $NameTransform)
 
         $result += "        .build();"
         $result += ""
@@ -380,7 +417,7 @@ class CommandInfo {
         return $result
     }
 
-    [string[]] GenerateShellCommand([string]$StringPrefix, [NameTransformMode]$NameTransform) {
+    [string[]] GenerateSubcommand([string]$StringPrefix, [string]$CharType, [NameTransformMode]$NameTransform) {
         $result = @("$($this.TypeName)::$($this.TypeName)($($this.TypeName)::builder_type &builder)")
         if ($this.BaseClass) {
             $result += "    : $($this.BaseClass){builder}"
@@ -389,7 +426,7 @@ class CommandInfo {
         $result += "{"
         $result += "    builder"
         $result += $this.GenerateParserAttributes($StringPrefix)
-        $result += $this.GenerateArguments($StringPrefix, "this->", $NameTransform)
+        $result += $this.GenerateArguments($StringPrefix, $CharType, "this->", $NameTransform)
         $result[-1] += ";"
         $result += "}"
         $result += ""
@@ -397,11 +434,11 @@ class CommandInfo {
         return $result
     }
 
-    [string[]] GenerateArguments([string]$StringPrefix, [string]$FieldPrefix, [NameTransformMode]$NameTransform) {
+    [string[]] GenerateArguments([string]$StringPrefix, [string]$CharType, [string]$FieldPrefix, [NameTransformMode]$NameTransform) {
         $result = @()
         foreach ($arg in $this.Arguments) {
             $arg.GenerateName($NameTransform)
-            $result += $arg.GenerateArgument($StringPrefix, $FieldPrefix)
+            $result += $arg.GenerateArgument($StringPrefix, $CharType, $FieldPrefix)
         }
 
         return $result
@@ -594,4 +631,23 @@ function Convert-NameTransform([string]$value) {
         { $_ -eq "DashCase" -or $_ -eq "dash-case" } { [NameTransformMode]::DashCase }
         default { throw "Invalid name transform: $value" }
     }
+}
+
+# Extract the type of the first parameter for an action argument.
+function Get-ArgumentType([string]$parameters) {
+    $level = 0
+    for ($index = 0; $index -lt $parameters.Length; $index += 1) {
+        $ch = $parameters[$index]
+        switch ($ch) {
+            '<' { $level += 1 }
+            '>' { $level -= 1 }
+            {$_ -eq ' ' -or $_ -eq ','} {
+                if ($level -eq 0) {
+                    return $parameters.Substring(0, $index)
+                }
+            }
+        }
+    }
+
+    throw "Unable to determine argument type from action argument parameters: $parameters"
 }

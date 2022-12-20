@@ -116,7 +116,7 @@ process {
         $headers += "#include `"$fileName`""
         foreach ($info in (Convert-Arguments $contents "command")) {
             $commands += $info
-            $result += $info.GenerateShellCommand($stringPrefix, $NameTransform) -join [System.Environment]::NewLine
+            $result += $info.GenerateSubcommand($stringPrefix, $charType, $NameTransform) -join [System.Environment]::NewLine
         }
     }
 }

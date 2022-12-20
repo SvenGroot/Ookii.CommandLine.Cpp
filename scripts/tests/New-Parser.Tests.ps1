@@ -48,6 +48,11 @@ Describe "New-Parser" {
         &$scriptPath (Join-Path $inputPath "long_short.h") -OutputPath $output -WideChar
         Compare-Files $output "expected_long_short_wide.cpp"
     }
+    It "Generates ation arguments" {
+        $output = Join-Path $outputPath "actual_action_arguments.cpp"
+        &$scriptPath (Join-Path $inputPath "action_arguments.h") -OutputPath $output
+        Compare-Files $output "expected_action_arguments.cpp"
+    }
     It "Can use additional headers" {
         $output = Join-Path $outputPath "actual_headers.cpp"
         &$scriptPath $inputs -OutputPath $output -NameTransform PascalCase -AdditionalHeaders "foo.h","bar.h"
