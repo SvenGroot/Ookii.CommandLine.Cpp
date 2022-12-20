@@ -14,6 +14,10 @@
 
 namespace ookii
 {
+    // Forward declaration.
+    template<typename CharType, typename Traits, typename Alloc>
+    class basic_command_line_parser;
+
     namespace details
     {
         template<typename CharType, typename Traits, typename Alloc>
@@ -22,7 +26,7 @@ namespace ookii
             using string_type = std::basic_string<CharType, Traits, Alloc>;
 
             argument_storage(string_type name)
-                : name(name)
+                : name{name}
             {
             }
 
@@ -39,7 +43,7 @@ namespace ookii
             CharType short_name{};
         };
 
-        template<class T, typename Element, typename CharType, typename Traits>
+        template<typename T, typename Element, typename CharType, typename Traits>
         struct typed_argument_storage
         {
             using converter_type = std::function<std::optional<Element>(std::basic_string_view<CharType, Traits>, const std::locale &)>;
@@ -51,6 +55,21 @@ namespace ookii
 
             T &value;
             std::optional<Element> default_value;
+            converter_type converter;
+        };
+
+        template<typename T, typename CharType, typename Traits, typename Alloc>
+        struct action_argument_storage
+        {
+            using converter_type = std::function<std::optional<T>(std::basic_string_view<CharType, Traits>, const std::locale &)>;
+            using function_type = std::function<bool(const T &value, basic_command_line_parser<CharType, Traits, Alloc> &parser)>;
+
+            action_argument_storage(function_type action)
+                : action{action}
+            {
+            }
+
+            function_type action;
             converter_type converter;
         };
 
@@ -66,6 +85,17 @@ namespace ookii
             using type = T;
         };
     }
+
+    //! \brief The result of attempting to set a value for an argument.
+    enum class set_value_result
+    {
+        //! \brief The operation was successful.
+        success,
+        //! \brief There was an error converting the value to the element type of the argument.
+        error,
+        //! \brief The operation was successful, but has requested that parsing will be cancelled.
+        cancel
+    };
 
     //! \brief Abstract base class for regular and multi-value arguments.
     //! \tparam CharType The character type used for arguments and other strings.
@@ -85,12 +115,26 @@ namespace ookii
         using string_view_type = std::basic_string_view<CharType, Traits>;
         //! \brief The concrete type of `std::basic_ostream` used.
         using stream_type = std::basic_ostream<CharType, Traits>;
+        //! \brief The concrete type of basic_command_line_parser used.
+        using parser_type = basic_command_line_parser<CharType, Traits, Alloc>;
 
         command_line_argument_base(const command_line_argument_base &) = delete;
 
         virtual ~command_line_argument_base() = default;
 
         command_line_argument_base &operator=(const command_line_argument_base &) = delete;
+
+        //! \brief Gets the basic_command_line_parser for this argument.
+        parser_type &parser() noexcept
+        {
+            return _parser;
+        }
+
+        //! \brief Gets the basic_command_line_parser for this argument.
+        const parser_type &parser() const noexcept
+        {
+            return _parser;
+        }
 
         //! \brief Gets the name of the argument.
         //!
@@ -162,7 +206,7 @@ namespace ookii
         //! 
         //! \return The position, or `std::nullopt` if the argument is not positional.
         //! 
-        //! A positional argument can be specified without suppling `-Name` before the value.
+        //! A positional argument can be specified without supplying `-Name` before the value.
         //! Note that a positional argument can still be specified by name, as well as by position.
         //! 
         //! An argument can be made positional using the basic_parser_builder::argument_builder::positional() method.
@@ -236,15 +280,14 @@ namespace ookii
         //! \brief Sets the argument to the specified value.
         //! \param value The string value of the argument.
         //! \param loc The locale to use to parse the argument value.
-        //! \return `true` if the value was successfully set, or `false` if conversion to the
-        //!         argument's type failed.
+        //! \return One of the values of the set_value_result enumeration.
         //! 
         //! When the value is set, this method converts to the string value to the actual type of
         //! the argument using either the custom converter function (if any), or the default
         //! converter, which is the lexical_convert template.
         //! 
         //! For multi-value arguments, the new value will be added to the list of values.
-        virtual bool set_value(string_view_type value, std::locale loc = {}) = 0;
+        virtual set_value_result set_value(string_view_type value, std::locale loc = {}) = 0;
 
         //! \brief Sets the variable holding the argument's value to the default value.
         //!
@@ -258,14 +301,14 @@ namespace ookii
         virtual void apply_default_value() = 0;
 
         //! \brief Applies the implicit value for a switch argument.
-        //! \return `true` if the argument was a switch argument; otherwise, `false`.
+        //! \return One of the values of the set_value_result enumeration.
         //! 
         //! If the argument is a switch argument (is_switch() returns `true`), the variable holding
-        //! its variable will be set to `true`. Otherwise, the value is not changed and `false` is
-        //! returned.
+        //! its variable will be set to `true`. Otherwise, the value is not changed and
+        //! set_value_result::error is returned.
         //! 
-        //! For a multi-value argument, this adds a value of `true` to the container.
-        virtual bool set_switch_value() = 0;
+        //! For a multi-value switch argument, this adds a value of `true` to the container.
+        virtual set_value_result set_switch_value() = 0;
 
         //! \brief Writes the default value to the specified stream.
         //!
@@ -295,11 +338,12 @@ namespace ookii
         }
 
         //! \brief Constructs a command line argument base from a command_line_argument_storage.
-        command_line_argument_base(storage_type &&storage, parsing_mode mode)
-            : _storage{std::move(storage)}
+        command_line_argument_base(parser_type &parser, storage_type &&storage)
+            : _parser{&parser},
+              _storage{std::move(storage)}
         {
             // Normalize elements based on parsing mode.
-            if (mode == parsing_mode::long_short)
+            if (parser.mode() == parsing_mode::long_short)
             {
                 if (!_storage.has_long_name)
                 {
@@ -326,6 +370,7 @@ namespace ookii
         }
 
     private:
+        parser_type *_parser;
         storage_type _storage;
         bool _has_value{};
     };
@@ -367,8 +412,9 @@ namespace ookii
         //! 
         //! You do not normally construct instances of this class manually. Instead, use the
         //! basic_parser_builder.
-        command_line_argument(typename base_type::storage_type &&storage, typed_storage_type &&typed_storage, parsing_mode mode)
-            : base_type{std::move(storage), mode},
+        command_line_argument(typename base_type::parser_type &parser, typename base_type::storage_type &&storage,
+                              typed_storage_type &&typed_storage)
+            : base_type{parser, std::move(storage)},
               _storage{std::move(typed_storage)}
         {
         }
@@ -384,7 +430,7 @@ namespace ookii
         }
 
         //! \copydoc base_type::set_value()
-        bool set_value(string_view_type value, std::locale loc = {}) override
+        set_value_result set_value(string_view_type value, std::locale loc = {}) override
         {
             std::optional<element_type> converted;
             if (_storage.converter)
@@ -393,15 +439,15 @@ namespace ookii
                 converted = lexical_convert<element_type, CharType, Traits, Alloc>::from_string(value, loc);
 
             if (!converted)
-                return false;
+                return set_value_result::error;
 
             _storage.value = std::move(*converted);
             base_type::set_value();
-            return true;
+            return set_value_result::success;
         }
 
         //! \copydoc base_type::set_switch_value()
-        bool set_switch_value() override
+        set_value_result set_switch_value() override
         {
             return set_switch_value_core();
         }
@@ -434,17 +480,17 @@ namespace ookii
 
     private:
         template<typename T2 = T>
-        std::enable_if_t<details::is_switch<T2>::value, bool> set_switch_value_core()
+        std::enable_if_t<details::is_switch<T2>::value, set_value_result> set_switch_value_core()
         {
             _storage.value = true;
             base_type::set_value();
-            return true;
+            return set_value_result::success;
         }
 
         template<typename T2 = T>
-        std::enable_if_t<!details::is_switch<T2>::value, bool> set_switch_value_core()
+        std::enable_if_t<!details::is_switch<T2>::value, set_value_result> set_switch_value_core()
         {
-            return false;
+            return set_value_result::error;
         }
 
         typed_storage_type _storage;
@@ -483,9 +529,9 @@ namespace ookii
         //! 
         //! You do not normally construct instances of this class manually. Instead, use the
         //! basic_parser_builder.
-        multi_value_command_line_argument(typename base_type::storage_type &&storage, typed_storage_type &&typed_storage,
-                                          parsing_mode mode)
-            : base_type{std::move(storage), mode},
+        multi_value_command_line_argument(typename base_type::parser_type &parser, typename base_type::storage_type &&storage,
+                                          typed_storage_type &&typed_storage)
+            : base_type{parser, std::move(storage)},
               _storage{std::move(typed_storage)}
         {
         }
@@ -496,7 +542,7 @@ namespace ookii
             return details::is_switch<element_type>::value;
         }
 
-        //! \copydoc base_type::set_value()
+        //! \copydoc base_type::is_multi_value()
         //!
         //! This method always returns `true`.
         bool is_multi_value() const noexcept override
@@ -521,7 +567,7 @@ namespace ookii
         }
 
         //! \copydoc base_type::set_value()
-        bool set_value(string_view_type value, std::locale loc = {}) override
+        set_value_result set_value(string_view_type value, std::locale loc = {}) override
         {
             for (auto element : tokenize{value, separator()})
             {
@@ -532,17 +578,17 @@ namespace ookii
                     converted = lexical_convert<element_type, CharType, Traits, Alloc>::from_string(element, loc);
 
                 if (!converted)
-                    return false;
+                    return set_value_result::error;
 
                 _storage.value.push_back(std::move(*converted));
             }
 
             base_type::set_value();
-            return true;
+            return set_value_result::success;
         }
 
         //! \copydoc base_type::set_switch_value()
-        bool set_switch_value() override
+        set_value_result set_switch_value() override
         {
             return set_switch_value_core();
         }
@@ -575,17 +621,146 @@ namespace ookii
 
     private:
         template<typename T2 = element_type>
-        std::enable_if_t<details::is_switch<T2>::value, bool> set_switch_value_core()
+        std::enable_if_t<details::is_switch<T2>::value, set_value_result> set_switch_value_core()
         {
             _storage.value.push_back(true);
             base_type::set_value();
-            return true;
+            return set_value_result::success;
         }
 
         template<typename T2 = element_type>
-        std::enable_if_t<!details::is_switch<T2>::value, bool> set_switch_value_core()
+        std::enable_if_t<!details::is_switch<T2>::value, set_value_result> set_switch_value_core()
         {
-            return false;
+            return set_value_result::error;
+        }
+
+        typed_storage_type _storage;
+    };
+
+    //! \brief Class that provides information about action arguments.
+    //! \tparam T The type of the argument.
+    //! \tparam CharType The character type used for arguments and other strings.
+    //! \tparam Traits The character traits to use for strings. Defaults to
+    //!         `std::char_traits<CharType>`.
+    //! \tparam Alloc The allocator to use for strings. Defaults to `std::allocator<CharType>`.
+    //!
+    //! This provides information for all action arguments created using
+    //! basic_parser_builder::add_argument().
+    //! 
+    //! For regular arguments, see command_line_argument; for multi-value arguments, see
+    //! multi_value_command_line_argument.
+    template<class T, typename CharType, typename Traits = std::char_traits<CharType>, typename Alloc = std::allocator<CharType>>
+    class action_command_line_argument final : public command_line_argument_base<CharType, Traits, Alloc>
+    {
+    public:
+        //! \brief The type of the base class of this class.
+        using base_type = command_line_argument_base<CharType, Traits, Alloc>;
+        //! \brief The type of the argument's value, which equals `T`.
+        using value_type = T;
+        //! \brief The type of the argument's elements, which equals `T`.
+        //!
+        //! Action arguments should not use `std::optional<T>`, so this will always be identical to
+        //! value_type.
+        using element_type = T;
+        //! \copydoc base_type::string_type
+        using string_type = typename base_type::string_type;
+        //! \copydoc base_type::string_view_type
+        using string_view_type = typename base_type::string_view_type;
+        //! \copydoc base_type::storage_type
+        using typed_storage_type = details::action_argument_storage<value_type, CharType, Traits, Alloc>;
+        //! \brief The type of the function used by this action argument.
+        using function_type = typename typed_storage_type::function_type;
+
+        //! \brief Initializes a new instance of the command_line_argument class.
+        //! \param storage Storage containing the argument's information.
+        //! \param typed_storage Storage containing information that depends on the argument's type.
+        //! \param mode The command line argument parsing rules used by the parser.
+        //! 
+        //! You do not normally construct instances of this class manually. Instead, use the
+        //! basic_parser_builder.
+        action_command_line_argument(typename base_type::parser_type &parser, typename base_type::storage_type &&storage,
+                              typed_storage_type &&typed_storage)
+            : base_type{parser, std::move(storage)},
+              _storage{std::move(typed_storage)}
+        {
+        }
+
+        //! \copydoc base_type::is_switch()
+        //! 
+        //! For a multi-value argument, the element_type must be `bool` or `std::optional<bool>`.
+        //! For example, an argument with the container type `std::vector<bool>` would be a
+        //! multi-value switch argument.
+        bool is_switch() const noexcept override
+        {
+            return details::is_switch<T>::value;
+        }
+
+        //! \copydoc base_type::set_value()
+        set_value_result set_value(string_view_type value, std::locale loc = {}) override
+        {
+            std::optional<element_type> converted;
+            if (_storage.converter)
+                converted = _storage.converter(value, loc);
+            else
+                converted = lexical_convert<element_type, CharType, Traits, Alloc>::from_string(value, loc);
+
+            if (!converted)
+                return set_value_result::error;
+
+            base_type::set_value();
+            return invoke_action(converted);
+        }
+
+        //! \copydoc base_type::set_switch_value()
+        set_value_result set_switch_value() override
+        {
+            return set_switch_value_core();
+        }
+
+        //! \copydoc base_type::apply_default_value()
+        void apply_default_value() override
+        {
+            if (!this->has_value() && _storage.default_value)
+            {
+                _storage.value = *_storage.default_value;
+            }
+        }
+
+        //! \copydoc base_type::write_default_value()
+        typename base_type::stream_type &write_default_value(typename base_type::stream_type &stream) const override
+        {
+            if (_storage.default_value)
+            {
+                stream << *_storage.default_value;
+            }
+
+            return stream;
+        }
+
+        //! \copydoc base_type::has_default_value()
+        bool has_default_value() const noexcept override
+        {
+            return _storage.default_value.has_value();
+        }
+
+    private:
+        set_value_result invoke_action(const T &value)
+        {
+            bool result = _storage.action(value, this->parser());
+            return result ? set_value_result::success : set_value_result::cancel;
+        }
+
+        template<typename T2 = T>
+        std::enable_if_t<details::is_switch<T2>::value, set_value_result> set_switch_value_core()
+        {
+            base_type::set_value();
+            return invoke_action(true);
+        }
+
+        template<typename T2 = T>
+        std::enable_if_t<!details::is_switch<T2>::value, set_value_result> set_switch_value_core()
+        {
+            return set_value_result::error;
         }
 
         typed_storage_type _storage;

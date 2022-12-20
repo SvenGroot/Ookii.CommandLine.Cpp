@@ -1,5 +1,5 @@
 #ifndef OOKII_PARSING_MODE_H_
-#define OOKII_PARSING_MODO_H_
+#define OOKII_PARSING_MODE_H_
 
 #pragma once
 

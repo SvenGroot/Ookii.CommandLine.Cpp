@@ -175,7 +175,7 @@ namespace ookii
 
             for (const auto &argument_builder : arguments)
             {
-                auto argument = argument_builder->to_argument(_storage.mode);
+                auto argument = argument_builder->to_argument(*this);
                 if (argument->has_long_name())
                 {
                     auto name = argument->name();
@@ -839,27 +839,32 @@ namespace ookii
             if (!_storage.allow_duplicate_arguments && !arg.is_multi_value() && arg.has_value())
                 return create_result(parse_error::duplicate_argument, arg.name());
 
+            set_value_result result;
             if (!value)
             {
                 assert(arg.is_switch());
-                arg.set_switch_value();
+                result = arg.set_switch_value();
             }
-            else if (!arg.set_value(*value, _storage.locale))
+            else 
             {
-                return create_result(parse_error::invalid_value, arg.name());
+                result = arg.set_value(*value, _storage.locale);
+                if (result == set_value_result::error)
+                {
+                    return create_result(parse_error::invalid_value, arg.name());
+                }
             }
 
-            return post_process_argument(arg, value);
+            return post_process_argument(arg, value, result);
         }
 
-        result_type post_process_argument(argument_base_type &arg, std::optional<string_view_type> value)
+        result_type post_process_argument(argument_base_type &arg, std::optional<string_view_type> value, set_value_result result)
         {
             auto action = on_parsed_action::none;
             if (_on_parsed_callback)
                 action = _on_parsed_callback(arg, value);
 
             if (action == on_parsed_action::cancel_parsing || 
-                (arg.cancel_parsing() && action != on_parsed_action::always_continue))
+                ((arg.cancel_parsing() || result == set_value_result::cancel) && action != on_parsed_action::always_continue))
             {
                 return create_result(parse_error::parsing_cancelled, arg.name());
             }

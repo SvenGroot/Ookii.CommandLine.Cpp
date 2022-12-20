@@ -61,7 +61,7 @@ protected:
         set_color(color_reset);
     }
 
-    virtual void write_argument_descriptions()
+    virtual void write_argument_descriptions() override
     {
         // Calculate the amount of indentation needed based on the longest names, with two spaces
         // before and after. This way the usage dynamically adapts if you change the argument
@@ -80,7 +80,7 @@ protected:
     }
 
     // Custom format for argument names and aliases.
-    virtual void write_argument_description_header(const argument_type &arg)
+    virtual void write_argument_description_header(const argument_type &arg) override
     {
         // WriteArgumentDescriptions adjusts the indentation when in long/short mode, which we don't
         // want here, so set it manually.
