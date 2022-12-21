@@ -173,7 +173,6 @@ namespace ookii
         //! \param arguments A range containing basic_parser_builder::argument_builder instances.
         //! \param storage Parameters for the basic_command_line_parser.
         //! \param options Creation options provided by the basic_parser_builder.
-        //! \param case_sensitive Indicates whether command line argument names are case sensitive.
         template<typename Range>
         basic_command_line_parser(const Range &arguments, storage_type &&storage, creation_options_type &options)
             : _storage{std::move(storage)},
@@ -244,6 +243,9 @@ namespace ookii
                 });
         }
 
+        //! \brief Gets the parsing mode used by this parser.
+        //!
+        //! This value is set by the basic_parser_builder::mode() function.
         parsing_mode mode() const noexcept
         {
             return _storage.mode;
@@ -291,7 +293,7 @@ namespace ookii
 
         //! \brief Gets a list of all the argument name prefixes accepted by the parser.
         //!
-        //! By default, the parser accepts '/' and '-' on Windows, and only '-' on other systems.
+        //! By default, the parser accepts '-' and '/' on Windows, and only '-' on other systems.
         //! 
         //! Which prefixes are accepted can be changed using basic_parser_builder::prefixes().
         const std::vector<string_type> &prefixes() const noexcept
@@ -299,6 +301,11 @@ namespace ookii
             return _storage.prefixes;
         }
 
+        //! \brief Gets the long argument prefix.
+        //!
+        //! By default, the parser accepts '--' for long argument names.
+        //!
+        //! If not using parsing_mode::long_short, this value is not used and is always empty.
         const string_type &long_prefix() const noexcept
         {
             return _storage.long_prefix;
@@ -796,11 +803,21 @@ namespace ookii
                 return existing_arg;
             }
 
+            bool has_alias;
+            if (options.case_sensitive)
+            {
+                has_alias = short_name != short_alias;
+            }
+            else
+            {
+                has_alias = std::toupper(short_name, _storage.locale) != std::toupper(short_alias, _storage.locale);
+            }
+
             details::argument_storage<CharType, Traits, Alloc> storage{name};
             if (_storage.mode == parsing_mode::long_short)
             {
                 storage.short_name = short_name;
-                if (short_name != short_alias)
+                if (has_alias)
                 {
                     storage.short_aliases.push_back(short_alias);
                 }
@@ -809,7 +826,7 @@ namespace ookii
             {
                 // Cannot use {} because it gets treated as an initializer list.
                 storage.aliases.push_back(string_type(1, short_name));
-                if (short_name != short_alias)
+                if (has_alias)
                 {
                     storage.aliases.push_back(string_type(1, short_alias));
                 }

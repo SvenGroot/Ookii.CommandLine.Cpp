@@ -86,16 +86,29 @@ namespace ookii
             return defaults::unknown.data();
         }
 
+        //! \brief Gets the name of the help argument created if
+        //! basic_parser_builder::automatic_help_argument() was not set to `false`.
         virtual string_type automatic_help_name() const
         {
             return defaults::automatic_help_name.data();
         }
 
+        //! \brief Gets the short name of the help argument created if
+        //! basic_parser_builder::automatic_help_argument() was not set to `false`.
+        //!
+        //! In addition to the short name, the help argument will automatically have a short alias
+        //! that is the lower case first character of the value returned by automatic_help_name().
+        //! If the short name and short alias are equal, then no alias is added.
+        //!
+        //! If you are not using parsing_mode::long_short, the short name and short alias will be
+        //! used as regular aliases instead.
         virtual CharType automatic_help_short_name() const
         {
             return defaults::automatic_help_short_name;
         }
 
+        //! \brief Gets the description of the help argument created if
+        //! basic_parser_builder::automatic_help_argument() was not set to `false`.
         virtual string_type automatic_help_description() const
         {
             return defaults::automatic_help_description.data();

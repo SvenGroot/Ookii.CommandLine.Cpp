@@ -139,21 +139,36 @@ namespace ookii
         //! \brief Gets the name of the argument.
         //!
         //! The argument's name is set using the basic_parser_builder::add_argument() method.
+        //!
+        //! If using parsing_mode::long_short, and the argument has no long name, this is identical
+        //! to the short name.
         const string_type &name() const noexcept
         {
             return _storage.name;
         }
 
+        //! \brief Gets the short name of the argument, or a NULL character if it doesn't have one.
+        //!
+        //! The argument's short name is set using the
+        //! basic_parser_builder::argument_builder::short_name() method.
+        //!
+        //! If not using parsing_mode::long_short, this is always `false`.
         CharType short_name() const noexcept
         {
             return _storage.short_name;
         }
 
+        //! \brief Gets a value that indicates whether the argument has a short name.
+        //!
+        //! If not using parsing_mode::long_short, this is always `false`.
         bool has_short_name() const noexcept
         {
             return _storage.short_name != '\0';
         }
 
+        //! \brief Gets a value that indicates whether the argument has a long name.
+        //!
+        //! If not using parsing_mode::long_short, this is always `true`.
         bool has_long_name() const noexcept
         {
             return _storage.has_long_name;
@@ -161,7 +176,7 @@ namespace ookii
 
         //! \brief Gets a list of aliases that can be used instead of the argument's name.
         //!
-        //! An argument may not have any aliases.
+        //! An argument may have zero or more aliases.
         //! 
         //! Aliases can be added using the basic_parser_builder::argument_builder::alias() method.
         const std::vector<string_type> &aliases() const noexcept
@@ -169,6 +184,14 @@ namespace ookii
             return _storage.aliases;
         }
 
+        //! \brief Gets a list of short aliases that can be used instead of the argument's name.
+        //!
+        //! An argument may have zero or more short aliases.
+        //!
+        //! If not using parsing_mode::long_short, this is always an empty collection.
+        //! 
+        //! Short aliases can be added using the
+        //! basic_parser_builder::argument_builder::short_alias() method.
         const std::vector<CharType> &short_aliases() const noexcept
         {
             return _storage.short_aliases;
@@ -338,6 +361,8 @@ namespace ookii
         }
 
         //! \brief Constructs a command line argument base from a command_line_argument_storage.
+        //! \param parser The basic_command_line_parser this argument belongs to.
+        //! \param storage Storage containing the argument's information.
         command_line_argument_base(parser_type &parser, storage_type &&storage)
             : _parser{&parser},
               _storage{std::move(storage)}
@@ -406,9 +431,9 @@ namespace ookii
         using typed_storage_type = details::typed_argument_storage<value_type, element_type, CharType, Traits>;
 
         //! \brief Initializes a new instance of the command_line_argument class.
+        //! \param parser The basic_command_line_parser this argument belongs to.
         //! \param storage Storage containing the argument's information.
         //! \param typed_storage Storage containing information that depends on the argument's type.
-        //! \param mode The command line argument parsing rules used by the parser.
         //! 
         //! You do not normally construct instances of this class manually. Instead, use the
         //! basic_parser_builder.
@@ -523,9 +548,9 @@ namespace ookii
         using typed_storage_type = details::typed_argument_storage<T, element_type, CharType, Traits>;
 
         //! \brief Initializes a new instance of the multi_value_command_line_argument class.
+        //! \param parser The basic_command_line_parser this argument belongs to.
         //! \param storage Storage containing the argument's information.
         //! \param typed_storage Storage containing information that depends on the argument's type.
-        //! \param mode The command line argument parsing rules used by the parser.
         //! 
         //! You do not normally construct instances of this class manually. Instead, use the
         //! basic_parser_builder.
@@ -672,9 +697,9 @@ namespace ookii
         using function_type = typename typed_storage_type::function_type;
 
         //! \brief Initializes a new instance of the command_line_argument class.
+        //! \param parser The basic_command_line_parser this argument belongs to.
         //! \param storage Storage containing the argument's information.
         //! \param typed_storage Storage containing information that depends on the argument's type.
-        //! \param mode The command line argument parsing rules used by the parser.
         //! 
         //! You do not normally construct instances of this class manually. Instead, use the
         //! basic_parser_builder.

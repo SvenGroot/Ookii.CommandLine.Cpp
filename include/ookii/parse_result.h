@@ -9,21 +9,6 @@
 
 namespace ookii
 {
-    namespace details
-    {
-        template<typename CharType>
-        struct error_formats
-        {
-            static constexpr auto invalid_value = literal_cast<CharType>("The value provided for the argument '{}' was invalid.");
-            static constexpr auto unknown_argument = literal_cast<CharType>("Unknown argument name '{}'.");
-            static constexpr auto missing_value = literal_cast<CharType>("No value was supplied for the argument '{}'.");
-            static constexpr auto duplicate_argument = literal_cast<CharType>("The argument '{}' was supplied more than once.");
-            static constexpr auto too_many_arguments = literal_cast<CharType>("Too many arguments were supplied.");
-            static constexpr auto missing_required_argument = literal_cast<CharType>("The required argument '{}' was not supplied.");
-            static constexpr auto unknown = literal_cast<CharType>("An unknown error has occurred.");
-        };
-    }
-
     //! \brief The type of error that occurred while parsing the command line.
     enum class parse_error
     {

@@ -208,6 +208,9 @@ namespace ookii
         //! The default value is `true`.
         bool blank_line_after_syntax{true};
 
+        //! \brief When using parsing_mode::long_short, use short names in the usage syntax.
+        //!
+        //! This has no effect when not using parsing_mode::long_short.
         bool use_short_names_for_syntax{};
 
         //! \brief Indicates whether to add a blank line after each argument's description.
@@ -801,10 +804,12 @@ namespace ookii
         //! If there are no aliases at all, it writes nothing.
         //!
         //! This method is called by the base implementation of the
-        //! write_argument_description_header() method
+        //! write_argument_description_header() method.
         //!
         //! \param aliases A list of the aliases.
+        //! \param short_aliases A list of the short aliases.
         //! \param prefix The argument name prefix to use.
+        //! \param short_prefix The prefix to use for short argument names.
         virtual void write_aliases(const std::vector<string_type> &aliases, const std::vector<CharType> &short_aliases,
             string_view_type prefix, string_view_type short_prefix)
         {

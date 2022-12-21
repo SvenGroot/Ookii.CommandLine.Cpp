@@ -350,6 +350,13 @@ namespace ookii
         CharType _separator;
     };
 
+    //! \brief Removes a prefix from a string.
+    //! \tparam CharType The character type used.
+    //! \tparam Traits The character traits to use.
+    //! \param value The string to remove the prefix from.
+    //! \param prefix The prefix to remove.
+    //! \return If the `value` parameter starts with the `prefix` parameter, a string view of the
+    //!         `value` parameter with the prefix removed; otherwise, `std::nullopt`.
     template<typename CharType, typename Traits>
     std::optional<std::basic_string_view<CharType, Traits>> strip_prefix(std::basic_string_view<CharType, Traits> value,
         std::basic_string_view<CharType, Traits> prefix)
@@ -362,6 +369,14 @@ namespace ookii
         return {};
     }
 
+    //! \brief Splits a string on the first occurrence of a separator.
+    //! \tparam CharType The character type used.
+    //! \tparam Traits The character traits to use.
+    //! \param value The string to split.
+    //! \param separator The separator to split on.
+    //! \return If the string contains the separator, both segments are returned, excluding the
+    //!         separator; otherwise, the first segment is the entire string and the second one is
+    //!         `std::nullopt`.
     template<typename CharType, typename Traits>
     std::tuple<std::basic_string_view<CharType, Traits>, std::optional<std::basic_string_view<CharType, Traits>>> split_once(
         std::basic_string_view<CharType, Traits> value, CharType separator)

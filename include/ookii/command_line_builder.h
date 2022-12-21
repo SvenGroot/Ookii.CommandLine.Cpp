@@ -97,6 +97,7 @@ namespace ookii
             //! \brief Default destructor.
             virtual ~argument_builder_base() = default;
 
+            //! \brief Deleted copy constructor.
             argument_builder_base(argument_builder_base &) = delete;
             argument_builder_base &operator=(argument_builder_base &) = delete;
 
@@ -121,7 +122,7 @@ namespace ookii
                 return _parser_builder.add_action_argument(action, name);
             }
 
-            //! \copydoc basic_parser_builder::add_action_argument(Action,string_type)
+            //! \copydoc basic_parser_builder::add_action_argument(Action,CharType)
             template<typename Action>
             action_argument_builder<details::first_argument_type<Action>> &add_action_argument(Action action, CharType short_name)
             {
@@ -162,7 +163,7 @@ namespace ookii
 
             //! \brief Converts the argument_builder_base into a command_line_argument_base that
             //!        can be used by the basic_command_line_parser.
-            //! \param mode The command line argument parsing rules used by the parser.
+            //! \param parser The basic_command_line_parser this argument belongs to.
             virtual std::unique_ptr<argument_base_type> to_argument(parser_type &parser) = 0;
 
         protected:
@@ -214,12 +215,18 @@ namespace ookii
         public:
             using argument_builder_base::argument_builder_base;
 
+            //! \brief Sets a short name for the argument that matches the first character of the
+            //! long name.
             BuilderType &short_name()
             {
                 this->storage().short_name = this->storage().name[0];
                 return *static_cast<BuilderType*>(this);
             }
 
+            //! \brief Sets an explicit short name for an argument.
+            //! \param short_name The short name.
+            //!
+            //! Use short_name() to use the first character of the long name as the short name.
             BuilderType &short_name(CharType short_name)
             {
                 this->storage().short_name = short_name;
@@ -307,12 +314,23 @@ namespace ookii
             //! 
             //! An argument can have multiple aliases, which can be specified by invoking this
             //! method multiple times.
+            //!
+            //! When using parsing_mode::long_short, this sets the long aliases. They are ignored if
+            //! the argument does not have a long name.
             BuilderType &alias(string_type alias)
             {
                 this->storage().aliases.push_back(alias);
                 return *static_cast<BuilderType*>(this);
             }
 
+            //! \brief Adds a short alias to the argument.
+            //! \param alias The short alias to add.
+            //! 
+            //! An argument can have multiple short aliases, which can be specified by invoking this
+            //! method multiple times.
+            //!
+            //! This is only used when using parsing_mode::long_short, and the argument has a short
+            //! name.
             BuilderType &short_alias(CharType alias)
             {
                 this->storage().short_aliases.push_back(alias);
@@ -422,9 +440,7 @@ namespace ookii
             typed_storage_type _typed_storage;
         };
 
-        //! \brief Specifies options for an argument, other than a multi-value or action argument,
-        //! under construction.
-        //!
+        //! \brief Specifies options for an argument, other than a multi-value or action argument.
         //! \tparam T The type of the argument's values.
         template<typename T>
         class argument_builder final : public typed_argument_builder<typed_argument_type<T>, argument_builder<T>>
@@ -435,7 +451,7 @@ namespace ookii
             using base_type::base_type;
         };
 
-        //! \brief Base class for argument_builder for multi-value arguments.
+        //! \brief Specified options for a multi-value argument.
         //! \tparam T The type of the argument's container.
         template<typename T>
         class multi_value_argument_builder final : public typed_argument_builder<multi_value_argument_type<T>, multi_value_argument_builder<T>>
@@ -465,6 +481,8 @@ namespace ookii
             }
         };
 
+        //! \brief Specifies options for an action argument.
+        //! \tparam T The type of the argument's values.
         template<typename T>
         class action_argument_builder final : public argument_builder_common<action_argument_builder<T>>
         {
@@ -492,7 +510,7 @@ namespace ookii
             //! \brief Initializes a new instance of the argument_builder class.
             //! \param parser_builder A reference to the basic_parser_builder used to build this argument.
             //! \param short_name The short name of the argument.
-            //! \param value A reference where the argument's value will be stored.
+            //! \param action The action to invoke when the argument is supplied.
             action_argument_builder(basic_parser_builder &parser_builder, CharType short_name, function_type action)
                 : base_type{parser_builder, short_name},
                   _typed_storage{action}
@@ -585,6 +603,28 @@ namespace ookii
             return *static_cast<argument_builder<T>*>(_arguments.back().get());
         }
 
+        //! \brief Adds a new action argument, and returns an argument_builder that can be used to
+        //!        further customize it.
+        //! \tparam Action The type of a _Callable_ object used for the action.
+        //! \param action The action to invoke when the argument is supplied.
+        //! \param name The name of the argument.
+        //!
+        //! Action arguments are arguments that don't use a variable to store their value, but which
+        //! invoke a function when supplied. This function must be a _Callable_ object, such as a
+        //! function pointer or lambda, which the following signature:
+        //!
+        //! ```
+        //! bool action(T value, ookii::basic_command_line_parser<CharType, Traits, Alloc> &parser);
+        //! ```
+        //!
+        //! Here, `T` is the the type of the argument, and the value will be converted to type `T`
+        //! before the function is invoked. If `T` is a `bool`, the argument is a switch argument.
+        //! Action arguments cannot be multi-value arguments. They also cannot use `std::optional<T>`
+        //! or have a default value.
+        //!
+        //! The function is invoked immediately as the argument is encountered, before the remainder
+        //! of the command line is parsed. Return `false` from the function to cancel parsing,
+        //! causing a parse_result with parse_error::parsing_cancelled to be returned.
         template<typename Action>
         action_argument_builder<details::first_argument_type<Action>> &add_action_argument(Action action, string_type name)
         {
@@ -593,6 +633,19 @@ namespace ookii
             return *static_cast<argument_type*>(_arguments.back().get());
         }
 
+        //! \brief Adds a new action argument, and returns an argument_builder that can be used to
+        //!        further customize it.
+        //! \tparam Action The type of a _Callable_ object used for the action.
+        //! \param action The action to invoke when the argument is supplied.
+        //! \param short_name The short name of the argument.
+        //!
+        //! When using long/short mode, this method adds an argument that only has a short name.
+        //! It cannot be given a long name afterwards.
+        //! 
+        //! When not using long/short mode, this method is identical to add_argument(T&,string_type)
+        //! with a single character name.
+        //! 
+        //! See add_action_argument(Action,string_type) for more information.
         template<typename Action>
         action_argument_builder<details::first_argument_type<Action>> &add_action_argument(Action action, CharType short_name)
         {
@@ -694,6 +747,8 @@ namespace ookii
             return *this;
         }
 
+        //! \brief Sets the command line parsing rules to use.
+        //! \param mode One of the values of the parsing_mode enumeration.
         basic_parser_builder &mode(parsing_mode mode)
         {
             if (mode < parsing_mode::default_mode || mode > parsing_mode::long_short)
@@ -735,18 +790,22 @@ namespace ookii
         //! Any value that starts with the specified prefixes is considered an argument name (with
         //! the exception of a dash followed by a number, which is always considered to be a
         //! negative number).
+        //!
+        //! When using parsing_mode::long_short, this defines the short argument name prefixes.
         //! 
-        //! By default, the parser accepts '/' and '-' on Windows, and only '-' on other systems.
-        //! 
-        //! The prefixes are evaluated in order, so if for example you wish to use '--' and '-'
-        //! you must provide the longer prefix first otherwise it will never be considered after
-        //! the shorter one matches.
+        //! By default, the parser accepts '-' and '/' on Windows, and only '-' on other systems.
         template<typename T>
         basic_parser_builder &prefixes(std::initializer_list<T> prefixes)
         {
             return this->prefixes<std::initializer_list<T>>(prefixes);
         }
 
+        //! \brief Sets the long argument name prefix accepted by the basic_command_line_parser.
+        //! \param prefix The long argument name prefix.
+        //!
+        //! This value is only used if the mode() function was used to set parsing_mode::long_short.
+        //!
+        //! The default value is "--".
         basic_parser_builder &long_prefix(string_type prefix)
         {
             _storage.long_prefix = prefix;
