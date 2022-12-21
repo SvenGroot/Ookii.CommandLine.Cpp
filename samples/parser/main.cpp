@@ -5,6 +5,11 @@
 #include <ookii/command_line.h>
 #include "../common.h"
 
+void show_version()
+{
+    std::cout << "Ookii.CommandLine Sample 2.0" << std::endl;
+}
+
 int main(int argc, char *argv[])
 {
     std::string source;
@@ -82,6 +87,9 @@ int main(int argc, char *argv[])
         // Multi-value arguments can be use any compatible container type, include std::vector and
         // std::list.
         .add_multi_value_argument(values, "Value").description("This is an example of a multi-value argument, which can be repeated multiple times to set more than one value.")
+        // This defines an argument named "Version", which will call the function and cancel parsing
+        // when invoked.
+        .add_version_argument(show_version)
         .build();
 
     // This method will parse the arguments, and print an error message and usage help if needed.

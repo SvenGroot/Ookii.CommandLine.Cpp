@@ -815,6 +815,27 @@ public:
         VERIFY_TRUE(parser.help_requested());
     }
 
+    TEST_METHOD(TestVersionArgument)
+    {
+        bool called = false;
+        auto parser = basic_parser_builder<tchar_t>{TEXT("TestCommand")}
+            .add_version_argument([&]() { called = true; })
+            .build();
+
+        VerifyArgument(parser, TEXT("Version"), false, true, false, {});
+        VerifyParseResult(parser.parse({ TEXT("-Version") }), parser, parse_error::parsing_cancelled, TEXT("Version"));
+        VERIFY_TRUE(called);
+
+        // Check case adjustment.
+        int foo;
+        auto parser2 = basic_parser_builder<tchar_t>{TEXT("TestCommand")}
+            .add_version_argument([&]() { called = true; })
+            .add_argument(foo, TEXT("foo"))
+            .build();
+
+        VerifyArgument(parser2, TEXT("version"), false, true, false, {});
+    }
+
 private:
     static void VerifyArgument(const basic_command_line_parser<tchar_t> &parser, const tstring &name, bool required, bool is_switch, bool multi_value, std::optional<size_t> position)
     {

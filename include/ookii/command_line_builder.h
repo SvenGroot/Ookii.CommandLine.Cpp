@@ -64,6 +64,8 @@ namespace ookii
         using argument_base_type = typename parser_type::argument_base_type;
         //! \copydoc parser_type::string_provider_type
         using string_provider_type = typename parser_type::string_provider_type;
+        //! \brief The function type used by the add_version_argument function.
+        using version_function = std::function<void()>;
 
         //! \brief The specialized type of the command_line_argument instances that will be built.
         //! \tparam T The type of the argument's value.
@@ -143,6 +145,12 @@ namespace ookii
                 return _parser_builder.add_multi_value_argument(value, short_name);
             }
 
+            //! \copydoc basic_parser_builder::add_version_argument()
+            action_argument_builder<bool> &add_version_argument(version_function function)
+            {
+                return _parser_builder.add_version_argument(function);
+            }
+
             //! \copydoc basic_parser_builder::build()
             parser_type build()
             {
@@ -215,8 +223,24 @@ namespace ookii
         public:
             using argument_builder_base::argument_builder_base;
 
+            //! \brief Changes the name of the argument.
+            //!
+            //! If using parsing_mode::long_short, this will give the argument a long name if it
+            //! didn't already have one.
+            //!
+            //! \param name The new name.
+            BuilderType &name(string_type name)
+            {
+                this->storage().name = name;
+                this->storage().has_long_name = true;
+                return *static_cast<BuilderType*>(this);
+            }
+
             //! \brief Sets a short name for the argument that matches the first character of the
             //! long name.
+            //!
+            //! \warning If you change the name of this argument after this call, the short name
+            //!          does not get updated.
             BuilderType &short_name()
             {
                 this->storage().short_name = this->storage().name[0];
@@ -231,6 +255,18 @@ namespace ookii
             {
                 this->storage().short_name = short_name;
                 return *static_cast<BuilderType*>(this);
+            }
+
+            //! \copydoc argument_builder_base::name()
+            const string_type &name() const noexcept
+            {
+                return argument_builder_base::name();
+            }
+
+            //! \copydoc argument_builder_base::short_name()
+            const CharType &short_name() const noexcept
+            {
+                return argument_builder_base::short_name();
             }
 
             //! \brief Sets the value description for the argument.
@@ -548,10 +584,6 @@ namespace ookii
 
         //! \brief Adds a new argument, and returns an argument_builder that can be used to
         //!        further customize it.
-        //! \tparam T The type of the argument.
-        //! \param value A reference to the storage for the argument's value. When the argument
-        //!              is supplied, the converted value will be written to this reference.
-        //! \param name The name of the argument, used to supply it on the command line.
         //! 
         //! Any type T can be used as an argument type, as long as it meets the following
         //! criteria:
@@ -575,6 +607,12 @@ namespace ookii
         //! 
         //! If type T is either `bool` or `std::optional<bool>`, the resulting argument will
         //! be a switch argument.
+        //!
+        //! \tparam T The type of the argument.
+        //! \param value A reference to the storage for the argument's value. When the argument
+        //!              is supplied, the converted value will be written to this reference.
+        //! \param name The name of the argument, used to supply it on the command line.
+        //! \return An argument_builder that can be used to further customize the argument.
         template<typename T>
         argument_builder<T> &add_argument(T &value, string_type name)
         {
@@ -584,18 +622,19 @@ namespace ookii
 
         //! \brief Adds a new argument, and returns an argument_builder that can be used to
         //!        further customize it.
-        //! \tparam T The type of the argument.
-        //! \param value A reference to the storage for the argument's value. When the argument
-        //!              is supplied, the converted value will be written to this reference.
-        //! \param short_name The short name of the argument, used to supply it on the command line.
         //! 
         //! When using long/short mode, this method adds an argument that only has a short name.
-        //! It cannot be given a long name afterwards.
         //! 
         //! When not using long/short mode, this method is identical to add_argument(T&,string_type)
         //! with a single character name.
         //! 
         //! See add_argument(T&,string_type) for more information.
+        //!
+        //! \tparam T The type of the argument.
+        //! \param value A reference to the storage for the argument's value. When the argument
+        //!              is supplied, the converted value will be written to this reference.
+        //! \param short_name The short name of the argument, used to supply it on the command line.
+        //! \return An argument_builder that can be used to further customize the argument.
         template<typename T>
         argument_builder<T> &add_argument(T &value, CharType short_name)
         {
@@ -603,11 +642,7 @@ namespace ookii
             return *static_cast<argument_builder<T>*>(_arguments.back().get());
         }
 
-        //! \brief Adds a new action argument, and returns an argument_builder that can be used to
-        //!        further customize it.
-        //! \tparam Action The type of a _Callable_ object used for the action.
-        //! \param action The action to invoke when the argument is supplied.
-        //! \param name The name of the argument.
+        //! \brief Adds a new action argument.
         //!
         //! Action arguments are arguments that don't use a variable to store their value, but which
         //! invoke a function when supplied. This function must be a _Callable_ object, such as a
@@ -625,6 +660,11 @@ namespace ookii
         //! The function is invoked immediately as the argument is encountered, before the remainder
         //! of the command line is parsed. Return `false` from the function to cancel parsing,
         //! causing a parse_result with parse_error::parsing_cancelled to be returned.
+        //!
+        //! \tparam Action The type of a _Callable_ object used for the action.
+        //! \param action The action to invoke when the argument is supplied.
+        //! \param name The name of the argument.
+        //! \return An action_argument_builder that can be used to further customize the argument.
         template<typename Action>
         action_argument_builder<details::first_argument_type<Action>> &add_action_argument(Action action, string_type name)
         {
@@ -633,19 +673,19 @@ namespace ookii
             return *static_cast<argument_type*>(_arguments.back().get());
         }
 
-        //! \brief Adds a new action argument, and returns an argument_builder that can be used to
-        //!        further customize it.
-        //! \tparam Action The type of a _Callable_ object used for the action.
-        //! \param action The action to invoke when the argument is supplied.
-        //! \param short_name The short name of the argument.
+        //! \brief Adds a new action argument.
         //!
         //! When using long/short mode, this method adds an argument that only has a short name.
-        //! It cannot be given a long name afterwards.
         //! 
         //! When not using long/short mode, this method is identical to add_argument(T&,string_type)
         //! with a single character name.
         //! 
         //! See add_action_argument(Action,string_type) for more information.
+        //!
+        //! \tparam Action The type of a _Callable_ object used for the action.
+        //! \param action The action to invoke when the argument is supplied.
+        //! \param short_name The short name of the argument.
+        //! \return An action_argument_builder that can be used to further customize the argument.
         template<typename Action>
         action_argument_builder<details::first_argument_type<Action>> &add_action_argument(Action action, CharType short_name)
         {
@@ -654,19 +694,20 @@ namespace ookii
             return *static_cast<argument_type*>(_arguments.back().get());
         }
 
-        //! \brief Adds a new multi-value argument, and returns an argument_builder that can
-        //!        be used to further customize it.
-        //! \tparam T The type of the argument's container.
-        //! \param value A reference to the container for the argument's values. When the
-        //!              argument is supplied, the converted value will be added to this
-        //!              container.
-        //! \param name The name of the argument, used to supply it on the command line.
+        //! \brief Adds a new multi-value argument.
         //! 
         //! Any container type T can be used, provided it meets the following requirements.
         //! 
         //! - It defines a type T::value_type that meets the requirements outlined in the
         //!   documentation for add_argument().
         //! - It defines the methods T::push_back() and T::clear()
+        //!
+        //! \tparam T The type of the argument's container.
+        //! \param value A reference to the container for the argument's values. When the
+        //!              argument is supplied, the converted value will be added to this
+        //!              container.
+        //! \param name The name of the argument, used to supply it on the command line.
+        //! \return A multi_value_argument_builder that can be used to further customize the argument.
         template<typename T>
         multi_value_argument_builder<T> &add_multi_value_argument(T &value, string_type name)
         {
@@ -674,26 +715,58 @@ namespace ookii
             return *static_cast<multi_value_argument_builder<T>*>(_arguments.back().get());
         }
 
-        //! \brief Adds a new multi-value argument, and returns an argument_builder that can
-        //!        be used to further customize it.
-        //! \tparam T The type of the argument's container.
-        //! \param value A reference to the container for the argument's values. When the
-        //!              argument is supplied, the converted value will be added to this
-        //!              container.
-        //! \param short_name The short name of the argument, used to supply it on the command line.
+        //! \brief Adds a new multi-value argument.
         //! 
         //! When using long/short mode, this method adds an argument that only has a short name.
-        //! It cannot be given a long name afterwards.
         //! 
         //! When not using long/short mode, this method is identical to using
         //! add_multi_value_argument(T&,string_type) with a single character name.
         //! 
         //! See add_multi_value_argument(T&,string_type) for more information.
+        //!
+        //! \tparam T The type of the argument's container.
+        //! \param value A reference to the container for the argument's values. When the
+        //!              argument is supplied, the converted value will be added to this
+        //!              container.
+        //! \param short_name The short name of the argument, used to supply it on the command line.
+        //! \return A multi_value_argument_builder that can be used to further customize the argument.
         template<typename T>
         multi_value_argument_builder<T> &add_multi_value_argument(T &value, CharType short_name)
         {
             _arguments.push_back(std::make_unique<multi_value_argument_builder<T>>(*this, short_name, value));
             return *static_cast<multi_value_argument_builder<T>*>(_arguments.back().get());
+        }
+
+        //! \brief Adds the standard version argument.
+        //!
+        //! This method adds an argument with the default name "Version", which invokes the
+        //! specified function when supplied. The argument cancels parsing, but does not show usage
+        //! help.
+        //!
+        //! The actual name and description of the argument are determined using the
+        //! basic_localized_string_provider class.
+        //!
+        //! \param function A function that displays version information. This will be called when
+        //! \return An action_argument_builder that can be used to further customize the argument.
+        action_argument_builder<bool> &add_version_argument(version_function function)
+        {
+            if (_version_argument != nullptr)
+            {
+                throw std::logic_error("Duplicate version argument.");
+            }
+            
+            auto action = [function = std::move(function)](bool, parser_type &)
+            {
+                function();
+                // Cancel parsing without requesting help.
+                return false;
+            };
+
+            auto &argument = add_action_argument(action, _storage.string_provider->automatic_version_name())
+                .description(_storage.string_provider->automatic_version_description());
+
+            _version_argument = &argument;
+            return argument;
         }
 
         //! \brief Creates a basic_command_line_parser using the current options and arguments.
@@ -717,6 +790,26 @@ namespace ookii
             else
             {
                 _storage.long_prefix.clear();
+            }
+
+            // If there is a version argument, try to match its case to other arguments.
+            if (_version_argument != nullptr)
+            {
+                auto it = std::find_if(_arguments.begin(), _arguments.end(), [this](auto &item) { return item.get() != _version_argument; });
+                if (it != _arguments.end())
+                {
+                    auto name = _version_argument->name();
+                    if (std::isupper((*it)->name()[0], _storage.locale))
+                    {
+                        name[0] = std::toupper(name[0], _storage.locale);
+                    }
+                    else
+                    {
+                        name[0] = std::tolower(name[0], _storage.locale);
+                    }
+
+                    _version_argument->name(name);
+                }
             }
 
             return parser_type{_arguments, std::move(_storage), _options};
@@ -900,6 +993,7 @@ namespace ookii
 
         std::vector<std::unique_ptr<argument_builder_base>> _arguments;
         size_t _next_position{};
+        action_argument_builder<bool> *_version_argument{};
         
         creation_options_type _options{};
         parser_storage_type _storage;

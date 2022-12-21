@@ -32,6 +32,13 @@ namespace ookii
         //! \brief The concrete string_view type used.
         using string_view_type = std::basic_string_view<CharType, Traits>;
 
+        //! \brief Gets a default instance of the basic_localized_string_provider.
+        static basic_localized_string_provider &get_default() noexcept
+        {
+            static basic_localized_string_provider default_string_provider;
+            return default_string_provider;
+        }
+
         //! \brief Gets the error message for parse_error::invalid_value.
         //! \param argument_name The name of the argument.
         virtual string_type invalid_value(string_view_type argument_name) const
@@ -114,6 +121,20 @@ namespace ookii
             return defaults::automatic_help_description.data();
         }
 
+        //! \brief Gets the name of the version argument created by
+        //! basic_parser_builder::add_version_argument().
+        virtual string_type automatic_version_name() const
+        {
+            return defaults::automatic_version_name.data();
+        }
+
+        //! \brief Gets the description of the version argument created by
+        //! basic_parser_builder::add_version_argument().
+        virtual string_type automatic_version_description() const
+        {
+            return defaults::automatic_version_description.data();
+        }
+
     private:
         struct defaults
         {
@@ -128,6 +149,8 @@ namespace ookii
             static constexpr auto automatic_help_name = literal_cast<CharType>("Help");
             static constexpr CharType automatic_help_short_name = '?';
             static constexpr auto automatic_help_description = literal_cast<CharType>("Displays this help message.");
+            static constexpr auto automatic_version_name = literal_cast<CharType>("Version");
+            static constexpr auto automatic_version_description = literal_cast<CharType>("Displays version information.");
         };
     };
 

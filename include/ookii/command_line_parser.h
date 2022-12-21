@@ -40,6 +40,10 @@ namespace ookii
                 : command_name{command_name},
                   string_provider{string_provider}
             {
+                if (this->string_provider == nullptr)
+                {
+                    this->string_provider = &string_provider_type::get_default();
+                }
             }
 
             string_type command_name;
@@ -179,11 +183,6 @@ namespace ookii
               _arguments_by_name{string_less{options.case_sensitive, _storage.locale}},
               _arguments_by_short_name{char_less{options.case_sensitive, _storage.locale}}
         {
-            if (_storage.string_provider == nullptr)
-            {
-                _storage.string_provider = &_default_string_provider;
-            }
-
             for (const auto &argument_builder : arguments)
             {
                 add_argument(argument_builder->to_argument(*this));
@@ -1042,7 +1041,6 @@ namespace ookii
         }
 
         storage_type _storage;
-        string_provider_type _default_string_provider;
         std::vector<prefix_info> _sorted_prefixes;
 
         // _arguments_by_name and _argument_by_short_name contain pointers to items owned by
