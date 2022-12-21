@@ -86,6 +86,21 @@ namespace ookii
             return defaults::unknown.data();
         }
 
+        virtual string_type automatic_help_name() const
+        {
+            return defaults::automatic_help_name.data();
+        }
+
+        virtual CharType automatic_help_short_name() const
+        {
+            return defaults::automatic_help_short_name;
+        }
+
+        virtual string_type automatic_help_description() const
+        {
+            return defaults::automatic_help_description.data();
+        }
+
     private:
         struct defaults
         {
@@ -97,6 +112,9 @@ namespace ookii
             static constexpr auto missing_required_argument_format = literal_cast<CharType>("The required argument '{}' was not supplied.");
             static constexpr auto combined_short_name_non_switch = literal_cast<CharType>("The combined short argument '{}' contains an argument that is not a switch.");
             static constexpr auto unknown = literal_cast<CharType>("An unknown error has occurred.");
+            static constexpr auto automatic_help_name = literal_cast<CharType>("Help");
+            static constexpr CharType automatic_help_short_name = '?';
+            static constexpr auto automatic_help_description = literal_cast<CharType>("Displays this help message.");
         };
     };
 

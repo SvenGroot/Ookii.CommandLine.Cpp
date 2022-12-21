@@ -26,7 +26,7 @@ public:
         int index = 0;
         for (const auto &arg : parser.arguments())
         {
-            VERIFY_TRUE(index < 2);
+            VERIFY_TRUE(index < 3);
             switch (index)
             {
             case 0:
@@ -35,6 +35,10 @@ public:
 
             case 1:
                 VERIFY_EQUAL(TEXT("Arg2"), arg.name());
+                break;
+
+            case 2:
+                VERIFY_EQUAL(TEXT("Help"), arg.name());
                 break;
             }
 

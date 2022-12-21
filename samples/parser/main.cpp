@@ -13,7 +13,6 @@ int main(int argc, char *argv[])
     std::optional<float> count;
     bool verbose;
     std::vector<std::string> values;
-    bool help;
 
     std::string name;
     if (argc > 0) 
@@ -83,12 +82,6 @@ int main(int argc, char *argv[])
         // Multi-value arguments can be use any compatible container type, include std::vector and
         // std::list.
         .add_multi_value_argument(values, "Value").description("This is an example of a multi-value argument, which can be repeated multiple times to set more than one value.")
-        // This defines a switch argument named "Help", with the alias "?".
-        // 
-        // For this argument, the cancel_parsing method is used, which means that command line
-        // processing is stopped when this argument is supplied. That way, we can print usage
-        // regardless of what other arguments are present.
-        .add_argument(help, "Help").cancel_parsing().alias("?").description("Displays this help message.")
         .build();
 
     // This method will parse the arguments, and print an error message and usage help if needed.
@@ -106,7 +99,6 @@ int main(int argc, char *argv[])
     std::cout << "Count: " << count << std::endl;
     std::cout << "Verbose: " << verbose << std::endl;
     std::cout << "Values: " << values << std::endl;
-    std::cout << "Help: " << help << std::endl;
 
     return 0;
 }

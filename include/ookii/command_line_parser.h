@@ -53,6 +53,15 @@ namespace ookii
             bool allow_white_space_separator{true};
             bool allow_duplicate_arguments{false};
         };
+
+        template<typename CharType, typename Traits, typename Alloc>
+        struct creation_options
+        {
+            using string_type = std::basic_string<CharType, Traits, Alloc>;
+
+            bool case_sensitive{};
+            bool automatic_help_argument{true};
+        };
     }
 
     //! \brief Value to be returned from the callback passed to the basic_command_line_parser::on_parsed()
@@ -109,6 +118,8 @@ namespace ookii
         using usage_writer_type = basic_usage_writer<CharType, Traits, Alloc>;
         //! \brief The specialized type of parser parameter storage used. For internal use.
         using storage_type = details::parser_storage<CharType, Traits, Alloc>;
+        //! \brief The specialized type of parser creation options used. For internal use.
+        using creation_options_type = details::creation_options<CharType, Traits, Alloc>;
         //! \brief The callback function type for on_parsed().
         using on_parsed_callback = std::function<on_parsed_action(argument_base_type &, std::optional<string_view_type> value)>;
         //! \brief The specialized type of basic_localized_string_provider used.
@@ -161,12 +172,13 @@ namespace ookii
         //!         instances.
         //! \param arguments A range containing basic_parser_builder::argument_builder instances.
         //! \param storage Parameters for the basic_command_line_parser.
+        //! \param options Creation options provided by the basic_parser_builder.
         //! \param case_sensitive Indicates whether command line argument names are case sensitive.
         template<typename Range>
-        basic_command_line_parser(const Range &arguments, storage_type &&storage, bool case_sensitive)
+        basic_command_line_parser(const Range &arguments, storage_type &&storage, creation_options_type &options)
             : _storage{std::move(storage)},
-              _arguments_by_name{string_less{case_sensitive, _storage.locale}},
-              _arguments_by_short_name{char_less{case_sensitive, _storage.locale}}
+              _arguments_by_name{string_less{options.case_sensitive, _storage.locale}},
+              _arguments_by_short_name{char_less{options.case_sensitive, _storage.locale}}
         {
             if (_storage.string_provider == nullptr)
             {
@@ -175,44 +187,10 @@ namespace ookii
 
             for (const auto &argument_builder : arguments)
             {
-                auto argument = argument_builder->to_argument(*this);
-                if (argument->has_long_name())
-                {
-                    auto name = argument->name();
-                    const auto [it, success] = _arguments_by_name.insert(std::pair{name, argument.get()});
-                    if (!success)
-                        throw std::logic_error("Duplicate argument name.");
-
-                    for (const auto &alias : argument->aliases())
-                    {
-                        const auto [alias_it, alias_success] = _arguments_by_name.insert(std::pair{alias, argument.get()});
-                        if (!alias_success)
-                            throw std::logic_error("Duplicate argument name.");
-                    }
-                }
-
-                if (argument->has_short_name())
-                {
-                    auto name = argument->short_name();
-                    const auto [it, success] = _arguments_by_short_name.insert(std::pair{name, argument.get()});
-                    if (!success)
-                        throw std::logic_error("Duplicate short argument name.");
-
-                    for (const auto &alias : argument->short_aliases())
-                    {
-                        const auto [alias_it, alias_success] = _arguments_by_short_name.insert(std::pair{alias, argument.get()});
-                        if (!alias_success)
-                            throw std::logic_error("Duplicate short argument name.");
-                    }
-                }
-
-                if (argument->position())
-                {
-                    ++_positional_argument_count;
-                }
-
-                _arguments.push_back(std::move(argument));
+                add_argument(argument_builder->to_argument(*this));
             }
+
+            add_automatic_help_argument(options);
 
             // Sort the full argument list.
             std::sort(_arguments.begin(), _arguments.end(),
@@ -726,6 +704,134 @@ namespace ookii
             string_type prefix;
             bool is_short;
         };
+
+        void add_argument(std::unique_ptr<argument_base_type> argument)
+        {
+            if (argument->has_long_name())
+            {
+                auto name = argument->name();
+                const auto [it, success] = _arguments_by_name.insert(std::pair{name, argument.get()});
+                if (!success)
+                    throw std::logic_error("Duplicate argument name.");
+
+                for (const auto &alias : argument->aliases())
+                {
+                    const auto [alias_it, alias_success] = _arguments_by_name.insert(std::pair{alias, argument.get()});
+                    if (!alias_success)
+                        throw std::logic_error("Duplicate argument name.");
+                }
+            }
+
+            if (argument->has_short_name())
+            {
+                auto name = argument->short_name();
+                const auto [it, success] = _arguments_by_short_name.insert(std::pair{name, argument.get()});
+                if (!success)
+                    throw std::logic_error("Duplicate short argument name.");
+
+                for (const auto &alias : argument->short_aliases())
+                {
+                    const auto [alias_it, alias_success] = _arguments_by_short_name.insert(std::pair{alias, argument.get()});
+                    if (!alias_success)
+                        throw std::logic_error("Duplicate short argument name.");
+                }
+            }
+            
+
+            if (argument->position())
+            {
+                ++_positional_argument_count;
+            }
+
+            _arguments.push_back(std::move(argument));
+        }
+
+        const argument_base_type *add_automatic_help_argument(creation_options_type &options)
+        {
+            if (!options.automatic_help_argument)
+            {
+                return nullptr;
+            }
+
+            auto name = _storage.string_provider->automatic_help_name();
+                
+            // Try to match the case of the other arguments; based on the first argument.
+            if (!_arguments.empty())
+            {
+                if (std::isupper(_arguments[0]->name()[0], _storage.locale))
+                {
+                    name[0] = std::toupper(name[0], _storage.locale);
+                }
+                else
+                {
+                    name[0] = std::tolower(name[0], _storage.locale);
+                }
+            }
+
+            auto short_name = _storage.string_provider->automatic_help_short_name();
+            auto short_alias = std::tolower(name[0], _storage.locale);
+            const auto *existing_arg = get_argument(name);
+            if (existing_arg == nullptr)
+            {
+                if (_storage.mode == parsing_mode::long_short)
+                {
+                    existing_arg = get_short_argument(short_name);
+                    if (existing_arg == nullptr)
+                    {
+                        existing_arg = get_short_argument(short_alias);
+                    }
+                }
+                else
+                {
+                    existing_arg = get_argument(string_view_type{&short_name, 1});
+                    if (existing_arg == nullptr)
+                    {
+                        existing_arg = get_argument(string_view_type{&short_alias, 1});
+                    }
+                }
+            }
+
+            if (existing_arg != nullptr)
+            {
+                return existing_arg;
+            }
+
+            details::argument_storage<CharType, Traits, Alloc> storage{name};
+            if (_storage.mode == parsing_mode::long_short)
+            {
+                storage.short_name = short_name;
+                if (short_name != short_alias)
+                {
+                    storage.short_aliases.push_back(short_alias);
+                }
+            }
+            else
+            {
+                // Cannot use {} because it gets treated as an initializer list.
+                storage.aliases.push_back(string_type(1, short_name));
+                if (short_name != short_alias)
+                {
+                    storage.aliases.push_back(string_type(1, short_alias));
+                }
+            }
+
+            storage.cancel_parsing = true;
+            storage.description = _storage.string_provider->automatic_help_description();
+            storage.value_description = value_description<bool, CharType, Traits, Alloc>::get();
+            
+            details::action_argument_storage<bool, CharType, Traits, Alloc> action_storage{automatic_help_handler};
+            auto argument = std::make_unique<action_command_line_argument<bool, CharType, Traits, Alloc>>(
+                *this, std::move(storage), std::move(action_storage));
+
+            auto result = argument.get();
+            add_argument(std::move(argument));
+            return result;
+        }
+
+        static bool automatic_help_handler(bool, basic_command_line_parser &)
+        {
+            return true;
+        }
 
         void handle_error(const result_type &result, usage_writer_type *usage)
         {

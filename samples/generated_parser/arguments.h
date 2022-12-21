@@ -117,19 +117,6 @@ struct arguments
     // more than one value.
     std::vector<std::string> values;
 
-    // This field defines a switch argument named "Help", with the alias "?".
-    // 
-    // For this argument, the cancel_parsing attribute is used, which means that command line
-    // processing is stopped when this argument is supplied. That way, we can print usage
-    // regardless of what other arguments are present.
-    // 
-    // [argument, cancel_parsing, alias: ?]
-    // Displays this help message.
-    static bool help(bool, ookii::command_line_parser &)
-    {
-        return false;
-    }
-
     // Structs used with the New-Parser.ps1 struct must have a parse method, whose implementation
     // will be provided by the script. Use the OOKII_DECLARE_PARSE_METHOD macro as an easy way to
     // declare the method with the correct signature. Call this method to parse the specified

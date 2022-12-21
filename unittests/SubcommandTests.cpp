@@ -147,8 +147,8 @@ public:
             .add_command<Command2>()
             .add_command<Command3>(TEXT("LastCommand"), TEXT("Foo"));
 
-        tstringstream output;
-        tstringstream error;
+        tline_wrapping_ostringstream output{0};
+        tline_wrapping_ostringstream error{0};
         basic_usage_writer<tchar_t> options{output, error};
         auto command = manager.create_command({ TEXT("AnotherCommand"), TEXT("-Value"), TEXT("42") }, &options);
         VERIFY_NOT_NULL(command);
@@ -227,7 +227,10 @@ The following commands are available:
 
     static constexpr tstring_view c_commandUsageExpected = TEXT(R"(This is a very long description that probably needs to be wrapped.
 
-Usage: TestApp AnotherCommand -Value <int>
+Usage: TestApp AnotherCommand -Value <int> [-Help]
+
+    -Help [<bool>] (-?, -h)
+        Displays this help message.
 
 )");
 

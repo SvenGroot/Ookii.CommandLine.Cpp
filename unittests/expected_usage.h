@@ -4,7 +4,7 @@ static constexpr ookii::tstring_view c_usageExpected = TEXT(R"(Application descr
 
 Usage: TestCommand [-StringArg] <string>
    -IntArg <int> [-FloatArg <number>]
-   [-MultiArg <string>...]
+   [-Help] [-MultiArg <string>...]
    [-OptionalSwitchArg] [-SwitchArg]
 
     -StringArg <string>
@@ -15,6 +15,9 @@ Usage: TestCommand [-StringArg] <string>
         is really quite long and
         probably needs to be wrapped.
         Default value: 10.
+
+    -Help [<bool>] (-?, -h)
+        Displays this help message.
 
     -MultiArg <string> (-multi, -m)
         Multi-value argument
@@ -33,7 +36,7 @@ static constexpr ookii::tstring_view c_usageExpectedColor = TEXT(R"(Application 
 
 [36mUsage:[0m TestCommand [-StringArg] <string>
    -IntArg <int> [-FloatArg <number>]
-   [-MultiArg <string>...]
+   [-Help] [-MultiArg <string>...]
    [-OptionalSwitchArg] [-SwitchArg]
 
     [32m-StringArg <string>[0m
@@ -44,6 +47,9 @@ static constexpr ookii::tstring_view c_usageExpectedColor = TEXT(R"(Application 
         is really quite long and
         probably needs to be wrapped.
         Default value: 10.
+
+    [32m-Help [<bool>] (-?, -h)[0m
+        Displays this help message.
 
     [32m-MultiArg <string> (-multi, -m)[0m
         Multi-value argument
@@ -58,7 +64,7 @@ static constexpr ookii::tstring_view c_usageExpectedColor = TEXT(R"(Application 
 
 )");
 
-static constexpr ookii::tstring_view c_usageExpectedLongShort = TEXT(R"(Usage: TestCommand [[--foo] <int>] [[--bar] <int>] [[--Arg2] <int>] [--Arg1 <int>] [--Switch1] [--Switch2] [-u]
+static constexpr ookii::tstring_view c_usageExpectedLongShort = TEXT(R"(Usage: TestCommand [[--foo] <int>] [[--bar] <int>] [[--Arg2] <int>] [--Arg1 <int>] [--help] [--Switch1] [--Switch2] [-u]
 
     -f, --foo <int>
             Foo description. Default value: 0.
@@ -72,6 +78,9 @@ static constexpr ookii::tstring_view c_usageExpectedLongShort = TEXT(R"(Usage: T
         --Arg1 <int>
             Arg1 description.
 
+    -?, --help [<bool>] (-h)
+            Displays this help message.
+
     -S, --Switch1 [<bool>]
             Switch1 description.
 
@@ -83,7 +92,7 @@ static constexpr ookii::tstring_view c_usageExpectedLongShort = TEXT(R"(Usage: T
 
 )");
 
-static constexpr ookii::tstring_view c_usageExpectedLongShortColor = TEXT(R"([36mUsage:[0m TestCommand [[--foo] <int>] [[--bar] <int>] [[--Arg2] <int>] [--Arg1 <int>] [--Switch1] [--Switch2] [-u]
+static constexpr ookii::tstring_view c_usageExpectedLongShortColor = TEXT(R"([36mUsage:[0m TestCommand [[--foo] <int>] [[--bar] <int>] [[--Arg2] <int>] [--Arg1 <int>] [--help] [--Switch1] [--Switch2] [-u]
 
     [32m-f, --foo <int>[0m
             Foo description. Default value: 0.
@@ -97,6 +106,9 @@ static constexpr ookii::tstring_view c_usageExpectedLongShortColor = TEXT(R"([3
     [32m    --Arg1 <int>[0m
             Arg1 description.
 
+    [32m-?, --help [<bool>] (-h)[0m
+            Displays this help message.
+
     [32m-S, --Switch1 [<bool>][0m
             Switch1 description.
 
@@ -108,7 +120,7 @@ static constexpr ookii::tstring_view c_usageExpectedLongShortColor = TEXT(R"([3
 
 )");
 
-static constexpr ookii::tstring_view c_usageExpectedLongShortSyntaxShortName = TEXT(R"(Usage: TestCommand [[-f] <int>] [[--bar] <int>] [[-a] <int>] [--Arg1 <int>] [-S] [-k] [-u]
+static constexpr ookii::tstring_view c_usageExpectedLongShortSyntaxShortName = TEXT(R"(Usage: TestCommand [[-f] <int>] [[--bar] <int>] [[-a] <int>] [--Arg1 <int>] [-?] [-S] [-k] [-u]
 
     -f, --foo <int>
             Foo description. Default value: 0.
@@ -121,6 +133,9 @@ static constexpr ookii::tstring_view c_usageExpectedLongShortSyntaxShortName = T
 
         --Arg1 <int>
             Arg1 description.
+
+    -?, --help [<bool>] (-h)
+            Displays this help message.
 
     -S, --Switch1 [<bool>]
             Switch1 description.
@@ -146,6 +161,9 @@ static constexpr ookii::tstring_view c_usageExpectedLongShortAbbreviated = TEXT(
 
         --Arg1 <int>
             Arg1 description.
+
+    -?, --help [<bool>] (-h)
+            Displays this help message.
 
     -S, --Switch1 [<bool>]
             Switch1 description.

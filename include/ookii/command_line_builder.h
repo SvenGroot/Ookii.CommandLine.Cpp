@@ -53,6 +53,7 @@ namespace ookii
     class basic_parser_builder
     {
         using parser_storage_type = details::parser_storage<CharType, Traits, Alloc>;
+        using creation_options_type = details::creation_options<CharType, Traits, Alloc>;
 
     public:
         //! \brief The specialized type of basic_command_line_parser that is being built.
@@ -148,9 +149,15 @@ namespace ookii
             }
 
             //! \brief Returns the name of the argument.
-            const string_type &name() const
+            const string_type &name() const noexcept
             {
-                return this->_storage.name;
+                return _storage.name;
+            }
+
+            //! \brief Returns the short name of the argument.
+            const CharType &short_name() const noexcept
+            {
+                return _storage.short_name;
             }
 
             //! \brief Converts the argument_builder_base into a command_line_argument_base that
@@ -659,7 +666,7 @@ namespace ookii
                 _storage.long_prefix.clear();
             }
 
-            return parser_type{_arguments, std::move(_storage), _case_sensitive};
+            return parser_type{_arguments, std::move(_storage), _options};
         }
 
         //! \brief Sets a value that indicates whether argument names are case sensitive.
@@ -673,7 +680,7 @@ namespace ookii
         //! The default value is `false`.
         basic_parser_builder &case_sensitive(bool case_sensitive) noexcept
         {
-            _case_sensitive = case_sensitive;
+            _options.case_sensitive = case_sensitive;
             return *this;
         }
 
@@ -804,6 +811,28 @@ namespace ookii
             return *this;
         }
 
+        //! \brief Set a value that indicates whether to create an automatic help argument.
+        //! \param enable `true` to create an automatic help argument, otherwise; `false`.
+        //!
+        //! If set to `true`, an argument will be added with the name "-Help" and the aliases "-?"
+        //! and "-h". If the mode() was set to parsing_mode::long_short, it will have the long name
+        //! "--Help", the short name "-?" and the short alias "-h".
+        //!
+        //! The argument will be called "help" (with a lowercase 'h') if the first letter of the
+        //! first argument in usage order is lowercase.
+        //!
+        //! You can specify a different name, as well as a custom description, using the
+        //! basic_localized_string_provider class.
+        //!
+        //! If any explicitly defined argument conflicts with the name or aliases of the automatic
+        //! help argument, no argument will be added. Therefore, it's only necessary to set this to
+        //! `false` if you do not want a help argument at all.
+        basic_parser_builder &automatic_help_argument(bool enable)
+        {
+            _options.automatic_help_argument = enable;
+            return *this;
+        }
+
     private:
         size_t get_next_position() noexcept
         {
@@ -812,8 +841,8 @@ namespace ookii
 
         std::vector<std::unique_ptr<argument_builder_base>> _arguments;
         size_t _next_position{};
-        bool _case_sensitive{};
         
+        creation_options_type _options{};
         parser_storage_type _storage;
 
         static constexpr auto c_default_long_prefix = literal_cast<CharType>("--");
