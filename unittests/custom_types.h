@@ -34,16 +34,6 @@ inline ookii::tistream &operator>>(ookii::tistream &stream, point &value)
     return stream;
 }
 
-template<>
-struct OOKII_FMT_NS formatter<point, ookii::tchar_t> : public OOKII_FMT_NS formatter<int, ookii::tchar_t>
-{
-    template<typename FormatContext>
-    auto format(point value, FormatContext &ctx)
-    {
-        return OOKII_FMT_NS format_to(ctx.out(), TEXT("{},{}"), value.x, value.y);
-    }
-};
-
 inline std::basic_ostream<ookii::tchar_t> &operator<<(std::basic_ostream<ookii::tchar_t> &stream, point value)
 {
     stream << value.x << TEXT(",") << value.y;
@@ -78,26 +68,6 @@ struct ookii::lexical_convert<animal, ookii::tchar_t>
             return {};
 
         return static_cast<animal>(std::distance(std::begin(animal_strings), it));
-    }
-};
-
-template<>
-struct OOKII_FMT_NS formatter<animal, ookii::tchar_t> : public OOKII_FMT_NS formatter<ookii::tstring_view, ookii::tchar_t>
-{
-    template<typename FormatContext>
-    auto format(animal value, FormatContext &ctx)
-    {
-        ookii::tstring_view string_value;
-        if (static_cast<int>(value) < 0 || static_cast<int>(value) >= static_cast<int>(std::size(animal_strings)))
-        {
-            string_value = TEXT("invalid");
-        }
-        else
-        {
-            string_value = animal_strings[static_cast<size_t>(value)];
-        }
-
-        return OOKII_FMT_NS formatter<ookii::tstring_view, ookii::tchar_t>::format(string_value, ctx);
     }
 };
 
