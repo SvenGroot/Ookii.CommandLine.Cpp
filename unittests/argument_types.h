@@ -38,6 +38,12 @@ struct ActionArguments
         return true;
     }
 
+    static bool static_action2(bool, ookii::basic_command_line_parser<ookii::tchar_t> &parser)
+    {
+        parser.help_requested(true);
+        return false;
+    }
+
     bool action(bool)
     {
         called = true;
@@ -48,6 +54,7 @@ struct ActionArguments
     {
         return ookii::basic_parser_builder<ookii::tchar_t>{TEXT("TestCommand")}
             .add_action_argument(static_action, TEXT("StaticAction"))
+            .add_action_argument(static_action2, TEXT("StaticAction2"))
             .add_action_argument([this](bool value, ookii::basic_command_line_parser<ookii::tchar_t> &)
                 {
                     return action(value);

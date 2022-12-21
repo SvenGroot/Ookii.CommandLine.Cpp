@@ -319,6 +319,29 @@ namespace ookii
             return _storage.locale;
         }
 
+        //! \brief Sets a value that indicates help should be shown if parse() returns a
+        //! parse_result with parse_error::parsing_cancelled.
+        //! \param help_requested The new value.
+        void help_requested(bool help_requested) noexcept
+        {
+            _help_requested = help_requested;
+        }
+
+        //! \brief Gets a value that indicates help should be shown if parse() returns a
+        //! parse_result with parse_error::parsing_cancelled.
+        //!
+        //! After calling parse(), if the result was parse_error::none, this method always returns
+        //! `false`. If the result was an error other than parse_error::parsing_cancelled`, it
+        //! always returns `true`.
+        //!
+        //! Arguments cancelled using basic_parser_builder::argument_builder_common::cancel_parsing()
+        //! automatically set this value to `true`. Action arguments that cancelled parsing must
+        //! explicitly do so.
+        bool help_requested() const noexcept
+        {
+            return _help_requested;
+        }
+
         //! \brief Gets a view of all the arguments defined by the parser.
         //!
         //! The arguments will be returned in alphabetical order.
@@ -454,6 +477,7 @@ namespace ookii
         template<typename Iterator>
         result_type parse(Iterator begin, Iterator end)
         {
+            help_requested(false);
             for (auto &arg : _arguments)
                 arg->reset();
 
@@ -469,7 +493,9 @@ namespace ookii
                     // Current is updated if parsing used the next argument for a value.
                     auto result = parse_named_argument(without_prefix, is_short, current, end);
                     if (!result)
+                    {
                         return result;
+                    }
                 }
                 else
                 {
@@ -483,34 +509,35 @@ namespace ookii
                     }
 
                     if (position >= _positional_argument_count)
+                    {
                         return create_result(parse_error::too_many_arguments);
+                    }
 
                     auto result = set_argument_value(*_arguments[position], arg);
                     if (!result)
+                    {
                         return result;
+                    }
                 }
             }
 
-            result_type result{*_storage.string_provider};
-            for_each_argument_in_usage_order([this, &result](auto &arg)
+            for (const auto &arg : _arguments)
+            {
+                if (arg->is_required())
                 {
-                    if (arg.is_required())
+                    if (!arg->has_value())
                     {
-                        if (!arg.has_value())
-                        {
-                            result = {*_storage.string_provider, parse_error::missing_required_argument, arg.name()};
-                            return false;
-                        }
+                        return create_result(parse_error::missing_required_argument, arg->name());
                     }
-                    else
-                    {
-                        arg.apply_default_value();
-                    }
+                }
+                else
+                {
+                    arg->apply_default_value();
+                }
+            }
 
-                    return true;
-                });
-
-            return result;
+            help_requested(false);
+            return create_result(parse_error::none);
         }
 
         //! \brief Parses the arguments in the range specified by the iterators, and writes error
@@ -868,7 +895,10 @@ namespace ookii
                     }
                 }
 
-                write_usage(usage);
+                if (help_requested())
+                {
+                    write_usage(usage);
+                }
             }
         }
 
@@ -989,14 +1019,25 @@ namespace ookii
             if (action == on_parsed_action::cancel_parsing || 
                 ((arg.cancel_parsing() || result == set_value_result::cancel) && action != on_parsed_action::always_continue))
             {
+                // Automatically request help for the event and cancel_parsing, but not for action arguments.
+                if (action == on_parsed_action::cancel_parsing || arg.cancel_parsing())
+                {
+                    help_requested(true);
+                }
+
                 return create_result(parse_error::parsing_cancelled, arg.name());
             }
 
             return create_result(parse_error::none);
         }
 
-        result_type create_result(parse_error error, string_type arg_name = {}) const
+        result_type create_result(parse_error error, string_type arg_name = {})
         {
+            if (error != parse_error::none && error != parse_error::parsing_cancelled)
+            {
+                help_requested(true);
+            }
+
             return {*_storage.string_provider, error, arg_name};
         }
 
@@ -1004,13 +1045,14 @@ namespace ookii
         string_provider_type _default_string_provider;
         std::vector<prefix_info> _sorted_prefixes;
 
-        // _arguments_by_name and _argument_by_short_nane contain pointers to items owned by
+        // _arguments_by_name and _argument_by_short_name contain pointers to items owned by
         // _arguments. Since they all have the same lifetime, this is okay.
         std::vector<std::unique_ptr<argument_base_type>> _arguments;
         std::map<string_type, argument_base_type *, string_less> _arguments_by_name;
         std::map<CharType, argument_base_type *, char_less> _arguments_by_short_name;
         size_t _positional_argument_count{};
         on_parsed_callback _on_parsed_callback;
+        bool _help_requested{};
     };
 
     //! \brief Typedef for basic_command_line_parser using `char` as the character type.

@@ -66,63 +66,63 @@ public:
         VerifyArgument(parser, TEXT("Arg2"), false, false, false, {});
 
         // Specify no arguments.
-        VerifyParseResult(parser.parse(std::vector<tstring>{}));
+        VerifyParseResult(parser.parse(std::vector<tstring>{}), parser);
         VERIFY_EQUAL(TEXT(""), arg1);
         VERIFY_EQUAL(TEXT(""), arg2);
 
         // Specify arg1 by name.
         arg1 = {};
         arg2 = {};
-        VerifyParseResult(parser.parse({ TEXT("-Arg1"), TEXT("Value1") }));
+        VerifyParseResult(parser.parse({ TEXT("-Arg1"), TEXT("Value1") }), parser);
         VERIFY_EQUAL(TEXT("Value1"), arg1);
         VERIFY_EQUAL(TEXT(""), arg2);
 
         // Specify arg2 by name.
         arg1 = {};
         arg2 = {};
-        VerifyParseResult(parser.parse({ TEXT("-Arg2"), TEXT("Value2") }));
+        VerifyParseResult(parser.parse({ TEXT("-Arg2"), TEXT("Value2") }), parser);
         VERIFY_EQUAL(TEXT(""), arg1);
         VERIFY_EQUAL(TEXT("Value2"), arg2);
 
         // Specify both.
         arg1 = {};
         arg2 = {};
-        VerifyParseResult(parser.parse({ TEXT("-Arg1"), TEXT("Value3"), TEXT("-Arg2"), TEXT("Value4") }));
+        VerifyParseResult(parser.parse({ TEXT("-Arg1"), TEXT("Value3"), TEXT("-Arg2"), TEXT("Value4") }), parser);
         VERIFY_EQUAL(TEXT("Value3"), arg1);
         VERIFY_EQUAL(TEXT("Value4"), arg2);
-        VerifyParseResult(parser.parse({ TEXT("-Arg2"), TEXT("Value3"), TEXT("-Arg1"), TEXT("Value4") }));
+        VerifyParseResult(parser.parse({ TEXT("-Arg2"), TEXT("Value3"), TEXT("-Arg1"), TEXT("Value4") }), parser);
         VERIFY_EQUAL(TEXT("Value4"), arg1);
         VERIFY_EQUAL(TEXT("Value3"), arg2);
 
         // Case insensitive
         arg1 = {};
         arg2 = {};
-        VerifyParseResult(parser.parse({ TEXT("-arg1"), TEXT("Value1") }));
+        VerifyParseResult(parser.parse({ TEXT("-arg1"), TEXT("Value1") }), parser);
         VERIFY_EQUAL(TEXT("Value1"), arg1);
         VERIFY_EQUAL(TEXT(""), arg2);
 
         // Using separator instead of space
         arg1 = {};
         arg2 = {};
-        VerifyParseResult(parser.parse({ TEXT("-Arg1:Value2") }));
+        VerifyParseResult(parser.parse({ TEXT("-Arg1:Value2") }), parser);
         VERIFY_EQUAL(TEXT("Value2"), arg1);
         VERIFY_EQUAL(TEXT(""), arg2);
 
         // positional.
-        VerifyParseResult(parser.parse({ TEXT("Value1") }), parse_error::too_many_arguments, {});
+        VerifyParseResult(parser.parse({ TEXT("Value1") }), parser, parse_error::too_many_arguments, {});
 
         // Missing value.
-        VerifyParseResult(parser.parse({ TEXT("-Arg1") }), parse_error::missing_value, TEXT("Arg1"));
-        VerifyParseResult(parser.parse({ TEXT("-Arg1"), TEXT("-Arg2") }), parse_error::missing_value, TEXT("Arg1"));
+        VerifyParseResult(parser.parse({ TEXT("-Arg1") }), parser, parse_error::missing_value, TEXT("Arg1"));
+        VerifyParseResult(parser.parse({ TEXT("-Arg1"), TEXT("-Arg2") }), parser, parse_error::missing_value, TEXT("Arg1"));
         
         // Unknown argument name.
-        VerifyParseResult(parser.parse({ TEXT("-Unknown"), TEXT("Value") }), parse_error::unknown_argument, TEXT("Unknown"));
+        VerifyParseResult(parser.parse({ TEXT("-Unknown"), TEXT("Value") }), parser, parse_error::unknown_argument, TEXT("Unknown"));
 
         // Duplicate.
-        VerifyParseResult(parser.parse({ TEXT("-Arg1"), TEXT("Value"), TEXT("-Arg1"), TEXT("Value") }), parse_error::duplicate_argument, TEXT("Arg1"));
+        VerifyParseResult(parser.parse({ TEXT("-Arg1"), TEXT("Value"), TEXT("-Arg1"), TEXT("Value") }), parser, parse_error::duplicate_argument, TEXT("Arg1"));
 
         // Duplicate switch.
-        VerifyParseResult(parser.parse({ TEXT("-Arg3"), TEXT("-Arg3") }), parse_error::duplicate_argument, TEXT("Arg3"));
+        VerifyParseResult(parser.parse({ TEXT("-Arg3"), TEXT("-Arg3") }), parser, parse_error::duplicate_argument, TEXT("Arg3"));
     }
 
     TEST_METHOD(TestPositional)
@@ -138,35 +138,35 @@ public:
         VerifyArgument(parser, TEXT("Arg2"), false, false, false, 1);
 
         // Specify no arguments.
-        VerifyParseResult(parser.parse(std::vector<tstring>{}));
+        VerifyParseResult(parser.parse(std::vector<tstring>{}), parser);
         VERIFY_EQUAL(TEXT(""), arg1);
         VERIFY_EQUAL(TEXT(""), arg2);
 
         // positional arguments.
-        VerifyParseResult(parser.parse({ TEXT("Value1"), TEXT("Value2") }));
+        VerifyParseResult(parser.parse({ TEXT("Value1"), TEXT("Value2") }), parser);
         VERIFY_EQUAL(TEXT("Value1"), arg1);
         VERIFY_EQUAL(TEXT("Value2"), arg2);
 
         // positional argument by name.
-        VerifyParseResult(parser.parse({ TEXT("-Arg1"), TEXT("Value3"), TEXT("-Arg2"), TEXT("Value4") }));
+        VerifyParseResult(parser.parse({ TEXT("-Arg1"), TEXT("Value3"), TEXT("-Arg2"), TEXT("Value4") }), parser);
         VERIFY_EQUAL(TEXT("Value3"), arg1);
         VERIFY_EQUAL(TEXT("Value4"), arg2);
-        VerifyParseResult(parser.parse({ TEXT("Value1"), TEXT("-Arg2"), TEXT("Value2") }));
+        VerifyParseResult(parser.parse({ TEXT("Value1"), TEXT("-Arg2"), TEXT("Value2") }), parser);
         VERIFY_EQUAL(TEXT("Value1"), arg1);
         VERIFY_EQUAL(TEXT("Value2"), arg2);
-        VerifyParseResult(parser.parse({ TEXT("-Arg2"), TEXT("Value4"), TEXT("Value3") }));
+        VerifyParseResult(parser.parse({ TEXT("-Arg2"), TEXT("Value4"), TEXT("Value3") }), parser);
         VERIFY_EQUAL(TEXT("Value3"), arg1);
         VERIFY_EQUAL(TEXT("Value4"), arg2);
-        VerifyParseResult(parser.parse({ TEXT("-Arg1"), TEXT("Value4"), TEXT("Value3") }));
+        VerifyParseResult(parser.parse({ TEXT("-Arg1"), TEXT("Value4"), TEXT("Value3") }), parser);
         VERIFY_EQUAL(TEXT("Value4"), arg1);
         VERIFY_EQUAL(TEXT("Value3"), arg2);
 
         // Too many arguments
-        VerifyParseResult(parser.parse({ TEXT("Value3"), TEXT("Value4"), TEXT("TooMany") }), parse_error::too_many_arguments, {});
-        VerifyParseResult(parser.parse({ TEXT("-Arg1"), TEXT("Value3"), TEXT("-Arg2"), TEXT("Value4"), TEXT("TooMany") }), parse_error::too_many_arguments, {});
+        VerifyParseResult(parser.parse({ TEXT("Value3"), TEXT("Value4"), TEXT("TooMany") }), parser, parse_error::too_many_arguments, {});
+        VerifyParseResult(parser.parse({ TEXT("-Arg1"), TEXT("Value3"), TEXT("-Arg2"), TEXT("Value4"), TEXT("TooMany") }), parser, parse_error::too_many_arguments, {});
 
         // Duplicate
-        VerifyParseResult(parser.parse({ TEXT("Value1"), TEXT("-Arg1"), TEXT("Value2") }), parse_error::duplicate_argument, TEXT("Arg1"));
+        VerifyParseResult(parser.parse({ TEXT("Value1"), TEXT("-Arg1"), TEXT("Value2") }), parser, parse_error::duplicate_argument, TEXT("Arg1"));
     }
 
     TEST_METHOD(TestRequired)
@@ -182,21 +182,21 @@ public:
         VerifyArgument(parser, TEXT("Arg2"), false, false, false, 1);
 
         // No arguments.
-        VerifyParseResult(parser.parse(std::vector<tstring>{}), parse_error::missing_required_argument, TEXT("Arg1"));
+        VerifyParseResult(parser.parse(std::vector<tstring>{}), parser, parse_error::missing_required_argument, TEXT("Arg1"));
 
         // required argument present.
-        VerifyParseResult(parser.parse({ TEXT("Value1") }));
+        VerifyParseResult(parser.parse({ TEXT("Value1") }), parser);
         VERIFY_EQUAL(TEXT("Value1"), arg1);
         VERIFY_EQUAL(TEXT(""), arg2);
-        VerifyParseResult(parser.parse({ TEXT("-Arg1"), TEXT("Value2") }));
+        VerifyParseResult(parser.parse({ TEXT("-Arg1"), TEXT("Value2") }), parser);
         VERIFY_EQUAL(TEXT("Value2"), arg1);
         VERIFY_EQUAL(TEXT(""), arg2);
-        VerifyParseResult(parser.parse({ TEXT("Value1"), TEXT("-Arg2"), TEXT("Value2") }));
+        VerifyParseResult(parser.parse({ TEXT("Value1"), TEXT("-Arg2"), TEXT("Value2") }), parser);
         VERIFY_EQUAL(TEXT("Value1"), arg1);
         VERIFY_EQUAL(TEXT("Value2"), arg2);
 
         // required argument missing.
-        VerifyParseResult(parser.parse({ TEXT("-Arg2"), TEXT("Value2") }), parse_error::missing_required_argument, TEXT("Arg1"));
+        VerifyParseResult(parser.parse({ TEXT("-Arg2"), TEXT("Value2") }), parser, parse_error::missing_required_argument, TEXT("Arg1"));
     }
 
     TEST_METHOD(TestDefaultValue)
@@ -212,12 +212,12 @@ public:
         VerifyArgument(parser, TEXT("Arg2"), false, false, false, 1);
 
         // No arguments.
-        VerifyParseResult(parser.parse<tstring>({}));
+        VerifyParseResult(parser.parse<tstring>({}), parser);
         VERIFY_EQUAL(42, arg1);
         VERIFY_EQUAL(47, arg2); // Unchanged if not specified.
 
         // Arguments present.
-        VerifyParseResult(parser.parse({ TEXT("5"), TEXT("6") }));
+        VerifyParseResult(parser.parse({ TEXT("5"), TEXT("6") }), parser);
         VERIFY_EQUAL(5, arg1);
         VERIFY_EQUAL(6, arg2);
     }
@@ -235,7 +235,7 @@ public:
         VerifyArgument(parser, TEXT("Arg2"), false, false, false, 1);
 
         // Negative value is not seen as an argument name even though it starts with -
-        VerifyParseResult(parser.parse({ TEXT("-Arg2"), TEXT("-42") }));
+        VerifyParseResult(parser.parse({ TEXT("-Arg2"), TEXT("-42") }), parser);
         VERIFY_EQUAL(0, arg1);
         VERIFY_EQUAL(-42, arg2);
     }
@@ -250,33 +250,33 @@ public:
         VerifyArgument(parser, TEXT("Switch"), false, true, false, {});
 
         // No arguments.
-        VerifyParseResult(parser.parse(std::vector<tstring>{}));
+        VerifyParseResult(parser.parse(std::vector<tstring>{}), parser);
         VERIFY_FALSE(sw);
 
         // Present.
-        VerifyParseResult(parser.parse({ TEXT("-Switch") }));
+        VerifyParseResult(parser.parse({ TEXT("-Switch") }), parser);
         VERIFY_TRUE(sw);
 
         // Explicit value.
-        VerifyParseResult(parser.parse({ TEXT("-Switch:false") }));
+        VerifyParseResult(parser.parse({ TEXT("-Switch:false") }), parser);
         VERIFY_FALSE(sw);
-        VerifyParseResult(parser.parse({ TEXT("-Switch:true") }));
+        VerifyParseResult(parser.parse({ TEXT("-Switch:true") }), parser);
         VERIFY_TRUE(sw);
-        VerifyParseResult(parser.parse({ TEXT("-Switch:False") }));
+        VerifyParseResult(parser.parse({ TEXT("-Switch:False") }), parser);
         VERIFY_FALSE(sw);
-        VerifyParseResult(parser.parse({ TEXT("-Switch:True") }));
+        VerifyParseResult(parser.parse({ TEXT("-Switch:True") }), parser);
         VERIFY_TRUE(sw);
-        VerifyParseResult(parser.parse({ TEXT("-Switch:0") }));
+        VerifyParseResult(parser.parse({ TEXT("-Switch:0") }), parser);
         VERIFY_FALSE(sw);
-        VerifyParseResult(parser.parse({ TEXT("-Switch:1") }));
+        VerifyParseResult(parser.parse({ TEXT("-Switch:1") }), parser);
         VERIFY_TRUE(sw);
 
         // Can't use space as a separator.
-        VerifyParseResult(parser.parse({ TEXT("-Switch"), TEXT("false") }), parse_error::too_many_arguments, {});
+        VerifyParseResult(parser.parse({ TEXT("-Switch"), TEXT("false") }), parser, parse_error::too_many_arguments, {});
 
         // Invalid values.
-        VerifyParseResult(parser.parse({ TEXT("-Switch:f") }), parse_error::invalid_value, TEXT("Switch"));
-        VerifyParseResult(parser.parse({ TEXT("-Switch:2") }), parse_error::invalid_value, TEXT("Switch"));
+        VerifyParseResult(parser.parse({ TEXT("-Switch:f") }), parser, parse_error::invalid_value, TEXT("Switch"));
+        VerifyParseResult(parser.parse({ TEXT("-Switch:2") }), parser, parse_error::invalid_value, TEXT("Switch"));
     }
 
     TEST_METHOD(TestOptionalSwitch)
@@ -289,18 +289,18 @@ public:
         VerifyArgument(parser, TEXT("switch"), false, true, false, {});
 
         // No arguments.
-        VerifyParseResult(parser.parse(std::vector<tstring>{}));
+        VerifyParseResult(parser.parse(std::vector<tstring>{}), parser);
         VERIFY_NULL(sw);
 
         // Present.
         sw = {};
-        VerifyParseResult(parser.parse({ TEXT("-switch") }));
+        VerifyParseResult(parser.parse({ TEXT("-switch") }), parser);
         VERIFY_NOT_NULL(sw);
         VERIFY_TRUE(*sw);
 
         // Explicit value.
         sw = {};
-        VerifyParseResult(parser.parse({ TEXT("-switch:false") }));
+        VerifyParseResult(parser.parse({ TEXT("-switch:false") }), parser);
         VERIFY_NOT_NULL(sw);
         VERIFY_FALSE(*sw);
     }
@@ -323,7 +323,7 @@ public:
         VerifyArgument(parser, TEXT("Point"), false, false, false, {});
         VerifyArgument(parser, TEXT("Animal"), false, false, false, {});
 
-        VerifyParseResult(parser.parse({ TEXT("-Number"), TEXT("42"), TEXT("-FloatNumber"), TEXT("-3.142"), TEXT("-Point"), TEXT("5,6") }));
+        VerifyParseResult(parser.parse({ TEXT("-Number"), TEXT("42"), TEXT("-FloatNumber"), TEXT("-3.142"), TEXT("-Point"), TEXT("5,6") }), parser);
         VERIFY_EQUAL(42, number);
         VERIFY_EQUAL(-3.142f, floatNumber);
         VERIFY_EQUAL(5, p.x);
@@ -331,18 +331,18 @@ public:
         VERIFY_NULL(a);
 
         // Specify animal.
-        VerifyParseResult(parser.parse({ TEXT("-Animal"), TEXT("cat") }));
+        VerifyParseResult(parser.parse({ TEXT("-Animal"), TEXT("cat") }), parser);
         VERIFY_NOT_NULL(a);
         VERIFY_EQUAL((int)animal::cat, (int)*a);
 
         // Different base.
-        VerifyParseResult(parser.parse({ TEXT("-Number"), TEXT("0x42") }));
+        VerifyParseResult(parser.parse({ TEXT("-Number"), TEXT("0x42") }), parser);
         VERIFY_EQUAL(0x42, number);
 
         // Invalid value.
-        VerifyParseResult(parser.parse({ TEXT("-Number"), TEXT("42a") }), parse_error::invalid_value, TEXT("Number"));
-        VerifyParseResult(parser.parse({ TEXT("-Point"), TEXT("42") }), parse_error::invalid_value, TEXT("Point"));
-        VerifyParseResult(parser.parse({ TEXT("-Animal"), TEXT("cat2") }), parse_error::invalid_value, TEXT("Animal"));
+        VerifyParseResult(parser.parse({ TEXT("-Number"), TEXT("42a") }), parser, parse_error::invalid_value, TEXT("Number"));
+        VerifyParseResult(parser.parse({ TEXT("-Point"), TEXT("42") }), parser, parse_error::invalid_value, TEXT("Point"));
+        VerifyParseResult(parser.parse({ TEXT("-Animal"), TEXT("cat2") }), parser, parse_error::invalid_value, TEXT("Animal"));
     }
 
     TEST_METHOD(TestCustomConverter)
@@ -363,11 +363,11 @@ public:
         VerifyArgument(parser, TEXT("Arg"), false, false, false, 0);
 
         // Valid value.
-        VerifyParseResult(parser.parse({ TEXT("5") }));
+        VerifyParseResult(parser.parse({ TEXT("5") }), parser);
         VERIFY_EQUAL(6, arg);
 
         // Invalid value.
-        VerifyParseResult(parser.parse({ TEXT("5b") }), parse_error::invalid_value, TEXT("Arg"));
+        VerifyParseResult(parser.parse({ TEXT("5b") }), parser, parse_error::invalid_value, TEXT("Arg"));
     }
 
     TEST_METHOD(TestMultiValue)
@@ -382,16 +382,16 @@ public:
         VerifyArgument(parser, TEXT("Arg"), false, false, true, 1);
 
         // No arguments.
-        VerifyParseResult(parser.parse(std::vector<tstring>{}));
+        VerifyParseResult(parser.parse(std::vector<tstring>{}), parser);
         VERIFY_EQUAL(0u, args.size());
 
         // One argument.
-        VerifyParseResult(parser.parse({ TEXT("-Arg"), TEXT("Value1") }));
+        VerifyParseResult(parser.parse({ TEXT("-Arg"), TEXT("Value1") }), parser);
         std::vector<tstring> expected = { TEXT("Value1")};
         VERIFY_RANGE_EQUAL(expected, args);
 
         // Multiple arguments.
-        VerifyParseResult(parser.parse({ TEXT("42"), TEXT("Value2"), TEXT("Value3"), TEXT("-Arg"), TEXT("Value4")}));
+        VerifyParseResult(parser.parse({ TEXT("42"), TEXT("Value2"), TEXT("Value3"), TEXT("-Arg"), TEXT("Value4")}), parser);
         expected = { TEXT("Value2"), TEXT("Value3"), TEXT("Value4") };
         VERIFY_RANGE_EQUAL(expected, args);
     }
@@ -406,16 +406,16 @@ public:
         VerifyArgument(parser, TEXT("Arg"), true, false, true, 0);
 
         // No arguments.
-        VerifyParseResult(parser.parse(std::vector<tstring>{}), parse_error::missing_required_argument, TEXT("Arg"));
+        VerifyParseResult(parser.parse(std::vector<tstring>{}), parser, parse_error::missing_required_argument, TEXT("Arg"));
         VERIFY_EQUAL(0u, args.size());
 
         // One argument.
-        VerifyParseResult(parser.parse({ TEXT("Value1") }));
+        VerifyParseResult(parser.parse({ TEXT("Value1") }), parser);
         std::vector<tstring> expected = { TEXT("Value1") };
         VERIFY_RANGE_EQUAL(expected, args);
 
         // Multiple arguments.
-        VerifyParseResult(parser.parse({ TEXT("Value2"), TEXT("Value3"), TEXT("-Arg"), TEXT("Value4") }));
+        VerifyParseResult(parser.parse({ TEXT("Value2"), TEXT("Value3"), TEXT("-Arg"), TEXT("Value4") }), parser);
         expected = { TEXT("Value2"), TEXT("Value3"), TEXT("Value4") };
         VERIFY_RANGE_EQUAL(expected, args);
     }
@@ -430,11 +430,11 @@ public:
         VerifyArgument(parser, TEXT("Arg"), false, true, true, {});
 
         // No arguments.
-        VerifyParseResult(parser.parse(std::vector<tstring>{}));
+        VerifyParseResult(parser.parse(std::vector<tstring>{}), parser);
         VERIFY_EQUAL(0u, args.size());
 
         // Multiple arguments.
-        VerifyParseResult(parser.parse({ TEXT("-Arg"), TEXT("-Arg:false"), TEXT("-Arg:true") }));
+        VerifyParseResult(parser.parse({ TEXT("-Arg"), TEXT("-Arg:false"), TEXT("-Arg:true") }), parser);
         std::vector<bool> expected = { true, false, true };
         VERIFY_RANGE_EQUAL(expected, args);
     }
@@ -449,12 +449,12 @@ public:
         VerifyArgument(parser, TEXT("Arg"), false, false, true, {});
 
         // No arguments.
-        VerifyParseResult(parser.parse<tstring>({}));
+        VerifyParseResult(parser.parse<tstring>({}), parser);
         std::vector<int> expected = { 42 };
         VERIFY_RANGE_EQUAL(expected, args);
 
         // Multiple arguments.
-        VerifyParseResult(parser.parse({ TEXT("-Arg"), TEXT("5"), TEXT("-Arg"), TEXT("6") }));
+        VerifyParseResult(parser.parse({ TEXT("-Arg"), TEXT("5"), TEXT("-Arg"), TEXT("6") }), parser);
         expected = { 5, 6 };
         VERIFY_RANGE_EQUAL(expected, args);
     }
@@ -468,7 +468,7 @@ public:
 
         VerifyArgument(parser, TEXT("Arg"), false, false, true, {});
 
-        VerifyParseResult(parser.parse({ TEXT("-Arg"), TEXT("5;6;7") }));
+        VerifyParseResult(parser.parse({ TEXT("-Arg"), TEXT("5;6;7") }), parser);
         std::vector<int> expected = { 5, 6, 7};
         VERIFY_RANGE_EQUAL(expected, args);
     }
@@ -561,7 +561,7 @@ public:
             .add_argument(sw, TEXT("Switch"))
             .build();
 
-        VerifyParseResult(parser.parse({ TEXT("/Switch") }));
+        VerifyParseResult(parser.parse({ TEXT("/Switch") }), parser);
 
 #ifdef _WIN32
         VERIFY_TRUE(sw);
@@ -580,15 +580,15 @@ public:
             .add_argument(sw, TEXT("Switch"))
             .build();
 
-        VerifyParseResult(parser.parse({ TEXT("++Switch") }));
+        VerifyParseResult(parser.parse({ TEXT("++Switch") }), parser);
         VERIFY_TRUE(sw);
 
         sw = false;
-        VerifyParseResult(parser.parse({ TEXT("+Switch") }));
+        VerifyParseResult(parser.parse({ TEXT("+Switch") }), parser);
         VERIFY_TRUE(sw);
 
         // With a - will now be considered a value.
-        VerifyParseResult(parser.parse({ TEXT("-Switch") }), parse_error::too_many_arguments);
+        VerifyParseResult(parser.parse({ TEXT("-Switch") }), parser, parse_error::too_many_arguments);
     }
 
     // N.B. If this test fails on Linux due to the locale, run "sudo locale-gen nl_NL.UTF-8".
@@ -596,7 +596,7 @@ public:
     {
         float arg;
         auto parser = basic_parser_builder<tchar_t>{TEXT("TestCommand")}.locale(std::locale{"nl_NL.UTF-8"}).add_argument(arg, TEXT("Arg")).build();
-        VerifyParseResult(parser.parse({ TEXT("-Arg"), TEXT("3,142") }));
+        VerifyParseResult(parser.parse({ TEXT("-Arg"), TEXT("3,142") }), parser);
         VERIFY_EQUAL(3.142f, arg);
     }
 
@@ -615,16 +615,16 @@ public:
         VERIFY_EQUAL(TEXT("Arg1"), parser.get_argument(TEXT("a1"))->name());
         VERIFY_EQUAL(TEXT("Arg2"), parser.get_argument(TEXT("a2"))->name());
 
-        VerifyParseResult(parser.parse({ TEXT("-a1"), TEXT("5"), TEXT("-Arg2"), TEXT("6") }));
+        VerifyParseResult(parser.parse({ TEXT("-a1"), TEXT("5"), TEXT("-Arg2"), TEXT("6") }), parser);
         VERIFY_EQUAL(5, arg1);
         VERIFY_EQUAL(6, arg2);
 
-        VerifyParseResult(parser.parse({ TEXT("-Arg1"), TEXT("7"), TEXT("-a2"), TEXT("8") }));
+        VerifyParseResult(parser.parse({ TEXT("-Arg1"), TEXT("7"), TEXT("-a2"), TEXT("8") }), parser);
         VERIFY_EQUAL(7, arg1);
         VERIFY_EQUAL(8, arg2);
 
-        VerifyParseResult(parser.parse({ TEXT("-a1"), TEXT("abc") }), parse_error::invalid_value, TEXT("Arg1"));
-        VerifyParseResult(parser.parse({ TEXT("-a1"), TEXT("5"), TEXT("-Arg1"), TEXT("6") }), parse_error::duplicate_argument, TEXT("Arg1"));
+        VerifyParseResult(parser.parse({ TEXT("-a1"), TEXT("abc") }), parser, parse_error::invalid_value, TEXT("Arg1"));
+        VerifyParseResult(parser.parse({ TEXT("-a1"), TEXT("5"), TEXT("-Arg1"), TEXT("6") }), parser, parse_error::duplicate_argument, TEXT("Arg1"));
     }
 
     TEST_METHOD(TestSeparator)
@@ -639,10 +639,10 @@ public:
         VERIFY_FALSE(parser.allow_white_space_separator());
         VERIFY_EQUAL('=', parser.argument_value_separator());
 
-        VerifyParseResult(parser.parse({ TEXT("-Arg=5") }));
+        VerifyParseResult(parser.parse({ TEXT("-Arg=5") }), parser);
         VERIFY_EQUAL(5, arg);
-        VerifyParseResult(parser.parse({ TEXT("-Arg:5") }), parse_error::unknown_argument, TEXT("Arg:5"));
-        VerifyParseResult(parser.parse({ TEXT("-Arg"), TEXT("5") }), parse_error::missing_value, TEXT("Arg"));
+        VerifyParseResult(parser.parse({ TEXT("-Arg:5") }), parser, parse_error::unknown_argument, TEXT("Arg:5"));
+        VerifyParseResult(parser.parse({ TEXT("-Arg"), TEXT("5") }), parser, parse_error::missing_value, TEXT("Arg"));
     }
 
     TEST_METHOD(TestAllowDuplicate)
@@ -653,9 +653,9 @@ public:
             .add_argument(arg, TEXT("Arg")).positional()
             .build();
 
-        VerifyParseResult(parser.parse({ TEXT("-Arg"), TEXT("5"), TEXT("-Arg"), TEXT("6") }));
+        VerifyParseResult(parser.parse({ TEXT("-Arg"), TEXT("5"), TEXT("-Arg"), TEXT("6") }), parser);
         VERIFY_EQUAL(6, arg);
-        VerifyParseResult(parser.parse({ TEXT("7"), TEXT("-Arg"), TEXT("8") }));
+        VerifyParseResult(parser.parse({ TEXT("7"), TEXT("-Arg"), TEXT("8") }), parser);
         VERIFY_EQUAL(8, arg);
     }
 
@@ -667,9 +667,9 @@ public:
             .add_argument(arg, TEXT("Arg"))
             .build();
 
-        VerifyParseResult(parser.parse({ TEXT("-Arg"), TEXT("5") }));
+        VerifyParseResult(parser.parse({ TEXT("-Arg"), TEXT("5") }), parser);
         VERIFY_EQUAL(5, arg);
-        VerifyParseResult(parser.parse({ TEXT("-arg"), TEXT("5") }), parse_error::unknown_argument, TEXT("arg"));
+        VerifyParseResult(parser.parse({ TEXT("-arg"), TEXT("5") }), parser, parse_error::unknown_argument, TEXT("arg"));
         VERIFY_EQUAL(TEXT("Arg"), parser.get_argument(TEXT("Arg"))->name());
         VERIFY_NULL(parser.get_argument(TEXT("arg")));
     }
@@ -683,7 +683,8 @@ public:
             .add_argument(arg, TEXT("Arg"))
             .build();
 
-        VerifyParseResult(parser.parse({ TEXT("-Switch"), TEXT("-Arg"), TEXT("5") }), parse_error::parsing_cancelled, TEXT("Switch"));
+        VerifyParseResult(parser.parse({ TEXT("-Switch"), TEXT("-Arg"), TEXT("5") }), parser, parse_error::parsing_cancelled, TEXT("Switch"));
+        VERIFY_TRUE(parser.help_requested());
         VERIFY_TRUE(sw);
         VERIFY_EQUAL(0, arg);
 
@@ -701,7 +702,8 @@ public:
                 return on_parsed_action::none;
             });
 
-        VerifyParseResult(parser.parse({ TEXT("-Switch"), TEXT("-Arg"), TEXT("5") }), parse_error::parsing_cancelled, TEXT("Switch"));
+        VerifyParseResult(parser.parse({ TEXT("-Switch"), TEXT("-Arg"), TEXT("5") }), parser, parse_error::parsing_cancelled, TEXT("Switch"));
+        VERIFY_TRUE(parser.help_requested());
         VERIFY_TRUE(called);
         VERIFY_TRUE(sw);
         VERIFY_EQUAL(0, arg);
@@ -721,7 +723,7 @@ public:
                 return on_parsed_action::none;
             });
 
-        VerifyParseResult(parser.parse({ TEXT("-Switch"), TEXT("-Arg"), TEXT("5") }));
+        VerifyParseResult(parser.parse({ TEXT("-Switch"), TEXT("-Arg"), TEXT("5") }), parser);
         VERIFY_TRUE(called);
         VERIFY_TRUE(sw);
         VERIFY_EQUAL(5, arg);
@@ -742,7 +744,7 @@ public:
                 return on_parsed_action::none;
             });
 
-        VerifyParseResult(parser.parse({ TEXT("-Arg"), TEXT("5"), TEXT("-Switch") }), parse_error::parsing_cancelled, TEXT("Arg"));
+        VerifyParseResult(parser.parse({ TEXT("-Arg"), TEXT("5"), TEXT("-Switch") }), parser, parse_error::parsing_cancelled, TEXT("Arg"));
         VERIFY_TRUE(called);
         VERIFY_FALSE(sw);
         VERIFY_EQUAL(5, arg);
@@ -768,7 +770,7 @@ public:
         VERIFY_EQUAL(TEXT('\0'), parser.get_argument(TEXT("bar"))->short_name());
         VERIFY_FALSE(parser.get_argument(TEXT("bar"))->has_short_name());
 
-        VerifyParseResult(parser.parse({ TEXT("-f"), TEXT("5"), TEXT("--bar"), TEXT("6"), TEXT("-a"), TEXT("7"), TEXT("--arg1"), TEXT("8"), TEXT("-s") }));
+        VerifyParseResult(parser.parse({ TEXT("-f"), TEXT("5"), TEXT("--bar"), TEXT("6"), TEXT("-a"), TEXT("7"), TEXT("--arg1"), TEXT("8"), TEXT("-s") }), parser);
         VERIFY_EQUAL(5, args.foo);
         VERIFY_EQUAL(6, args.bar);
         VERIFY_EQUAL(7, args.arg2);
@@ -779,34 +781,38 @@ public:
 
         // Combine switches.
         args = {};
-        VerifyParseResult(parser.parse({ TEXT("-su") }));
+        VerifyParseResult(parser.parse({ TEXT("-su") }), parser);
         VERIFY_TRUE(args.switch1);
         VERIFY_FALSE(args.switch2);
         VERIFY_TRUE(args.switch3);
 
         // Use a short alias.
-        VerifyParseResult(parser.parse({ TEXT("-b"), TEXT("5") }));
+        VerifyParseResult(parser.parse({ TEXT("-b"), TEXT("5") }), parser);
         VERIFY_EQUAL(5, args.arg2);
 
         // Can't use long argument prefix with short names.
-        VerifyParseResult(parser.parse({ TEXT("--s") }), parse_error::unknown_argument, TEXT("s"));;
+        VerifyParseResult(parser.parse({ TEXT("--s") }), parser, parse_error::unknown_argument, TEXT("s"));;
 
         // And vice versa.
-        VerifyParseResult(parser.parse({ TEXT("-Switch1") }), parse_error::unknown_argument, TEXT("w"));
+        VerifyParseResult(parser.parse({ TEXT("-Switch1") }), parser, parse_error::unknown_argument, TEXT("w"));
 
         // Short alias is ignored on an argument without a short name.
-        VerifyParseResult(parser.parse({ TEXT("-c") }), parse_error::unknown_argument, TEXT("c"));;
+        VerifyParseResult(parser.parse({ TEXT("-c") }), parser, parse_error::unknown_argument, TEXT("c"));;
     }
 
     TEST_METHOD(TestActionArguments)
     {
         ActionArguments args{};
         auto parser = args.create_parser();
-        VerifyParseResult(parser.parse({ TEXT("-StaticAction"), TEXT("42") }));
+        VerifyParseResult(parser.parse({ TEXT("-StaticAction"), TEXT("42") }), parser);
         VERIFY_EQUAL(42, ActionArguments::action_value);
 
-        VerifyParseResult(parser.parse({ TEXT("-Action") }), parse_error::parsing_cancelled, TEXT("Action"));
+        VerifyParseResult(parser.parse({ TEXT("-Action") }), parser, parse_error::parsing_cancelled, TEXT("Action"));
+        VERIFY_FALSE(parser.help_requested());
         VERIFY_TRUE(args.called);
+
+        VerifyParseResult(parser.parse({ TEXT("-StaticAction2") }), parser, parse_error::parsing_cancelled, TEXT("StaticAction2"));
+        VERIFY_TRUE(parser.help_requested());
     }
 
 private:
@@ -824,7 +830,7 @@ private:
         }
     }
 
-    static void VerifyParseResult(const parse_result<tchar_t> &result, parse_error expected_error = parse_error::none, tstring_view expected_arg = {})
+    static void VerifyParseResult(const parse_result<tchar_t> &result, basic_command_line_parser<tchar_t> &parser, parse_error expected_error = parse_error::none, tstring_view expected_arg = {})
     {
         if (expected_error != result.error)
         {
@@ -833,6 +839,14 @@ private:
 
         VERIFY_EQUAL((int)expected_error, (int)result.error);
         VERIFY_EQUAL(expected_arg, result.error_arg_name);
+        if (result.error == parse_error::none)
+        {
+            VERIFY_FALSE(parser.help_requested());
+        }
+        else if (result.error != parse_error::parsing_cancelled)
+        {
+            VERIFY_TRUE(parser.help_requested());
+        }
     }
 };
 
