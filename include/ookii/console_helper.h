@@ -11,8 +11,8 @@
 //! define NOMINMAX or the build will fail.
 //! 
 //! If you want to avoid polluting the global namespace with items from these platform headers,
-//! you can define OOKII_CONSOLE_NOT_INLINE for your project to avoid defining the functions in the
-//! header. Then, in one file only, you must define OOKII_CONSOLE_DEFINITION and then include
+//! you can define OOKII_PLATFORM_NOT_INLINE for your project to avoid defining the functions in the
+//! header. Then, in one file only, you must define OOKII_PLATFORM_DEFINITION and then include
 //! console_helper.h, to provide the symbol to the linker. This way, the platform headers are
 //! limited to only that one file.
 //! 
@@ -22,41 +22,8 @@
 
 #pragma once
 
-#if !defined(OOKII_NO_PLATFORM_HEADERS) && (!defined(OOKII_CONSOLE_NOT_INLINE) || defined(OOKII_CONSOLE_DEFINITION))
-
-#if _WIN32
-#define WIN32_LEAN_AND_MEAN
-#define NOMINMAX
-#define NOSERVICE
-#define NOMCX
-#define NOIME
-#define NOSOUND
-#define NOCOMM
-#define NOKANJI
-#define NORPC
-#define NOPROXYSTUB
-#define NOIMAGE
-#define NOTAPE
-#include <Windows.h>
-#include <io.h>
-#else
-#include <unistd.h>
-#include <sys/ioctl.h>
-#endif
-
+#include "platform_helper.h"
 #include <iostream>
-
-#endif
-
-#ifndef OOKII_CONSOLE_NOT_INLINE
-#define OOKII_CONSOLE_FUNC(decl) inline decl
-#define OOKII_CONSOLE_FUNC_HAS_BODY
-#elif defined(OOKII_CONSOLE_DEFINITION)
-#define OOKII_CONSOLE_FUNC(decl) decl
-#define OOKII_CONSOLE_FUNC_HAS_BODY
-#else
-#define OOKII_CONSOLE_FUNC(decl) decl;
-#endif
 
 namespace ookii
 {
@@ -66,28 +33,16 @@ namespace ookii
     //! to a file, it's platform dependent whether the width is still returned.
     //! 
     //! \param default_width The width to assume if the actual width can't be determined.
-    OOKII_CONSOLE_FUNC(short get_console_width(short default_width = 80) noexcept)
-#ifdef OOKII_CONSOLE_FUNC_HAS_BODY
+    inline short get_console_width(short default_width = 80) noexcept
     {
-#if _WIN32
-
-        HANDLE handle = GetStdHandle(STD_OUTPUT_HANDLE);
-        CONSOLE_SCREEN_BUFFER_INFO info;
-        if (GetConsoleScreenBufferInfo(handle, &info))
-            return info.srWindow.Right - info.srWindow.Left + 1;
-
-#elif defined(TIOCGWINSZ)
-
-        struct winsize ws;
-
-        if (ioctl(STDOUT_FILENO, TIOCGWINSZ, &ws) == 0)
-            return static_cast<short>(ws.ws_col);
-
-#endif
+        auto width = details::get_console_width();
+        if (width)
+        {
+            return *width;
+        }
 
         return default_width;
     }
-#endif
 
     //! \brief Represents one of the standard console streams.
     enum class standard_stream
@@ -175,8 +130,8 @@ namespace ookii
         }
 
 #ifdef _WIN32
-#ifdef OOKII_CONSOLE_FUNC_HAS_BODY
-        OOKII_CONSOLE_FUNC(HANDLE get_stream_handle(standard_stream stream))
+#ifdef OOKII_PLATFORM_FUNC_HAS_BODY
+        OOKII_PLATFORM_FUNC(HANDLE get_stream_handle(standard_stream stream))
         {
             switch (stream)
             {
@@ -197,8 +152,8 @@ namespace ookii
             return _fileno(get_stream_file(stream));
         }
 
-        OOKII_CONSOLE_FUNC(bool is_console(standard_stream stream))
-#ifdef OOKII_CONSOLE_FUNC_HAS_BODY
+        OOKII_PLATFORM_FUNC(bool is_console(standard_stream stream))
+#ifdef OOKII_PLATFORM_FUNC_HAS_BODY
         {
             return _isatty(get_stream_fd(stream));
         }
@@ -210,8 +165,8 @@ namespace ookii
             return fileno(get_stream_file(stream));
         }
 
-        OOKII_CONSOLE_FUNC(bool is_console(standard_stream stream))
-#ifdef OOKII_CONSOLE_FUNC_HAS_BODY
+        OOKII_PLATFORM_FUNC(bool is_console(standard_stream stream))
+#ifdef OOKII_PLATFORM_FUNC_HAS_BODY
         {
             return isatty(get_stream_fd(stream));
         }
@@ -244,8 +199,8 @@ namespace ookii
     //! \param enable `true` to enable VT support, otherwise, `false`.
     //! \return One of the values of the vt_result enumeration.
 #ifdef _WIN32
-    OOKII_CONSOLE_FUNC(vt_result set_console_vt_support(standard_stream stream, bool enable) noexcept)
-#ifdef OOKII_CONSOLE_FUNC_HAS_BODY
+    OOKII_PLATFORM_FUNC(vt_result set_console_vt_support(standard_stream stream, bool enable) noexcept)
+#ifdef OOKII_PLATFORM_FUNC_HAS_BODY
     {
         auto handle = details::get_stream_handle(stream);
         DWORD mode;

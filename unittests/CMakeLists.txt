@@ -7,7 +7,7 @@ target_link_libraries(unittests PRIVATE Ookii.CommandLine::OOKIICL)
 
 set_property(TARGET unittests PROPERTY CXX_STANDARD 20)
 
-add_compile_definitions(OOKII_CONSOLE_NOT_INLINE)
+add_compile_definitions(OOKII_PLATFORM_NOT_INLINE)
 
 if(MSVC)
   target_compile_options(unittests PRIVATE /W4)
