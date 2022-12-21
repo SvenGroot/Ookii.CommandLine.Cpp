@@ -171,8 +171,8 @@ private:
 
     size_t calculate_names_length(const argument_type &argument)
     {
-        auto short_prefix_length = parser().prefixes()[0].length();
-        auto long_prefix_length = parser().long_prefix().length();
+        size_t short_prefix_length = parser().prefixes()[0].length();
+        size_t long_prefix_length = parser().long_prefix().length();
         size_t length = 0;
         if (argument.has_short_name())
         {
@@ -190,7 +190,7 @@ private:
         }
 
         // Space for prefix, long name, separator.
-        length += std::accumulate(argument.aliases().begin(), argument.aliases().end(), 0,
+        length += std::accumulate(argument.aliases().begin(), argument.aliases().end(), static_cast<size_t>(0),
             [long_prefix_length](size_t left, const auto &right)
             {
                 return left + long_prefix_length + right.length() + 1;
