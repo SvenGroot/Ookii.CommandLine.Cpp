@@ -193,6 +193,16 @@ public:
         VERIFY_NULL(command);
     }
 
+    TEST_METHOD(TestConfigureParser)
+    {
+        basic_command_manager<tchar_t> manager{TEXT("TestApp")};
+        manager.configure_parser([](auto &parser) { parser.mode(parsing_mode::long_short); })
+            .add_command<Command2>();
+
+        auto result = manager.run_command({ TEXT("AnotherCommand"), TEXT("--value"), TEXT("42") });
+        VERIFY_EQUAL(42, result);
+    }
+
     static constexpr tstring_view c_usageExpected = TEXT(R"(Usage: TestApp <command> [arguments]
 
 The following commands are available:

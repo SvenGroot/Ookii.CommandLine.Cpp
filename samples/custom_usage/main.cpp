@@ -22,7 +22,6 @@ void show_args(arguments args)
     std::cout << "Verbose: " << args.verbose << std::endl;
     std::cout << "Process: " << args.process << std::endl;
     std::cout << "Values: " << args.values << std::endl;
-    std::cout << "Help: " << args.help << std::endl;
 }
 
 // In this case we don't have the script generate a main method, because we want to use our custom

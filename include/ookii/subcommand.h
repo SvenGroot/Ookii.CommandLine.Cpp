@@ -202,6 +202,8 @@ namespace ookii
         using usage_writer_type = basic_usage_writer<CharType, Traits, Alloc>;
         //! \brief The concrete type of output stream used.
         using stream_type = std::basic_ostream<CharType, Traits>;
+        //! \brief The type of a function used to configure parser options for every command.
+        using configure_function = std::function<void(builder_type&)>;
 
         //! \brief The error exit code used by run_command() if no command name was supplied
         //!        or the supplied command could not be found.
@@ -221,6 +223,23 @@ namespace ookii
               _locale{locale},
               _case_sensitive{case_sensitive}
         {
+        }
+
+        //! \brief Sets a function that can be used to configure parser options for every command.
+        //!
+        //! The configure parser function, if set, is invoked on the basic_parser_builder instance
+        //! created before that instance is passed to the command class's constructor.
+        //!
+        //! Use this to configure global options (such as parsing mode) that apply to all commands.
+        //!
+        //! While this could be used to define global arguments shared by every command, generally
+        //! it's recommended to use a common base class for that.
+        //!
+        //! \param function The function to invoke to configure the parser.
+        basic_command_manager &configure_parser(configure_function function)
+        {
+            _configure_function = function;
+            return *this;
         }
 
         //! \brief Adds a command to the basic_command_manager.
@@ -668,6 +687,11 @@ namespace ookii
                 .case_sensitive(_case_sensitive)
                 .description(command.description());
 
+            if (_configure_function)
+            {
+                _configure_function(builder);
+            }
+
             return builder;
         }
 
@@ -712,6 +736,7 @@ namespace ookii
         string_type _application_name;
         std::locale _locale;
         bool _case_sensitive;
+        configure_function _configure_function;
     };
 
     //! \brief Typedef for basic_command_manager using `char` as the character type.
