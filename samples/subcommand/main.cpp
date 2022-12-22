@@ -13,7 +13,8 @@ int main(int argc, char *argv[])
 
     // Register the available commands.
     manager.add_command<read_command>()
-        .add_command<write_command>();
+        .add_command<write_command>()
+        .add_version_command([]() { std::cout << "Ookii.CommandLine Subcommand Sample 2.0" << std::endl; });
 
     // Find and run the command based on the command line arguments, and print error messages and
     // usage help as appropriate.

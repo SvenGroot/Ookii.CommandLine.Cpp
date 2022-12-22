@@ -110,11 +110,21 @@ namespace ookii
         using builder_type = typename command_type::builder_type;
         //! \brief The concrete string type used.
         using string_type = std::basic_string<CharType, Traits, Alloc>;
-
-    private:
+        //! \brief The type of a function that instantiates a subcommand.
         using creator = std::function<std::unique_ptr<command_type>(builder_type &)>;
 
     public:
+
+        //! \brief Initializes a new instance of the command_info class.
+        //! \param name The name of the subcommand.
+        //! \param description The description of the subcommand.
+        //! \param creator A function that instantiates the subcommand.
+        command_info(string_type name, string_type description, creator creator)
+            : _name{name},
+              _description{description},
+              _creator{creator}
+        {
+        }
 
         //! \brief Creates a command_info instance for the specified type.
         //! 
@@ -153,17 +163,36 @@ namespace ookii
         }
 
     private:
-        command_info(string_type name, string_type description, creator creator)
-            : _name{name},
-              _description{description},
-              _creator{creator}
-        {
-        }
-
         string_type _name;
         string_type _description;
         creator _creator;
     };
+
+    namespace details
+    {
+        template<typename CharType, typename Traits, typename Alloc>
+        class version_command : public basic_command<CharType, Traits, Alloc>
+        {
+        public:
+            using base_type = basic_command<CharType, Traits, Alloc>;
+            using builder_type = typename base_type::builder_type;
+
+            version_command(builder_type &builder, typename builder_type::version_function function)
+                : base_type{builder},
+                  _function{function}
+            {
+            }
+
+            virtual int run() override
+            {
+                _function();
+                return 0;
+            }
+
+        private:
+            typename builder_type::version_function _function;
+        };
+    }
 
     //! \brief Manages registration, creation and invocation of subcommands for an application.
     //! 
@@ -176,8 +205,8 @@ namespace ookii
     //! 
     //! Several typedefs for common character types are provided:
     //! 
-    //! Type                            | Definition
-    //! ------------------------------- | -------------------------------------
+    //! Type                      | Definition
+    //! ------------------------- | -------------------------------------
     //! `ookii::command_manager`  | `ookii::basic_command_manager<char>`
     //! `ookii::wcommand_manager` | `ookii::basic_command_manager<wchar_t>`
     //! 
@@ -204,6 +233,10 @@ namespace ookii
         using stream_type = std::basic_ostream<CharType, Traits>;
         //! \brief The type of a function used to configure parser options for every command.
         using configure_function = std::function<void(builder_type&)>;
+        //! \brief The type of a function that displays version information.
+        using version_function = std::function<void()>;
+        //! \brief The specialized type of basic_localized_string_provider used.
+        using string_provider_type = basic_localized_string_provider<CharType, Traits, Alloc>;
 
         //! \brief The error exit code used by run_command() if no command name was supplied
         //!        or the supplied command could not be found.
@@ -217,12 +250,18 @@ namespace ookii
         //!        sensitive. The default is false.
         //! \param locale The locale to use when converting argument values. The default is a copy
         //!        of the current global locale.
-        basic_command_manager(string_type application_name, bool case_sensitive = false, const std::locale &locale = {})
+        basic_command_manager(string_type application_name, bool case_sensitive = false, const std::locale &locale = {},
+            string_provider_type *string_provider = nullptr)
             : _commands{string_less{case_sensitive, locale}},
               _application_name{application_name},
               _locale{locale},
-              _case_sensitive{case_sensitive}
+              _case_sensitive{case_sensitive},
+              _string_provider{string_provider}
         {
+            if (_string_provider == nullptr)
+            {
+                _string_provider = &string_provider_type::get_default();
+            }
         }
 
         //! \brief Sets a function that can be used to configure parser options for every command.
@@ -236,6 +275,7 @@ namespace ookii
         //! it's recommended to use a common base class for that.
         //!
         //! \param function The function to invoke to configure the parser.
+        //! \return A reference to the basic_command_manager.
         basic_command_manager &configure_parser(configure_function function)
         {
             _configure_function = function;
@@ -251,6 +291,7 @@ namespace ookii
         //! \param description The description of the command, used for usage help. If left blank,
         //!        it will be determined by the static description() method of the command type. If
         //!        no such method exist, the description will be blank.
+        //! \return A reference to the basic_command_manager.
         template<typename T>
         basic_command_manager &add_command(string_type name = {}, string_type description = {})
         {
@@ -266,6 +307,53 @@ namespace ookii
 
             return *this;
         }
+
+        //! \brief Adds the standard version command.
+        //!
+        //! This method adds a command with the default name "version", which invokes the specified
+        //! function when invoked.
+        //!
+        //! You can specify a different name, as well as a custom description, using the
+        //! basic_localized_string_provider class.
+        //!
+        //! \param function A function that displays version information. This will be called when
+        //!        the command is invoked.
+        //! \return A reference to the basic_command_manager.
+        basic_command_manager &add_version_command(version_function function)
+        {
+            auto creator = [function = std::move(function)](builder_type &builder) -> std::unique_ptr<command_type>
+            {
+                return std::make_unique<details::version_command<CharType, Traits, Alloc>>(builder, function);
+            };
+
+            auto name = _string_provider->automatic_version_command_name();
+            auto description = _string_provider->automatic_version_description();
+            auto [it, success] = _commands.emplace(name, info_type{name, description, creator});
+            if (!success)
+                throw std::logic_error("Duplicate command name");
+
+            return *this;
+        }
+
+#ifdef _WIN32
+        //! \brief Adds the standard version command, using version information from the
+        //! VERSION_INFO resource.
+        //!
+        //! This method adds a command with the default name "version", which when invoked will
+        //! read the VERSION_INFO resource of the current executable, and print the product name,
+        //! version and optionally copyright information to the standard output. If these resources
+        //! don't exist, the text "Unknown version" is shown.
+        //!
+        //! You can specify a different name, as well as a custom description, using the
+        //! basic_localized_string_provider class.
+        //!
+        //! \return A reference to the basic_command_manager.
+        basic_command_manager &add_win32_version_command()
+        {
+            return add_version_command(details::show_win32_version<CharType>);
+        }
+#endif
+
 
         //! \brief Gets a view of all the commands.
         auto commands() const noexcept
@@ -682,7 +770,7 @@ namespace ookii
         {
             // Include the application name so usage will be correct.
             string_type full_name = _application_name + static_cast<CharType>(' ') + command.name();
-            builder_type builder{full_name};
+            builder_type builder{full_name, _string_provider};
             builder.locale(_locale)
                 .case_sensitive(_case_sensitive)
                 .description(command.description());
@@ -737,6 +825,7 @@ namespace ookii
         std::locale _locale;
         bool _case_sensitive;
         configure_function _configure_function;
+        string_provider_type *_string_provider;
     };
 
     //! \brief Typedef for basic_command_manager using `char` as the character type.

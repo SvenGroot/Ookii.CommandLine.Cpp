@@ -27,6 +27,25 @@ namespace ookii
 
         template <typename T>
         using first_argument_type = decltype(first_argument_helper(std::declval<T>()));
+
+#ifdef _WIN32
+        template<typename CharType>
+        inline void show_win32_version()
+        {
+            auto info = details::get_version_resource();
+            if (!info)
+            {
+                console_stream<CharType>::cout() << "Unknown version." << std::endl;
+                return;
+            }
+
+            console_stream<CharType>::cout() << info->product_name << " " << info->version << std::endl;
+            if (!info->copyright.empty())
+            {
+                console_stream<CharType>::cout() << info->copyright << std::endl;
+            }
+        }
+#endif
     }
 
     //! \brief Provides functionality to specify options and arguments to create a
@@ -758,6 +777,7 @@ namespace ookii
         //! basic_localized_string_provider class.
         //!
         //! \param function A function that displays version information. This will be called when
+        //!        the argument is supplied.
         //! \return An action_argument_builder that can be used to further customize the argument.
         action_argument_builder<bool> &add_version_argument(version_function function)
         {
@@ -786,8 +806,8 @@ namespace ookii
         //!
         //! This method adds an argument with the default name "Version", which when supplied will
         //! read the VERSION_INFO resource of the current executable, and print the product name,
-        //! version and copyright information to the standard output. If these resources don't
-        //! exist, the text "Unknown version" is shown.
+        //! version and optionally copyright information to the standard output. If these resources
+        //! don't exist, the text "Unknown version" is shown.
         //!
         //! The argument will be called "version" (with a lowercase 'v') if the first letter of the
         //! first manually defined argument is lowercase.
@@ -795,11 +815,10 @@ namespace ookii
         //! You can specify a different name, as well as a custom description, using the
         //! basic_localized_string_provider class.
         //!
-        //! \param function A function that displays version information. This will be called when
         //! \return An action_argument_builder that can be used to further customize the argument.
         action_argument_builder<bool> &add_win32_version_argument()
         {
-            return add_version_argument(show_win32_version);
+            return add_version_argument(details::show_win32_version<CharType>);
         }
 #endif
 
@@ -1020,24 +1039,6 @@ namespace ookii
         }
 
     private:
-#ifdef _WIN32
-        static void show_win32_version()
-        {
-            auto info = details::get_version_resource();
-            if (!info)
-            {
-                console_stream<CharType>::cout() << "Unknown version." << std::endl;
-                return;
-            }
-
-            console_stream<CharType>::cout() << info->product_name << " " << info->version << std::endl;
-            if (!info->copyright.empty())
-            {
-                console_stream<CharType>::cout() << info->copyright << std::endl;
-            }
-        }
-#endif
-
         size_t get_next_position() noexcept
         {
             return _next_position++;

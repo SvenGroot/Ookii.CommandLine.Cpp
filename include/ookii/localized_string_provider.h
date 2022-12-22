@@ -128,6 +128,13 @@ namespace ookii
             return defaults::automatic_version_name.data();
         }
 
+        //! \brief Gets the name of the version command created by
+        //! basic_command_manager::add_version_command().
+        virtual string_type automatic_version_command_name() const
+        {
+            return defaults::automatic_version_command_name.data();
+        }
+
         //! \brief Gets the description of the version argument created by
         //! basic_parser_builder::add_version_argument().
         virtual string_type automatic_version_description() const
@@ -150,6 +157,7 @@ namespace ookii
             static constexpr CharType automatic_help_short_name = '?';
             static constexpr auto automatic_help_description = literal_cast<CharType>("Displays this help message.");
             static constexpr auto automatic_version_name = literal_cast<CharType>("Version");
+            static constexpr auto automatic_version_command_name = literal_cast<CharType>("version");
             static constexpr auto automatic_version_description = literal_cast<CharType>("Displays version information.");
         };
     };
