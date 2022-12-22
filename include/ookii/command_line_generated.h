@@ -46,7 +46,7 @@ namespace ookii
     //!        of the current global locale.
     basic_command_manager<details::default_char_type> register_commands(
         std::basic_string<details::default_char_type> application_name,
-        ::ookii::basic_localized_string_provider<details::default_char_type> *string_provider = nullptr,
+        basic_localized_string_provider<details::default_char_type> *string_provider = nullptr,
         const std::locale& locale = {});
 }
 
