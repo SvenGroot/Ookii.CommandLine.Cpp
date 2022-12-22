@@ -14,7 +14,7 @@ function Compare-Files([string]$Actual, [string]$Expected, [switch]$Negate, [str
         throw "Negate not supported."
     }
 
-    $expectedContent = Get-ContentWithLineNumbers (Join-Path $inputPath $Expected)
+    $expectedContent = Get-ContentWithLineNumbers (Join-Path $expectedPath $Expected)
     $actualContent = Get-ContentWithLineNumbers $Actual
     [bool]$succeeded = $true
     $differences = Compare-Object $expectedContent $actualContent -CaseSensitive -PassThru
