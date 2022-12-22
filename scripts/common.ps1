@@ -213,70 +213,12 @@ class ArgumentInfo {
     [void] GenerateName([NameTransformMode]$Transform) {
         # Don't alter an explicitly specified name.
         if (-not $this.Name) {
-            switch ($Transform) {
-                PascalCase {
-                    $this.Name = [ArgumentInfo]::ToPascalOrCamelCase($this.MemberName, $true)
-                }
-                CamelCase {
-                    $this.Name = [ArgumentInfo]::ToPascalOrCamelCase($this.MemberName, $false)
-                }
-                SnakeCase {
-                    $this.Name = [ArgumentInfo]::ToSnakeOrDashCase($this.MemberName, '_')
-                }
-                DashCase {
-                    $this.Name = [ArgumentInfo]::ToSnakeOrDashCase($this.MemberName, '-')
-                }
-                Trim {
-                    $this.Name = $this.MemberName.Trim('_')
-                }
-                default {
-                    $this.Name = $this.MemberName
-                }
-            }
+            $this.Name = Convert-Name $this.MemberName $Transform
         }
 
         if ((-not $this.HasLongName) -and $this.HasShortName -and (-not $this.ShortName)) {
             $this.ShortName = $this.Name[0]
         }
-    }
-
-    [string]hidden static ToPascalOrCamelCase([string]$Name, [bool]$PascalCase) {
-        # Remove any underscores, and the first letter (if pascal case) and any letter after an
-        # underscore is converted to uppercase. Other letters are unchanged.
-        $toUpper = $PascalCase
-        $toLower = -not $PascalCase # Only for the first character.
-        return [string]::new(($Name.Trim("_").ToCharArray() | ForEach-Object {
-            if ($_ -eq "_") {
-                $toUpper = $true
-            } elseif ($toUpper) {
-                [char]::ToUpperInvariant($_)
-                $toUpper = $false
-            } elseif ($toLower) {
-                [char]::ToLowerInvariant($_)
-                $toLower = $false
-            } else {
-                $_
-            }
-        }))
-    }
-
-    [string]hidden static ToSnakeOrDashCase([string]$Name, [char]$separator) {
-        $needSeparator = $false
-        $first = $true
-        return [string]::new(($Name.Trim("_").ToCharArray() | ForEach-Object {
-            if ($_ -eq "_") {
-                $needSeparator = $true
-            } else {
-                if ($needSeparator -or ([char]::IsUpper($_) -and -not $first)) {
-                    $separator
-                    $needSeparator = $false
-                }
-
-                [char]::ToLowerInvariant($_)
-            }
-
-            $first = $false
-        }))
     }
 }
 
@@ -286,6 +228,7 @@ class CommandInfo {
     [string] $TypeName
     [string] $BaseClass
     [string[]] $Prefixes
+    [string] $LongPrefix
     [bool] $CaseSensitive
     [bool] $Register = $true
     [bool] $AllowWhiteSpaceSeparator = $true
@@ -298,6 +241,8 @@ class CommandInfo {
     [bool] $Win32VersionInfo
     [bool] $NoAutoHelp
     [bool] $IsGlobal
+    [string] $CommonHelpArgument
+    [bool] $AutoCommonHelpArgument
 
     [bool] NeedFileSystem() {
         return -not ([bool]$this.CommandName)
@@ -321,6 +266,9 @@ class CommandInfo {
                 $attribute.Value.Split(",") | ForEach-Object {
                     $this.Prefixes += $_.Trim()
                 }
+            }
+            "long_prefix" {
+                $this.Prefix = $attribute.Value
             }
             "case_sensitive" {
                 $this.CaseSensitive = $true
@@ -359,8 +307,19 @@ class CommandInfo {
             "no_auto_help" {
                 $this.NoAutoHelp = $true
             }
+            "common_help_argument" {
+                if (-not $this.IsGlobal) {
+                    Write-Warning "Attribute $($attribute.Name) can only be used with the global context for subcommands."
+                } else {
+                    if ($attribute.Value) {
+                        $this.CommonHelpArgument = $attribute.Value
+                    } else {
+                        $this.AutoCommonHelpArgument = $true
+                    }
+                }
+            }
             default {
-                Write-Warning "Unexpected command attribute $($attribute.Name)"
+                Write-Warning "Unexpected command attribute $($attribute.Name)."
             }
         }
     }
@@ -410,6 +369,10 @@ class CommandInfo {
             $result += "$($Context.ExtraIndent)        .prefixes({ $($Context.StringPrefix)`"$prefixList`" })"
         }
 
+        if ($this.LongPrefix) {
+            $result += "$($Context.ExtraIndent)        .long_prefix($($Context.StringPrefix)`"$($this.LongPrefix)`")"
+        }
+
         if (-not $this.IsGlobal -and $this.CaseSensitive) {
             $result += "$($Context.ExtraIndent)        .case_sensitive(true)"
         }
@@ -430,26 +393,28 @@ class CommandInfo {
             $result += "$($Context.ExtraIndent)        .automatic_help_argument(false)"
         }
 
-        if (-not $this.IsGlobal -and $this.Win32VersionInfo) {
-            $result += "#ifdef _WIN32"
-            $result += "$($Context.ExtraIndent)        .add_win32_version_argument()"
+        if (-not $this.IsGlobal) {
+            if ($this.Win32VersionInfo) {
+                $result += "#ifdef _WIN32"
+                $result += "$($Context.ExtraIndent)        .add_win32_version_argument()"
+                if ($this.VersionInfo) {
+                    $result += "#else"
+                }
+            }
+
             if ($this.VersionInfo) {
-                $result += "#else"
-            }
-        }
+                $result += "$($Context.ExtraIndent)        .add_version_argument([]()"
+                $result += "$($Context.ExtraIndent)        {"
+                foreach ($line in $this.VersionInfo) {
+                    $result += "$($Context.ExtraIndent)            ookii::console_stream<$($Context.CharType)>::cout() << $($Context.StringPrefix)`"$line`" << std::endl;"
+                }
 
-        if (-not $this.IsGlobal -and $this.VersionInfo) {
-            $result += "$($Context.ExtraIndent)        .add_version_argument([]()"
-            $result += "$($Context.ExtraIndent)        {"
-            foreach ($line in $this.VersionInfo)
-            {
-                $result += "$($Context.ExtraIndent)            ookii::console_stream<$($Context.CharType)>::cout() << $($Context.StringPrefix)`"$line`" << std::endl;"
+                $result += "$($Context.ExtraIndent)        })"
             }
-            $result += "$($Context.ExtraIndent)        })"
-        }
 
-        if (-not $this.IsGlobal -and $this.Win32VersionInfo) {
-            $result += "#endif"
+            if ($this.Win32VersionInfo) {
+                $result += "#endif"
+            }
         }
 
         return $result
@@ -474,13 +439,14 @@ class CommandInfo {
     }
 
     [string[]] GenerateArguments([CodeGenContext]$Context) {
+        $nameTransform = $Context.NameTransform
         if ($null -ne $this.OverrideNameTransform) {
-            $Context.NameTransform = $this.OverrideNameTransform
+            $nameTransform = $this.OverrideNameTransform
         }
 
         $result = @()
         foreach ($arg in $this.Arguments) {
-            $arg.GenerateName($Context.NameTransform)
+            $arg.GenerateName($nameTransform)
             $result += $arg.GenerateArgument($Context)
         }
 
@@ -504,7 +470,38 @@ class CommandInfo {
     }
 
     [string[]] GenerateGlobal([CodeGenContext]$Context) {
-        $result = @("        .configure_parser([](auto &parser)")
+        $result = @()
+        if ($this.Description) {
+            $result += "        .description($($Context.StringPrefix)`"$($this.Description)`")"
+        }
+
+        $helpArgument = $this.CommonHelpArgument
+        if ($this.AutoCommonHelpArgument) {
+            $nameTransform = $Context.NameTransform
+            if ($null -ne $this.OverrideNameTransform) {
+                $nameTransform = $this.OverrideNameTransform
+            }
+
+            if ($this.ParsingMode -eq [ParsingMode]::LongShort) {
+                $prefix = $this.LongPrefix
+                if (-not $prefix) {
+                    $prefix = "--"
+                }
+            } else {
+                $prefix = "-"
+                if ($this.Prefixes.Length -gt 0) {
+                    $prefix = $this.Prefixes[0]
+                }
+            }
+
+            $helpArgument = $prefix + (Convert-Name "Help" $nameTransform)
+        }
+
+        if ($helpArgument) {
+            $result += "        .common_help_argument($($Context.StringPrefix)`"$helpArgument`")"
+        }
+
+        $result += "        .configure_parser([](auto &parser)"
         $result += "        {"
         $result += "            parser"
         $Context.ExtraIndent = "        "
@@ -512,6 +509,29 @@ class CommandInfo {
         $result[-1] += ";"
         $Context.ExtraIndent = $null
         $result += "        })"
+
+        if ($this.Win32VersionInfo) {
+            $result += "#ifdef _WIN32"
+            $result += "$($Context.ExtraIndent)        .add_win32_version_command()"
+            if ($this.VersionInfo) {
+                $result += "#else"
+            }
+        }
+
+        if ($this.VersionInfo) {
+            $result += "$($Context.ExtraIndent)        .add_version_command([]()"
+            $result += "$($Context.ExtraIndent)        {"
+            foreach ($line in $this.VersionInfo) {
+                $result += "$($Context.ExtraIndent)            ookii::console_stream<$($Context.CharType)>::cout() << $($Context.StringPrefix)`"$line`" << std::endl;"
+            }
+
+            $result += "$($Context.ExtraIndent)        })"
+        }
+
+        if ($this.Win32VersionInfo) {
+            $result += "#endif"
+        }
+
         return $result
     }
 }
@@ -692,6 +712,17 @@ function Convert-Arguments([string[]]$contents, [CodeGenContext]$Context) {
             Default {}
         }
     }
+
+    if (($state -eq [ParseState]::StructAttributes -or $state -eq [ParseState]::StructComment) -and $info.IsGlobal)
+    {
+        $info
+        $info = [CommandInfo]::new()
+        $state = [ParseState]::BeforeStruct
+    }
+
+    if ($state -ne [ParseState]::BeforeStruct) {
+        Write-Warning "Unexpected end of file; some information may have been discarded."
+    }
 }
 
 function Convert-NameTransform([string]$value) {
@@ -722,4 +753,65 @@ function Get-ArgumentType([string]$parameters) {
     }
 
     throw "Unable to determine argument type from action argument parameters: $parameters"
+}
+
+function Convert-Name([string]$Name, [NameTransformMode]$Transform) {
+    switch ($Transform) {
+        PascalCase {
+            $Name = ConvertTo-PascalOrCamelCase $Name $true
+        }
+        CamelCase {
+            $Name = ConvertTo-PascalOrCamelCase $Name $false
+        }
+        SnakeCase {
+            $Name = ConvertTo-SnakeOrDashCase $Name '_'
+        }
+        DashCase {
+            $Name = ConvertTo-SnakeOrDashCase $Name '-'
+        }
+        Trim {
+            $Name = $Name.Trim('_')
+        }
+    }
+
+    return $Name
+}
+
+function ConvertTo-PascalOrCamelCase([string]$Name, [bool]$PascalCase) {
+    # Remove any underscores, and the first letter (if pascal case) and any letter after an
+    # underscore is converted to uppercase. Other letters are unchanged.
+    $toUpper = $PascalCase
+    $toLower = -not $PascalCase # Only for the first character.
+    return [string]::new(($Name.Trim("_").ToCharArray() | ForEach-Object {
+        if ($_ -eq "_") {
+            $toUpper = $true
+        } elseif ($toUpper) {
+            [char]::ToUpperInvariant($_)
+            $toUpper = $false
+        } elseif ($toLower) {
+            [char]::ToLowerInvariant($_)
+            $toLower = $false
+        } else {
+            $_
+        }
+    }))
+}
+
+function ConvertTo-SnakeOrDashCase([string]$Name, [char]$separator) {
+    $needSeparator = $false
+    $first = $true
+    return [string]::new(($Name.Trim("_").ToCharArray() | ForEach-Object {
+        if ($_ -eq "_") {
+            $needSeparator = $true
+        } else {
+            if ($needSeparator -or ([char]::IsUpper($_) -and -not $first)) {
+                $separator
+                $needSeparator = $false
+            }
+
+            [char]::ToLowerInvariant($_)
+        }
+
+        $first = $false
+    }))
 }

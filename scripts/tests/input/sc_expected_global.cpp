@@ -7,19 +7,29 @@ my_command::my_command(my_command::builder_type &builder)
     : ookii::command{builder}
 {
     builder
-        .add_argument(this->test_arg, "TestArg").required().positional();
+        .add_argument(this->test_arg, "test-arg").required().positional();
 }
 
 ookii::basic_command_manager<char> ookii::register_commands(std::basic_string<char> application_name)
 {
-    basic_command_manager<char> manager{application_name};
+    basic_command_manager<char> manager{application_name, true};
     manager
+        .description("Description of the application.")
+        .common_help_argument("--help")
         .configure_parser([](auto &parser)
         {
             parser
                 .mode(ookii::parsing_mode::long_short)
                 .prefixes({ "-", "/" });
         })
+#ifdef _WIN32
+        .add_win32_version_command()
+#else
+        .add_version_command([]()
+        {
+            ookii::console_stream<char>::cout() << "Version info" << std::endl;
+        })
+#endif
         .add_command<my_command>("name", "Description of the command with a line break.\n\nAnd a paragraph.");
 
     return manager;

@@ -121,6 +121,9 @@ process {
         foreach ($info in (Convert-Arguments $contents $context)) {
             if ($info.IsGlobal) {
                 $global = $info
+                if ($null -ne $global.OverrideNameTransform) {
+                    $context.NameTransform = $global.OverrideNameTransform
+                }
             } else {
                 $commands += $info
                 $result += $info.GenerateSubcommand($context) -join [System.Environment]::NewLine
@@ -133,9 +136,14 @@ end {
         throw "No subcommand types found."
     }
 
+    $case = "false"
+    if ($global.CaseSensitive) {
+        $case = "true"
+    }
+
     $result += "ookii::basic_command_manager<$($context.CharType)> ookii::register_commands(std::basic_string<$($context.CharType)> application_name)
 {
-    basic_command_manager<$($context.CharType)> manager{application_name};
+    basic_command_manager<$($context.CharType)> manager{application_name, $case};
     manager
 "
     if ($global) {

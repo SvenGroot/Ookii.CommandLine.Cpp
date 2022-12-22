@@ -4,7 +4,7 @@ include(CheckIncludeFileCXX)
 
 set(OOKII_GENERATED_DIR "${CMAKE_BINARY_DIR}/generated")
 set(OOKII_GENERATED_OUTPUT "${OOKII_GENERATED_DIR}/commands_generated.cpp")
-set(OOKII_GENERATED_INPUT "${CMAKE_CURRENT_LIST_DIR}/read_command.h" "${CMAKE_CURRENT_LIST_DIR}/write_command.h")
+set(OOKII_GENERATED_INPUT "${CMAKE_CURRENT_LIST_DIR}/global.h" "${CMAKE_CURRENT_LIST_DIR}/read_command.h" "${CMAKE_CURRENT_LIST_DIR}/write_command.h")
 list(JOIN OOKII_GENERATED_INPUT "," OOKII_GENERATED_INPUT_LIST)
 
 make_directory("${OOKII_GENERATED_DIR}")
@@ -14,7 +14,7 @@ make_directory("${OOKII_GENERATED_DIR}")
 # We have to use -Command to be able to pass an array
 add_custom_command(
     OUTPUT ${OOKII_GENERATED_OUTPUT}
-    COMMAND ${POWERSHELL_PATH} -ExecutionPolicy Bypass -Command "&{ ${CMAKE_CURRENT_LIST_DIR}/../../scripts/New-Subcommand.ps1 -Path ${OOKII_GENERATED_INPUT_LIST} -OutputPath ${OOKII_GENERATED_OUTPUT} -NameTransform PascalCase -GenerateMain }"
+    COMMAND ${POWERSHELL_PATH} -ExecutionPolicy Bypass -Command "&{ ${CMAKE_CURRENT_LIST_DIR}/../../scripts/New-Subcommand.ps1 -Path ${OOKII_GENERATED_INPUT_LIST} -OutputPath ${OOKII_GENERATED_OUTPUT} -GenerateMain }"
     DEPENDS ${OOKII_GENERATED_INPUT}
     VERBATIM
 )

@@ -1,6 +1,12 @@
 // [global]
 // [mode: long_short]
+// [case_sensitive]
 // [prefixes: -, /]
+// [win32_version]
+// [version_info: Version info]
+// [common_help_argument]
+// [name_transform: DashCase]
+// Description of the application.
 
 // [command: name]
 // Description of the command

@@ -36,7 +36,7 @@ third_command::third_command(third_command::builder_type &builder)
 
 ookii::basic_command_manager<char> ookii::register_commands(std::basic_string<char> application_name)
 {
-    basic_command_manager<char> manager{application_name};
+    basic_command_manager<char> manager{application_name, false};
     manager
         .add_command<my_command>("name", "Description of the command with a line break.\n\nAnd a paragraph.")
         .add_command<third_command>({}, {});
