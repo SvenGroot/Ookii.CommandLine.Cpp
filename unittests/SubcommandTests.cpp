@@ -121,7 +121,9 @@ public:
     TEST_METHOD(TestCommandListUsage)
     {
         basic_command_manager<tchar_t> manager{TEXT("TestApp")};
-        manager.add_command<Command1>()
+        manager.description(TEXT("Application description."))
+            .common_help_argument(TEXT("-Help"))
+            .add_command<Command1>()
             .add_command<Command2>()
             .add_command<Command3>(TEXT("LastCommand"), TEXT("Foo"));
 
@@ -203,7 +205,9 @@ public:
         VERIFY_EQUAL(42, result);
     }
 
-    static constexpr tstring_view c_usageExpected = TEXT(R"(Usage: TestApp <command> [arguments]
+    static constexpr tstring_view c_usageExpected = TEXT(R"(Application description.
+
+Usage: TestApp <command> [arguments]
 
 The following commands are available:
 
@@ -217,9 +221,13 @@ The following commands are available:
     LastCommand
         Foo
 
+Run 'TestApp <command> -Help' for more
+information about a command.
 )");
 
-    static constexpr tstring_view c_usageExpectedColor = TEXT(R"([36mUsage:[0m TestApp <command> [arguments]
+    static constexpr tstring_view c_usageExpectedColor = TEXT(R"(Application description.
+
+[36mUsage:[0m TestApp <command> [arguments]
 
 The following commands are available:
 
@@ -233,6 +241,8 @@ The following commands are available:
     [32mLastCommand[0m
         Foo
 
+Run 'TestApp <command> -Help' for more
+information about a command.
 )");
 
     static constexpr tstring_view c_commandUsageExpected = TEXT(R"(This is a very long description that probably needs to be wrapped.

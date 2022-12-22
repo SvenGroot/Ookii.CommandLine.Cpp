@@ -12,7 +12,9 @@ int main(int argc, char *argv[])
     ookii::command_manager manager{name};
 
     // Register the available commands.
-    manager.add_command<read_command>()
+    manager.description("Subcommand sample for Ookii.CommandLine.")
+        .common_help_argument("-Help")
+        .add_command<read_command>()
         .add_command<write_command>()
         .add_version_command([]() { std::cout << "Ookii.CommandLine Subcommand Sample 2.0" << std::endl; });
 

@@ -264,6 +264,48 @@ namespace ookii
             }
         }
 
+        //! \brief Sets a description that will be shown before the command list usage help.
+        //! \param description The description.
+        //! \return A reference to the basic_command_manager.
+        basic_command_manager &description(string_type description)
+        {
+            _description = description;
+            return *this;
+        }
+
+        //! \brief Gets the description that will be shown before the command list usage help.
+        const string_type &description() const
+        {
+            return _description;
+        }
+
+        //! \brief Sets the name of a help argument, _including prefix_, that is used by all
+        //! subcommands.
+        //! 
+        //! When set, the command list usage help will include an instruction for the user to
+        //! invoke a command with this argument to get information about that command.
+        //! 
+        //! This must be set manually because the command manager cannot know the name,
+        //! capitalization or prefix used by each command without instantiating every command.
+        //! Keep in mind that the automatically added help argument will adjust its name based on
+        //! the capitalization of the other arguments.
+        //! 
+        //! \param name_with_prefix The name of the argument, including its prefix. For example,
+        //!        "-Help".
+        //! \return A reference to the basic_command_manager.
+        basic_command_manager& common_help_argument(string_type name_with_prefix)
+        {
+            _common_help_argument = name_with_prefix;
+            return *this;
+        }
+
+        //! \brief Gets the name of a help argument, including prefix, that is used by all
+        //! subcommands.
+        const string_type& common_help_argument() const
+        {
+            return _common_help_argument;
+        }
+
         //! \brief Sets a function that can be used to configure parser options for every command.
         //!
         //! The configure parser function, if set, is invoked on the basic_parser_builder instance
@@ -822,10 +864,12 @@ namespace ookii
 
         std::map<string_type, info_type, string_less> _commands;
         string_type _application_name;
+        string_type _description;
+        string_type _common_help_argument;
         std::locale _locale;
-        bool _case_sensitive;
         configure_function _configure_function;
         string_provider_type *_string_provider;
+        bool _case_sensitive;
     };
 
     //! \brief Typedef for basic_command_manager using `char` as the character type.

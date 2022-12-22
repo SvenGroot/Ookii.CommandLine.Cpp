@@ -905,11 +905,18 @@ namespace ookii
         //! are included exactly can be influenced by the properties of this class.
         virtual void write_command_list_usage_core()
         {
+            if (!command_manager().description().empty())
+            {
+                write_application_description(command_manager().description());
+            }
+
             output << reset_indent << set_indent(syntax_indent);
             write_command_list_usage_syntax();
             output << reset_indent << set_indent(0);
             write_available_commands_header();
             write_command_descriptions();
+            output << reset_indent << set_indent(0);
+            write_command_list_usage_footer();
         }
 
         //! \brief Writes the usage syntax for an application using subcommands.
@@ -1040,6 +1047,25 @@ namespace ookii
         virtual void write_command_description(string_view_type description)
         {
             output << description;
+        }
+
+        //! \brief Writes a footer after the list of commands.
+        //! 
+        //! The base implementation writes an instruction on how to get help for a command if the
+        //! basic_command_manager::common_help_argument() method returns a non-empty string.
+        virtual void write_command_list_usage_footer()
+        {
+            if (!command_manager().common_help_argument().empty())
+            {
+                // If there wasn't already a blank line after the last command, add one now.
+                if (!blank_line_after_command_description)
+                {
+                    output << std::endl;
+                }
+
+                output << "Run '" << command_manager().application_name() << " <command> " <<
+                    command_manager().common_help_argument() << "' for more information about a command." << std::endl;
+            }
         }
 
         //! \brief Writes the specified amount of spaces.
