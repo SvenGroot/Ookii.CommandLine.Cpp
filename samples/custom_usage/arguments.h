@@ -24,6 +24,7 @@
 // [arguments, case_sensitive]
 // [mode: long_short]
 // [name_transform: dash-case]
+// [version_info: Ookii.CommandLine Custom Usage Sample 2.0]
 // Sample command line application. The application parses the command line and prints the results,
 // but otherwise does nothing and none of the arguments are actually used for anything.
 struct arguments
@@ -82,18 +83,6 @@ struct arguments
     // This is an example of a multi-value argument, which can be repeated multiple times to set
     // more than one value.
     std::vector<std::string> values;
-
-    // This field defines a switch argument named "Help", with the short name "?" and the short
-    // alias "h".
-    // 
-    // For this argument, the cancel_parsing attribute is used, which means that command line
-    // processing is stopped when this argument is supplied. That way, we can print usage
-    // regardless of what other arguments are present.
-    // 
-    // [argument, cancel_parsing, short_name: ?]
-    // [short_alias: h]
-    // Displays this help message.
-    bool help;
 
     OOKII_DECLARE_PARSE_METHOD(arguments);
 };

@@ -14,8 +14,15 @@
 
 // This struct defines the sample's command line arguments. The rest of the comment under the
 // attribute provides the description for the application used in the generated usage help.
+//
+// The [version_info] attribute is used to create a "-Version" argument that will print the
+// specified string. You can show multiple lines by repeating this attribute. On Windows, you can
+// also use [win32_version] to display version information from the VERSION_INFO resource. If you
+// use both [win32_version] and [version_info], the latter will be used on non-Windows platforms
+// only.
 // 
 // [arguments]
+// [version_info: Ookii.CommandLine Sample 2.0]
 // Sample command line application. The application parses the command line and prints the results,
 // but otherwise does nothing and none of the arguments are actually used for anything.
 struct arguments

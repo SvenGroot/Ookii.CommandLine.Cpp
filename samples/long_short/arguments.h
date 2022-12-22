@@ -24,6 +24,7 @@
 // [arguments, case_sensitive]
 // [mode: long_short]
 // [name_transform: dash-case]
+// [version_info: Ookii.CommandLine Long/Short Sample 2.0]
 // Sample command line application. The application parses the command line and prints the results,
 // but otherwise does nothing and none of the arguments are actually used for anything.
 struct arguments

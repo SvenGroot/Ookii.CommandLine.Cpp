@@ -751,7 +751,10 @@ namespace ookii
         //! specified function when supplied. The argument cancels parsing, but does not show usage
         //! help.
         //!
-        //! The actual name and description of the argument are determined using the
+        //! The argument will be called "version" (with a lowercase 'v') if the first letter of the
+        //! first manually defined argument is lowercase.
+        //!
+        //! You can specify a different name, as well as a custom description, using the
         //! basic_localized_string_provider class.
         //!
         //! \param function A function that displays version information. This will be called when
@@ -786,7 +789,10 @@ namespace ookii
         //! version and copyright information to the standard output. If these resources don't
         //! exist, the text "Unknown version" is shown.
         //!
-        //! The actual name and description of the argument are determined using the
+        //! The argument will be called "version" (with a lowercase 'v') if the first letter of the
+        //! first manually defined argument is lowercase.
+        //!
+        //! You can specify a different name, as well as a custom description, using the
         //! basic_localized_string_provider class.
         //!
         //! \param function A function that displays version information. This will be called when

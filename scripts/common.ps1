@@ -107,7 +107,6 @@ class ArgumentInfo {
         } elseif ($line -match "(?<static>static\s+)?bool (?<name>\w+)\s*\((?<params>.*)\)") {
             $this.MemberName = $Matches.name
             $this.Kind = [ArgumentKind]::Action;
-            Write-Host $Matches.static
             $this.Static = $null -ne $Matches.static
             if ($this.Kind -eq [ArgumentKind]::MultiValue) {
                 Write-Warning "[multi_value] attribute ignored for action argument member $($this.MemberName)"
@@ -244,7 +243,7 @@ class ArgumentInfo {
                 $toUpper = $false
             } elseif ($toLower) {
                 [char]::ToLowerInvariant($_)
-                $toLower = $false                
+                $toLower = $false
             } else {
                 $_
             }
@@ -285,6 +284,9 @@ class CommandInfo {
     [ParsingMode] $ParsingMode
     [ArgumentInfo[]] $Arguments
     [Nullable[NameTransformMode]] $OverrideNameTransform = $null
+    [string[]] $VersionInfo
+    [bool] $Win32VersionInfo
+    [bool] $NoAutoHelp
 
     [bool] NeedFileSystem() {
         return -not ([bool]$this.CommandName)
@@ -337,6 +339,15 @@ class CommandInfo {
             "name_transform" {
                 $this.OverrideNameTransform = Convert-NameTransform $attribute.Value
             }
+            "version_info" {
+                $this.VersionInfo += $attribute.Value
+            }
+            "win32_version" {
+                $this.Win32VersionInfo = $true
+            }
+            "no_auto_help" {
+                $this.NoAutoHelp = $true
+            }
             default {
                 Write-Warning "Unexpected command attribute $($attribute.Name)"
             }
@@ -368,7 +379,7 @@ class CommandInfo {
             $result += "        .description($StringPrefix`"$($this.Description)`")"
         }
         
-        $result += $this.GenerateParserAttributes($StringPrefix)
+        $result += $this.GenerateParserAttributes($StringPrefix, $CharType)
         $result += $this.GenerateArguments($StringPrefix, $CharType, "args.", $NameTransform)
 
         $result += "        .build();"
@@ -382,7 +393,7 @@ class CommandInfo {
         return $result;
     }
 
-    [string[]] GenerateParserAttributes([string]$StringPrefix) {
+    [string[]] GenerateParserAttributes([string]$StringPrefix, [string]$CharType) {
         $result = @()
         switch ($this.ParsingMode) {
             DefaultMode {
@@ -414,6 +425,32 @@ class CommandInfo {
             $result += "        .argument_value_separator($StringPrefix'$($this.Separator)')"
         }
 
+        if ($this.NoAutoHelp) {
+            $result += "        .automatic_help_argument(false)"
+        }
+
+        if ($this.Win32VersionInfo) {
+            $result += "#ifdef _WIN32"
+            $result += "        .add_win32_version_argument()"
+            if ($this.VersionInfo) {
+                $result += "#else"
+            }
+        }
+
+        if ($this.VersionInfo) {
+            $result += "        .add_version_argument([]()"
+            $result += "        {"
+            foreach ($line in $this.VersionInfo)
+            {
+                $result += "            ookii::console_stream<$CharType>::cout() << $StringPrefix`"$line`" << std::endl;"
+            }
+            $result += "        })"
+        }
+
+        if ($this.Win32VersionInfo) {
+            $result += "#endif"
+        }
+
         return $result
     }
 
@@ -425,7 +462,7 @@ class CommandInfo {
 
         $result += "{"
         $result += "    builder"
-        $result += $this.GenerateParserAttributes($StringPrefix)
+        $result += $this.GenerateParserAttributes($StringPrefix, $CharType)
         $result += $this.GenerateArguments($StringPrefix, $CharType, "this->", $NameTransform)
         $result[-1] += ";"
         $result += "}"
