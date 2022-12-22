@@ -120,7 +120,7 @@ process {
         $headers += "#include `"$fileName`""
         foreach ($info in (Convert-Arguments $contents $context)) {
             $infoCount += 1
-            $result += "std::optional<$($info.TypeName)> $($info.TypeName)::parse(int argc, const $($context.CharType) *const argv[], ookii::basic_usage_writer<$($context.CharType)> *options, ookii::basic_localized_string_provider<$($context.CharType)> *string_provider)
+            $result += "std::optional<$($info.TypeName)> $($info.TypeName)::parse(int argc, const $($context.CharType) *const argv[], ookii::basic_usage_writer<$($context.CharType)> *options, ookii::basic_localized_string_provider<$($context.CharType)> *string_provider, const std::locale &locale)
 {
 $($info.GenerateParser($context) -join [System.Environment]::NewLine)
 }

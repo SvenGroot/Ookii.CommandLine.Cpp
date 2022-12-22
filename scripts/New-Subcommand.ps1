@@ -141,9 +141,9 @@ end {
         $case = "true"
     }
 
-    $result += "ookii::basic_command_manager<$($context.CharType)> ookii::register_commands(std::basic_string<$($context.CharType)> application_name)
+    $result += "ookii::basic_command_manager<$($context.CharType)> ookii::register_commands(std::basic_string<$($context.CharType)> application_name, ::ookii::basic_localized_string_provider<$($context.CharType)> *string_provider, const std::locale& locale)
 {
-    basic_command_manager<$($context.CharType)> manager{application_name, $case};
+    basic_command_manager<$($context.CharType)> manager{application_name, $case, locale, string_provider};
     manager
 "
     if ($global) {

@@ -2,11 +2,12 @@
 #include <ookii/command_line.h>
 #include "../input/long_short.h"
     
-std::optional<my_arguments> my_arguments::parse(int argc, const wchar_t *const argv[], ookii::basic_usage_writer<wchar_t> *options, ookii::basic_localized_string_provider<wchar_t> *string_provider)
+std::optional<my_arguments> my_arguments::parse(int argc, const wchar_t *const argv[], ookii::basic_usage_writer<wchar_t> *options, ookii::basic_localized_string_provider<wchar_t> *string_provider, const std::locale &locale)
 {
     auto name = ookii::basic_command_line_parser<wchar_t>::get_executable_name(argc, argv);
     my_arguments args{};
     auto parser = ookii::basic_parser_builder<wchar_t>{name, string_provider}
+        .locale(locale)
         .mode(ookii::parsing_mode::long_short)
         .case_sensitive(true)
         .add_argument(args.test_arg, L"test-arg").short_name().required().positional()

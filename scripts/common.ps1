@@ -335,6 +335,7 @@ class CommandInfo {
         $Context.FieldPrefix = "args."
         $result += "    $($this.TypeName) args{};"
         $result += "    auto parser = ookii::basic_parser_builder<$($Context.CharType)>{name, string_provider}"
+        $result += "        .locale(locale)"
         if ($this.Description) {
             $result += "        .description($($Context.StringPrefix)`"$($this.Description)`")"
         }

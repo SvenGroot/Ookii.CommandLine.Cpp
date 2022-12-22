@@ -34,9 +34,9 @@ third_command::third_command(third_command::builder_type &builder)
         .add_argument(this->_other_arg, L"OtherArg");
 }
 
-ookii::basic_command_manager<wchar_t> ookii::register_commands(std::basic_string<wchar_t> application_name)
+ookii::basic_command_manager<wchar_t> ookii::register_commands(std::basic_string<wchar_t> application_name, ::ookii::basic_localized_string_provider<wchar_t> *string_provider, const std::locale& locale)
 {
-    basic_command_manager<wchar_t> manager{application_name, false};
+    basic_command_manager<wchar_t> manager{application_name, false, locale, string_provider};
     manager
         .add_command<my_command>(L"name", L"Description of the command with a line break.\n\nAnd a paragraph.")
         .add_command<third_command>({}, {});

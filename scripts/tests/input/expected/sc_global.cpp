@@ -10,9 +10,9 @@ my_command::my_command(my_command::builder_type &builder)
         .add_argument(this->test_arg, "test-arg").required().positional();
 }
 
-ookii::basic_command_manager<char> ookii::register_commands(std::basic_string<char> application_name)
+ookii::basic_command_manager<char> ookii::register_commands(std::basic_string<char> application_name, ::ookii::basic_localized_string_provider<char> *string_provider, const std::locale& locale)
 {
-    basic_command_manager<char> manager{application_name, true};
+    basic_command_manager<char> manager{application_name, true, locale, string_provider};
     manager
         .description("Description of the application.")
         .common_help_argument("--help")

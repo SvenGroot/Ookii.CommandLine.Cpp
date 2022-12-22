@@ -2,11 +2,12 @@
 #include <ookii/command_line.h>
 #include "../input/auto_arguments.h"
     
-std::optional<my_arguments> my_arguments::parse(int argc, const char *const argv[], ookii::basic_usage_writer<char> *options, ookii::basic_localized_string_provider<char> *string_provider)
+std::optional<my_arguments> my_arguments::parse(int argc, const char *const argv[], ookii::basic_usage_writer<char> *options, ookii::basic_localized_string_provider<char> *string_provider, const std::locale &locale)
 {
     auto name = ookii::basic_command_line_parser<char>::get_executable_name(argc, argv);
     my_arguments args{};
     auto parser = ookii::basic_parser_builder<char>{name, string_provider}
+        .locale(locale)
         .automatic_help_argument(false)
 #ifdef _WIN32
         .add_win32_version_argument()

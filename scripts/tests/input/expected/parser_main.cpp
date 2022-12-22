@@ -2,11 +2,12 @@
 #include <ookii/command_line.h>
 #include "../input/arguments.h"
     
-std::optional<my_arguments> my_arguments::parse(int argc, const char *const argv[], ookii::basic_usage_writer<char> *options, ookii::basic_localized_string_provider<char> *string_provider)
+std::optional<my_arguments> my_arguments::parse(int argc, const char *const argv[], ookii::basic_usage_writer<char> *options, ookii::basic_localized_string_provider<char> *string_provider, const std::locale &locale)
 {
     auto name = "name";
     my_arguments args{};
     auto parser = ookii::basic_parser_builder<char>{name, string_provider}
+        .locale(locale)
         .description("Description of the arguments with a line break.\n\nAnd a paragraph.")
         .add_argument(args.test_arg, "TestArg").required().positional().description("Argument description with a line break.\n\nAnd another paragraph.")
         .add_argument(args.__test__arg2__, "TestArg2").positional().default_value(1).value_description("desc").alias("test").description("Short description.")
