@@ -1,7 +1,7 @@
 #ifndef OOKII_LINUX_HELPER_H_
 #define OOKII_LINUX_HELPER_H_
 
-#pragma once.
+#pragma once
 
 #if !defined(OOKII_NO_PLATFORM_HEADERS) && (!defined(OOKII_CONSOLE_NOT_INLINE) || defined(OOKII_CONSOLE_DEFINITION))
 
@@ -16,7 +16,7 @@ namespace ookii::details
 {
 
     OOKII_PLATFORM_FUNC(std::optional<short> get_console_width())
-#ifdef OOKII_CONSOLE_FUNC_HAS_BODY
+#ifdef OOKII_PLATFORM_FUNC_HAS_BODY
     {
 #if defined(TIOCGWINSZ)
 
