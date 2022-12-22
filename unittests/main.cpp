@@ -1,5 +1,4 @@
 #include "common.h"
-#define OOKII_PRESERVE_APPLICATION_NAME
 #include <ookii/command_line.h>
 #include "framework.h"
 using namespace std;
@@ -12,7 +11,6 @@ struct Arguments
 {
     tstring Pattern;
     bool Verbose{};
-    bool Help{};
 
     static std::optional<Arguments> Parse(int argc, tchar_t *argv[])
     {
@@ -32,8 +30,9 @@ struct Arguments
                 .description(TEXT("Regular expression used to determine which tests to run. This is matched against the full name of the test (e.g. TestClass::TestMethod). If omitted, all tests are run."))
             .add_argument(result.Verbose, TEXT("Verbose")).alias(TEXT("v"))
                 .description(TEXT("Print detailed information about successful tests."))
-            .add_argument(result.Help, TEXT("Help")).alias(TEXT("h")).alias(TEXT("?")).cancel_parsing()
-                .description(TEXT("Display this help message."))
+#ifdef _WIN32
+            .add_win32_version_argument()
+#endif
             .build();
 
         if (parser.parse(argc, argv, {}))

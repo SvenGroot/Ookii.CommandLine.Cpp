@@ -4,7 +4,7 @@ include(CMakePackageConfigHelpers)
 
 project (
     "Ookii.CommandLine.Cpp"
-    VERSION 1.0.0
+    VERSION 2.0.0
     HOMEPAGE_URL "https://github.com/SvenGroot/Ookii.CommandLine.Cpp"
     LANGUAGES CXX)
 

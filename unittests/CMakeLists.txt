@@ -2,7 +2,13 @@ cmake_minimum_required (VERSION 3.15)
 
 include(CheckIncludeFileCXX)
 
-add_executable(unittests "main.cpp" "CommandLineParserTests.cpp"  "LineWrappingStreamTests.cpp" "SubcommandTests.cpp" "console.cpp")
+set(SRC_FILES "main.cpp" "CommandLineParserTests.cpp"  "LineWrappingStreamTests.cpp" "SubcommandTests.cpp" "console.cpp")
+
+if (WIN32)
+    list(APPEND SRC_FILES "unittests.rc")
+endif()
+
+add_executable(unittests ${SRC_FILES})
 target_link_libraries(unittests PRIVATE Ookii.CommandLine::OOKIICL)
 
 set_property(TARGET unittests PROPERTY CXX_STANDARD 20)
