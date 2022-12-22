@@ -370,14 +370,7 @@ class CommandInfo {
         if ($this.CommandName) {
             $result += "    auto name = $($Context.StringPrefix)`"$($this.CommandName)`";"
         } else {
-            $result += "    std::basic_string<$($Context.CharType)> name;"
-            $conversion = if ($($Context.CharType) -eq "wchar_t") {
-                "wstring"
-            } else {
-                "string"
-            }
-
-            $result += "    if (argc > 0) { name = std::filesystem::path{argv[0]}.filename().$conversion(); }"
+            $result += "    auto name = ookii::basic_command_line_parser<$($Context.CharType)>::get_executable_name(argc, argv);"
         }
 
         $Context.FieldPrefix = "args."

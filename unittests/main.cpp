@@ -14,16 +14,7 @@ struct Arguments
 
     static std::optional<Arguments> Parse(int argc, tchar_t *argv[])
     {
-        tstring name;
-        if (argc > 0)
-        {
-#ifdef _UNICODE
-            name = std::filesystem::path{argv[0]}.filename().wstring();
-#else
-            name = std::filesystem::path{argv[0]}.filename().string();
-#endif
-        }
-
+        auto name = basic_command_line_parser<tchar_t>::get_executable_name(argc, argv);
         Arguments result;
         auto parser = basic_parser_builder<tchar_t>{name}.add_argument(result.Pattern, TEXT("Pattern"))
             .positional().value_description(TEXT("Regex"))

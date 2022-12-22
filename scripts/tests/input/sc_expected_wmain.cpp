@@ -47,9 +47,7 @@ ookii::basic_command_manager<wchar_t> ookii::register_commands(std::basic_string
 
 int wmain(int argc, wchar_t *argv[])
 {
-    std::basic_string<wchar_t> name;
-    if (argc > 0)
-        name = std::filesystem::path{argv[0]}.filename().wstring();
+    auto name = ookii::basic_command_line_parser<wchar_t>::get_executable_name(argc, argv);
     auto manager = ookii::register_commands(name);
     return manager.run_command(argc, argv);
 }

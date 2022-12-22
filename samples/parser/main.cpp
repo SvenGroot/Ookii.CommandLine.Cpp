@@ -19,13 +19,8 @@ int main(int argc, char *argv[])
     bool verbose;
     std::vector<std::string> values;
 
-    std::string name;
-    if (argc > 0) 
-    {
-        name = std::filesystem::path{argv[0]}.filename().string(); 
-    }
-
-    auto parser = ookii::basic_parser_builder<char>{name}
+    auto name = ookii::command_line_parser::get_executable_name(argc, argv);
+    auto parser = ookii::parser_builder{name}
         .description("Sample command line application. The application parses the command line and prints the results, but otherwise does nothing and none of the arguments are actually used for anything.")
         // This defines a required positional argument called "Source". It can be set by name as
         // e.g. "-Source value", or by position by specifying "value" as the first positional argument.

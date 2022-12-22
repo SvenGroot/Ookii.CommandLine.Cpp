@@ -27,8 +27,7 @@ std::optional<my_arguments> my_arguments::parse(int argc, const wchar_t *const a
 
 std::optional<other_arguments> other_arguments::parse(int argc, const wchar_t *const argv[], ookii::basic_usage_writer<wchar_t> *options, ookii::basic_localized_string_provider<wchar_t> *string_provider)
 {
-    std::basic_string<wchar_t> name;
-    if (argc > 0) { name = std::filesystem::path{argv[0]}.filename().wstring(); }
+    auto name = ookii::basic_command_line_parser<wchar_t>::get_executable_name(argc, argv);
     other_arguments args{};
     auto parser = ookii::basic_parser_builder<wchar_t>{name, string_provider}
         .prefixes({ L"--", L"-" })
@@ -49,8 +48,7 @@ std::optional<other_arguments> other_arguments::parse(int argc, const wchar_t *c
 
 std::optional<third_arguments> third_arguments::parse(int argc, const wchar_t *const argv[], ookii::basic_usage_writer<wchar_t> *options, ookii::basic_localized_string_provider<wchar_t> *string_provider)
 {
-    std::basic_string<wchar_t> name;
-    if (argc > 0) { name = std::filesystem::path{argv[0]}.filename().wstring(); }
+    auto name = ookii::basic_command_line_parser<wchar_t>::get_executable_name(argc, argv);
     third_arguments args{};
     auto parser = ookii::basic_parser_builder<wchar_t>{name, string_provider}
         .add_argument(args.other_arg, L"OtherArg")

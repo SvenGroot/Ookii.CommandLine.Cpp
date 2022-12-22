@@ -153,17 +153,10 @@ end {
 "
 
     if ($GenerateMain) {
-        $conversion = if ($context.CharType -eq "wchar_t") {
-            "wstring"
-        } else {
-            "string"
-        }
 
         $result += "int $mainName(int argc, $($context.CharType) *argv[])
 {
-    std::basic_string<$($context.CharType)> name;
-    if (argc > 0)
-        name = std::filesystem::path{argv[0]}.filename().$conversion();
+    auto name = ookii::basic_command_line_parser<$($context.CharType)>::get_executable_name(argc, argv);
     auto manager = ookii::register_commands(name);
     return manager.run_command(argc, argv);
 }

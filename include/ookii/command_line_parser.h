@@ -10,6 +10,7 @@
 
 #include <iterator>
 #include <map>
+#include <filesystem>
 #include "command_line_argument.h"
 #include "usage_writer.h"
 #include "parse_result.h"
@@ -729,6 +730,35 @@ namespace ookii
         void on_parsed(on_parsed_callback callback)
         {
             _on_parsed_callback = callback;
+        }
+
+        //! \brief Extracts the executable name from the application's arguments.
+        //!
+        //! This can be used to get the command name for the basic_parser_builder's
+        //! constructor.
+        //!
+        //! \param argc The number of arguments.
+        //! \param argv An array containing the arguments.
+        //! \param include_extension `true` to include the file's extension; otherwise, `false`.
+        //! \return The name of the executable, or an empty string if `argc` was zero.
+        static string_type get_executable_name(int argc, const CharType *const argv[], bool include_extension = false)
+        {
+            if (argc < 1)
+            {
+                return {};
+            }
+
+            std::filesystem::path path{argv[0]};
+            if (include_extension)
+            {
+                path = path.filename();
+            }
+            else
+            {
+                path = path.stem();
+            }
+
+            return path.string<CharType, Traits, Alloc>();
         }
 
     private:

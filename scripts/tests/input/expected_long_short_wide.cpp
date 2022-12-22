@@ -5,8 +5,7 @@
     
 std::optional<my_arguments> my_arguments::parse(int argc, const wchar_t *const argv[], ookii::basic_usage_writer<wchar_t> *options, ookii::basic_localized_string_provider<wchar_t> *string_provider)
 {
-    std::basic_string<wchar_t> name;
-    if (argc > 0) { name = std::filesystem::path{argv[0]}.filename().wstring(); }
+    auto name = ookii::basic_command_line_parser<wchar_t>::get_executable_name(argc, argv);
     my_arguments args{};
     auto parser = ookii::basic_parser_builder<wchar_t>{name, string_provider}
         .mode(ookii::parsing_mode::long_short)

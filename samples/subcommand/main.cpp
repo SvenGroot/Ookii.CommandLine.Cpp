@@ -8,14 +8,10 @@
 
 int main(int argc, char *argv[])
 {
-    std::string name;
-    if (argc > 0) 
-    {
-        name = std::filesystem::path{argv[0]}.filename().string(); 
-    }
+    auto name = ookii::command_line_parser::get_executable_name(argc, argv);
+    ookii::command_manager manager{name};
 
     // Register the available commands.
-    ookii::command_manager manager{name};
     manager.add_command<read_command>()
         .add_command<write_command>();
 
