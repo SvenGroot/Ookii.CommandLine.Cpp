@@ -151,6 +151,14 @@ namespace ookii
                 return _parser_builder.add_version_argument(function);
             }
 
+#ifdef _WIN32
+            //! \copydoc basic_parser_builder::add_win32_version_argument()
+            action_argument_builder<bool> &add_win32_version_argument()
+            {
+                return _parser_builder.add_win32_version_argument();
+            }
+#endif
+
             //! \copydoc basic_parser_builder::build()
             parser_type build()
             {
@@ -769,6 +777,26 @@ namespace ookii
             return argument;
         }
 
+#ifdef _WIN32
+        //! \brief Adds the standard version argument, using version information from the
+        //! VERSION_INFO resource.
+        //!
+        //! This method adds an argument with the default name "Version", which when supplied will
+        //! read the VERSION_INFO resource of the current executable, and print the product name,
+        //! version and copyright information to the standard output. If these resources don't
+        //! exist, the text "Unknown version" is shown.
+        //!
+        //! The actual name and description of the argument are determined using the
+        //! basic_localized_string_provider class.
+        //!
+        //! \param function A function that displays version information. This will be called when
+        //! \return An action_argument_builder that can be used to further customize the argument.
+        action_argument_builder<bool> &add_win32_version_argument()
+        {
+            return add_version_argument(show_win32_version);
+        }
+#endif
+
         //! \brief Creates a basic_command_line_parser using the current options and arguments.
         //! \return A basic_command_line_parser that can be used to parse the arguments defined by
         //!         the basic_parser_builder.
@@ -986,6 +1014,24 @@ namespace ookii
         }
 
     private:
+#ifdef _WIN32
+        static void show_win32_version()
+        {
+            auto info = details::get_version_resource();
+            if (!info)
+            {
+                console_stream<CharType>::cout() << "Unknown version." << std::endl;
+                return;
+            }
+
+            console_stream<CharType>::cout() << info->product_name << " " << info->version << std::endl;
+            if (!info->copyright.empty())
+            {
+                console_stream<CharType>::cout() << info->copyright << std::endl;
+            }
+        }
+#endif
+
         size_t get_next_position() noexcept
         {
             return _next_position++;

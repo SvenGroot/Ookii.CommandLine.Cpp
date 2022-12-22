@@ -89,6 +89,10 @@ int main(int argc, char *argv[])
         .add_multi_value_argument(values, "Value").description("This is an example of a multi-value argument, which can be repeated multiple times to set more than one value.")
         // This defines an argument named "Version", which will call the function and cancel parsing
         // when invoked.
+        //
+        // If building a Windows application, you can use add_win32_version_argument() to show the
+        // product name, version and copyright information from the executable's VERSION_INFO
+        // resource.
         .add_version_argument(show_version)
         .build();
 
