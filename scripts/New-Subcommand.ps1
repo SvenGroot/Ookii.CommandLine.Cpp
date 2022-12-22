@@ -85,8 +85,7 @@ begin {
         "#include `"$_`""
     }
 
-    $headers += "#include <filesystem>",
-        "#include <ookii/command_line.h>",
+    $headers += "#include <ookii/command_line.h>",
         "#include <ookii/command_line_generated.h>"
 
     $context = [CodeGenContext]::new();
