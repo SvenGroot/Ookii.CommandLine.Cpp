@@ -38,6 +38,11 @@ Describe "New-Parser" {
         &$scriptPath $inputs -OutputPath $output -NameTransform PascalCase -GenerateMain -WideChar
         Compare-Files $output "sc_expected_wmain.cpp"
     }
+    It "Generates global parser config" {
+        $output = Join-Path $outputPath "sc_actual_global.cpp"
+        &$scriptPath (Join-Path $inputPath "subcommand_global.h") -OutputPath $output -NameTransform PascalCase
+        Compare-Files $output "sc_expected_global.cpp"
+    }
     It "Can use additional headers" {
         $output = Join-Path $outputPath "sc_actual_headers.cpp"
         &$scriptPath $inputs -OutputPath $output -NameTransform PascalCase -AdditionalHeaders "foo.h","bar.h"

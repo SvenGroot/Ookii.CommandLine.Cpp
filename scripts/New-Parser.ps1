@@ -90,16 +90,20 @@ begin {
     $headers += "#include <filesystem>",
         "#include <ookii/command_line.h>"
 
+    $context = [CodeGenContext]::new();
     if ($WideChar) {
-        $stringPrefix = "L"
-        $charType = "wchar_t"
+        $context.StringPrefix = "L"
+        $context.CharType = "wchar_t"
         $mainName = "wmain"
     } else {
-        $stringPrefix = ""
-        $charType = "char"
+        $context.StringPrefix = ""
+        $context.CharType = "char"
         $mainName = "main"
     }
 
+    $context.NameTransform = $NameTransform
+    $context.TypeAttribute = "arguments"
+    
     $infoCount = 0
 }
 process {
@@ -115,11 +119,11 @@ process {
         # Get the relative path to the header from the generated output file, and always use / even on Windows.
         $fileName = [System.IO.Path]::GetRelativePath($outputDir, $file.FullName).Replace([System.IO.Path]::DirectorySeparatorChar, [System.IO.Path]::AltDirectorySeparatorChar)
         $headers += "#include `"$fileName`""
-        foreach ($info in (Convert-Arguments $contents)) {
+        foreach ($info in (Convert-Arguments $contents $context)) {
             $infoCount += 1
-            $result += "std::optional<$($info.TypeName)> $($info.TypeName)::parse(int argc, const $charType *const argv[], ookii::basic_usage_writer<$chartype> *options, ookii::basic_localized_string_provider<$chartype> *string_provider)
+            $result += "std::optional<$($info.TypeName)> $($info.TypeName)::parse(int argc, const $($context.CharType) *const argv[], ookii::basic_usage_writer<$($context.CharType)> *options, ookii::basic_localized_string_provider<$($context.CharType)> *string_provider)
 {
-$($info.GenerateParser($stringPrefix, $charType, $NameTransform) -join [System.Environment]::NewLine)
+$($info.GenerateParser($context) -join [System.Environment]::NewLine)
 }
 
 "
@@ -136,7 +140,7 @@ end {
             throw "Can't generate entry point with more than one arguments type."
         }
 
-        $result += "int $mainName(int argc, $charType *argv[])
+        $result += "int $mainName(int argc, $($context.CharType) *argv[])
 {
     auto args = $($info.TypeName)::parse(argc, argv);
     if (!args)

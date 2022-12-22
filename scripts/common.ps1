@@ -28,6 +28,16 @@ enum ArgumentKind {
     Action
 }
 
+class CodeGenContext {
+    [string] $CharType
+    [string] $FieldPrefix
+    [string] $StringPrefix
+    [string] $TypeAttribute
+    [string] $GlobalAttribute
+    [string] $ExtraIndent
+    [NameTransformMode] $NameTransform
+}
+
 class AttributeInfo {
     AttributeInfo([string]$Name, [string]$Value = $null) {
         $this.Name = $Name
@@ -122,7 +132,7 @@ class ArgumentInfo {
         }
     }
 
-    [string] GenerateArgument([string]$StringPrefix, [string]$CharType, [string]$FieldPrefix) {
+    [string] GenerateArgument([CodeGenContext]$Context) {
         $method = "add_argument"
         switch ($this.Kind) {
             MultiValue { $method = "add_multi_value_argument" }
@@ -144,21 +154,21 @@ class ArgumentInfo {
             if ($this.Static) {
                 $target = $this.MemberName
             } else {
-                if ($FieldPrefix.StartsWith("this")) {
+                if ($Context.FieldPrefix.StartsWith("this")) {
                     $capture = "this"
                 } else {
-                    $capture = "&$($FieldPrefix.Substring(0, $FieldPrefix.Length - 1))"
+                    $capture = "&$($Context.FieldPrefix.Substring(0, $Context.FieldPrefix.Length - 1))"
                 }
-                $target = "[$capture]($($this.ArgumentType) value, ookii::basic_command_line_parser<$CharType> &parser) { return $FieldPrefix$($this.MemberName)(value, parser); }"
+                $target = "[$capture]($($this.ArgumentType) value, ookii::basic_command_line_parser<$($Context.CharType)> &parser) { return $($Context.FieldPrefix)$($this.MemberName)(value, parser); }"
             }
         } else {
-            $target = "$FieldPrefix$($this.MemberName)"
+            $target = "$($Context.FieldPrefix)$($this.MemberName)"
         }
 
-        $result = "        .$method($target, $StringPrefix$primaryName)"
+        $result = "        .$method($target, $($Context.StringPrefix)$primaryName)"
         if ($this.HasLongName -and $this.HasShortName) {
             if ($this.ShortName) {
-                $result += ".short_name($StringPrefix'$($this.ShortName)')"
+                $result += ".short_name($($Context.StringPrefix)'$($this.ShortName)')"
             } else {
                 $result += ".short_name()"
             }
@@ -181,19 +191,19 @@ class ArgumentInfo {
         }
 
         if ($this.ValueDescription) {
-            $result += ".value_description($StringPrefix`"$($this.ValueDescription)`")"
+            $result += ".value_description($($Context.StringPrefix)`"$($this.ValueDescription)`")"
         }
 
         foreach ($alias in $this.Aliases) {
-            $result += ".alias($StringPrefix`"$alias`")"
+            $result += ".alias($($Context.StringPrefix)`"$alias`")"
         }
 
         foreach ($alias in $this.ShortAliases) {
-            $result += ".short_alias($StringPrefix'$alias')"
+            $result += ".short_alias($($Context.StringPrefix)'$alias')"
         }
 
         if ($this.Description) {
-            $result += ".description($StringPrefix`"$($this.Description)`")"
+            $result += ".description($($Context.StringPrefix)`"$($this.Description)`")"
         }
 
         $result
@@ -287,6 +297,7 @@ class CommandInfo {
     [string[]] $VersionInfo
     [bool] $Win32VersionInfo
     [bool] $NoAutoHelp
+    [bool] $IsGlobal
 
     [bool] NeedFileSystem() {
         return -not ([bool]$this.CommandName)
@@ -354,17 +365,13 @@ class CommandInfo {
         }
     }
 
-    [string[]] GenerateParser([string]$StringPrefix, [string]$CharType, [NameTransformMode]$NameTransform) {
-        if ($null -ne $this.OverrideNameTransform) {
-            $NameTransform = $this.OverrideNameTransform
-        }
-
+    [string[]] GenerateParser([CodeGenContext]$Context) {
         $result = @()
         if ($this.CommandName) {
-            $result += "    auto name = $StringPrefix`"$($this.CommandName)`";"
+            $result += "    auto name = $($Context.StringPrefix)`"$($this.CommandName)`";"
         } else {
-            $result += "    std::basic_string<$CharType> name;"
-            $conversion = if ($CharType -eq "wchar_t") {
+            $result += "    std::basic_string<$($Context.CharType)> name;"
+            $conversion = if ($($Context.CharType) -eq "wchar_t") {
                 "wstring"
             } else {
                 "string"
@@ -373,14 +380,15 @@ class CommandInfo {
             $result += "    if (argc > 0) { name = std::filesystem::path{argv[0]}.filename().$conversion(); }"
         }
 
+        $Context.FieldPrefix = "args."
         $result += "    $($this.TypeName) args{};"
-        $result += "    auto parser = ookii::basic_parser_builder<$CharType>{name, string_provider}"
+        $result += "    auto parser = ookii::basic_parser_builder<$($Context.CharType)>{name, string_provider}"
         if ($this.Description) {
-            $result += "        .description($StringPrefix`"$($this.Description)`")"
+            $result += "        .description($($Context.StringPrefix)`"$($this.Description)`")"
         }
         
-        $result += $this.GenerateParserAttributes($StringPrefix, $CharType)
-        $result += $this.GenerateArguments($StringPrefix, $CharType, "args.", $NameTransform)
+        $result += $this.GenerateParserAttributes($Context)
+        $result += $this.GenerateArguments($Context)
 
         $result += "        .build();"
         $result += ""
@@ -393,77 +401,78 @@ class CommandInfo {
         return $result;
     }
 
-    [string[]] GenerateParserAttributes([string]$StringPrefix, [string]$CharType) {
+    [string[]] GenerateParserAttributes([CodeGenContext]$Context) {
         $result = @()
         switch ($this.ParsingMode) {
             DefaultMode {
-                $result += "        .mode(ookii::parsing_mode::default)"
+                $result += "$($Context.ExtraIndent)        .mode(ookii::parsing_mode::default)"
             }
             LongShort {
-                $result += "        .mode(ookii::parsing_mode::long_short)"
+                $result += "$($Context.ExtraIndent)        .mode(ookii::parsing_mode::long_short)"
             }
         }
 
         if ($this.Prefixes.Length -gt 0) {
-            $prefixList = $this.Prefixes -join "`", $StringPrefix`""
-            $result += "        .prefixes({ $StringPrefix`"$prefixList`" })"
+            $prefixList = $this.Prefixes -join "`", $($Context.StringPrefix)`""
+            $result += "$($Context.ExtraIndent)        .prefixes({ $($Context.StringPrefix)`"$prefixList`" })"
         }
 
-        if ($this.CaseSensitive) {
-            $result += "        .case_sensitive(true)"
+        if (-not $this.IsGlobal -and $this.CaseSensitive) {
+            $result += "$($Context.ExtraIndent)        .case_sensitive(true)"
         }
 
         if (-not $this.AllowWhiteSpaceSeparator) {
-            $result += "        .allow_whitespace_separator(false)"
+            $result += "$($Context.ExtraIndent)        .allow_whitespace_separator(false)"
         }
 
         if ($this.AllowDuplicateArguments) {
-            $result += "        .allow_duplicate_arguments(true)"
+            $result += "$($Context.ExtraIndent)        .allow_duplicate_arguments(true)"
         }
 
         if ($this.Separator) {
-            $result += "        .argument_value_separator($StringPrefix'$($this.Separator)')"
+            $result += "$($Context.ExtraIndent)        .argument_value_separator($($Context.StringPrefix)'$($this.Separator)')"
         }
 
         if ($this.NoAutoHelp) {
-            $result += "        .automatic_help_argument(false)"
+            $result += "$($Context.ExtraIndent)        .automatic_help_argument(false)"
         }
 
-        if ($this.Win32VersionInfo) {
+        if (-not $this.IsGlobal -and $this.Win32VersionInfo) {
             $result += "#ifdef _WIN32"
-            $result += "        .add_win32_version_argument()"
+            $result += "$($Context.ExtraIndent)        .add_win32_version_argument()"
             if ($this.VersionInfo) {
                 $result += "#else"
             }
         }
 
-        if ($this.VersionInfo) {
-            $result += "        .add_version_argument([]()"
-            $result += "        {"
+        if (-not $this.IsGlobal -and $this.VersionInfo) {
+            $result += "$($Context.ExtraIndent)        .add_version_argument([]()"
+            $result += "$($Context.ExtraIndent)        {"
             foreach ($line in $this.VersionInfo)
             {
-                $result += "            ookii::console_stream<$CharType>::cout() << $StringPrefix`"$line`" << std::endl;"
+                $result += "$($Context.ExtraIndent)            ookii::console_stream<$($Context.CharType)>::cout() << $($Context.StringPrefix)`"$line`" << std::endl;"
             }
-            $result += "        })"
+            $result += "$($Context.ExtraIndent)        })"
         }
 
-        if ($this.Win32VersionInfo) {
+        if (-not $this.IsGlobal -and $this.Win32VersionInfo) {
             $result += "#endif"
         }
 
         return $result
     }
 
-    [string[]] GenerateSubcommand([string]$StringPrefix, [string]$CharType, [NameTransformMode]$NameTransform) {
+    [string[]] GenerateSubcommand([CodeGenContext]$Context) {
         $result = @("$($this.TypeName)::$($this.TypeName)($($this.TypeName)::builder_type &builder)")
         if ($this.BaseClass) {
             $result += "    : $($this.BaseClass){builder}"
         }
 
+        $Context.FieldPrefix = "this->"
         $result += "{"
         $result += "    builder"
-        $result += $this.GenerateParserAttributes($StringPrefix, $CharType)
-        $result += $this.GenerateArguments($StringPrefix, $CharType, "this->", $NameTransform)
+        $result += $this.GenerateParserAttributes($Context)
+        $result += $this.GenerateArguments($Context)
         $result[-1] += ";"
         $result += "}"
         $result += ""
@@ -471,30 +480,46 @@ class CommandInfo {
         return $result
     }
 
-    [string[]] GenerateArguments([string]$StringPrefix, [string]$CharType, [string]$FieldPrefix, [NameTransformMode]$NameTransform) {
+    [string[]] GenerateArguments([CodeGenContext]$Context) {
+        if ($null -ne $this.OverrideNameTransform) {
+            $Context.NameTransform = $this.OverrideNameTransform
+        }
+
         $result = @()
         foreach ($arg in $this.Arguments) {
-            $arg.GenerateName($NameTransform)
-            $result += $arg.GenerateArgument($StringPrefix, $CharType, $FieldPrefix)
+            $arg.GenerateName($Context.NameTransform)
+            $result += $arg.GenerateArgument($Context)
         }
 
         return $result
     }
 
-    [string] GenerateRegistration([string]$StringPrefix) {
+    [string] GenerateRegistration([CodeGenContext]$Context) {
         $name = if ($this.CommandName) {
-            "$StringPrefix`"$($this.CommandName)`""
+            "$($Context.StringPrefix)`"$($this.CommandName)`""
         } else {
             "{}"
         }
 
         $commandDescription = if ($this.Description) {
-            "$StringPrefix`"$($this.Description)`""
+            "$($Context.StringPrefix)`"$($this.Description)`""
         } else {
             "{}"
         }
 
         return "        .add_command<$($this.TypeName)>($name, $commandDescription)"
+    }
+
+    [string[]] GenerateGlobal([CodeGenContext]$Context) {
+        $result = @("        .configure_parser([](auto &parser)")
+        $result += "        {"
+        $result += "            parser"
+        $Context.ExtraIndent = "        "
+        $result += $this.GenerateParserAttributes($Context)
+        $result[-1] += ";"
+        $Context.ExtraIndent = $null
+        $result += "        })"
+        return $result
     }
 }
 
@@ -550,7 +575,7 @@ function Get-DescriptionLine([string]$comment, [ref]$newParagraph, [bool]$allowW
     }
 }
 
-function Convert-Arguments([string[]]$contents, [string]$argumentsAttributeName = "arguments") {
+function Convert-Arguments([string[]]$contents, [CodeGenContext]$Context) {
     $info = [CommandInfo]::new()
     $state = [ParseState]::BeforeStruct
     [bool]$newParagraph = $false
@@ -559,8 +584,13 @@ function Convert-Arguments([string[]]$contents, [string]$argumentsAttributeName 
             BeforeStruct {
                 foreach ($attribute in (Get-CommentAttribute $line)) {
                     if ($state -eq [ParseState]::BeforeStruct) {
-                        if ($attribute.Name -ieq $argumentsAttributeName) {
+                        if ($attribute.Name -ieq $context.TypeAttribute) {
                             $info.CommandName = $attribute.Value
+                            $state = [ParseState]::StructAttributes
+                            $newParagraph = $false
+                        } elseif ($context.GlobalAttribute -and $attribute.Name -ieq $context.GlobalAttribute) {
+                            $info.CommandName = "[global]"
+                            $info.IsGlobal = $true
                             $state = [ParseState]::StructAttributes
                             $newParagraph = $false
                         } else {
@@ -587,8 +617,14 @@ function Convert-Arguments([string[]]$contents, [string]$argumentsAttributeName 
                         $state = [ParseState]::StructComment
                     }
                 } else {
-                    $info.ParseType($line)
-                    $state = [ParseState]::InStruct
+                    if ($info.IsGlobal) {
+                        $info
+                        $info = [CommandInfo]::new()
+                        $state = [ParseState]::BeforeStruct
+                    } else {
+                        $info.ParseType($line)
+                        $state = [ParseState]::InStruct
+                    }
                 }
             }
             StructComment {
@@ -596,8 +632,14 @@ function Convert-Arguments([string[]]$contents, [string]$argumentsAttributeName 
                 if ($null -ne $comment) {
                     $info.Description += Get-DescriptionLine $comment ([ref]$newParagraph) ($info.Description -gt 0)
                 } else {
-                    $info.ParseType($line)
-                    $state = [ParseState]::InStruct
+                    if ($info.IsGlobal) {
+                        $info
+                        $info = [CommandInfo]::new()
+                        $state = [ParseState]::BeforeStruct
+                    } else {
+                        $info.ParseType($line)
+                        $state = [ParseState]::InStruct
+                    }
                 }
             }
             InStruct {

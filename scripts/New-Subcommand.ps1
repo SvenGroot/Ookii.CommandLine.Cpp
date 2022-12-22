@@ -89,16 +89,20 @@ begin {
         "#include <ookii/command_line.h>",
         "#include <ookii/command_line_generated.h>"
 
+    $context = [CodeGenContext]::new();
     if ($WideChar) {
-        $stringPrefix = "L"
-        $charType = "wchar_t"
+        $context.StringPrefix = "L"
+        $context.CharType = "wchar_t"
         $mainName = "wmain"
     } else {
-        $stringPrefix = ""
-        $charType = "char"
+        $context.StringPrefix = ""
+        $context.CharType = "char"
         $mainName = "main"
     }
 
+    $context.NameTransform = $NameTransform
+    $context.TypeAttribute = "command"
+    $context.GlobalAttribute = "global"
     $commands = @()
 }
 process {
@@ -107,6 +111,7 @@ process {
     } else {
         $inputs = Get-Item -LiteralPath $LiteralPath
     }
+    
 
     foreach ($file in $inputs)
     {
@@ -114,22 +119,33 @@ process {
         # Get the relative path to the header from the generated output file, and always use / even on Windows.
         $fileName = [System.IO.Path]::GetRelativePath($outputDir, $file.FullName).Replace([System.IO.Path]::DirectorySeparatorChar, [System.IO.Path]::AltDirectorySeparatorChar)
         $headers += "#include `"$fileName`""
-        foreach ($info in (Convert-Arguments $contents "command")) {
-            $commands += $info
-            $result += $info.GenerateSubcommand($stringPrefix, $charType, $NameTransform) -join [System.Environment]::NewLine
+        foreach ($info in (Convert-Arguments $contents $context)) {
+            if ($info.IsGlobal) {
+                $global = $info
+            } else {
+                $commands += $info
+                $result += $info.GenerateSubcommand($context) -join [System.Environment]::NewLine
+            }
         }
     }
 }
 end {
     if ($commands.Length -eq 0) {
-        throw "No arguments types found."
+        throw "No subcommand types found."
     }
 
-    $result += "ookii::basic_command_manager<$charType> ookii::register_commands(std::basic_string<$charType> application_name)
+    $result += "ookii::basic_command_manager<$($context.CharType)> ookii::register_commands(std::basic_string<$($context.CharType)> application_name)
 {
-    basic_command_manager<$charType> manager{application_name};
+    basic_command_manager<$($context.CharType)> manager{application_name};
     manager
-$(($commands | ForEach-Object { if ($_.Register) { $_.GenerateRegistration($stringPrefix) } }) -join [System.Environment]::NewLine);
+"
+    if ($global) {
+        $result += $global.GenerateGlobal($context) -join [System.Environment]::NewLine
+        $result += [System.Environment]::NewLine
+    }
+
+    $result += ($commands | ForEach-Object { if ($_.Register) { $_.GenerateRegistration($context) } }) -join [System.Environment]::NewLine;
+    $result += ";
 
     return manager;
 }
@@ -137,15 +153,15 @@ $(($commands | ForEach-Object { if ($_.Register) { $_.GenerateRegistration($stri
 "
 
     if ($GenerateMain) {
-        $conversion = if ($charType -eq "wchar_t") {
+        $conversion = if ($context.CharType -eq "wchar_t") {
             "wstring"
         } else {
             "string"
         }
 
-        $result += "int $mainName(int argc, $charType *argv[])
+        $result += "int $mainName(int argc, $($context.CharType) *argv[])
 {
-    std::basic_string<$charType> name;
+    std::basic_string<$($context.CharType)> name;
     if (argc > 0)
         name = std::filesystem::path{argv[0]}.filename().$conversion();
     auto manager = ookii::register_commands(name);
