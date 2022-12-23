@@ -714,31 +714,6 @@ namespace ookii
             }
         }
 
-        //! \brief Invokes the specified function on each argument in the order they are shown in
-        //!        in the usage help.
-        //! 
-        //! \tparam Func The type of the function.
-        //! \param f The function to call.
-        //! 
-        //! Usage help order is as follows:
-        //! 
-        //! 1. The positional arguments, in their specified order.
-        //! 2. Any required non-positional arguments, in alphabetical order.
-        //! 3. All remaining arguments, in alphabetical order.
-        template<typename Func>
-        bool for_each_argument_in_usage_order(Func f) const
-        {
-            // First the positional arguments
-            for (auto &arg : _arguments)
-            {
-                auto result = f(*arg);
-                if (!result)
-                    return result;
-            }
-
-            return true;
-        }
-
         //! \brief Sets a callback that will be invoked every time an argument is parsed.
         //! \param callback The callback to be invoked.
         //! 

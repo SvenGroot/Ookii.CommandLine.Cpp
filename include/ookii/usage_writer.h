@@ -447,26 +447,24 @@ namespace ookii
         {
             output << reset_indent << set_indent(syntax_indent);
             write_usage_syntax_prefix(parser().command_name());
-            parser().for_each_argument_in_usage_order([this](const auto &arg)
+            for (const auto &arg : parser().arguments())
+            {
+                output << ' ';
+                if (use_abbreviated_syntax && !arg.position())
                 {
-                    output << ' ';
-                    if (use_abbreviated_syntax && !arg.position())
-                    {
-                        write_abbreviated_remaining_arguments();
-                        return false;
-                    }
+                    write_abbreviated_remaining_arguments();
+                    break;
+                }
 
-                    if (arg.is_required())
-                    {
-                        write_argument_syntax(arg);
-                    }
-                    else
-                    {
-                        write_optional_argument_syntax(arg);
-                    }
-
-                    return true;
-                });
+                if (arg.is_required())
+                {
+                    write_argument_syntax(arg);
+                }
+                else
+                {
+                    write_optional_argument_syntax(arg);
+                }
+            }
 
             output << std::endl;
             if (blank_line_after_syntax)
