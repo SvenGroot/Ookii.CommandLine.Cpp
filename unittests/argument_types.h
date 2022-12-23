@@ -6,6 +6,7 @@ struct UsageArguments
 {
     ookii::tstring stringArg;
     int intArg;
+    int intArg2;
     float floatArg;
     bool switchArg;
     std::vector<ookii::tstring> multiArg;
@@ -18,6 +19,7 @@ struct UsageArguments
             .show_usage_on_error(on_error)
             .add_argument(stringArg, TEXT("StringArg")).positional().required().description(TEXT("String argument description."))
             .add_argument(intArg, TEXT("IntArg")).required() // No description so it doesn't show up in the detailed help.
+            .add_argument(intArg2, TEXT("IntArg2")).default_value(4) // No description but the default value causes it to show up for information mode.
             .add_argument(floatArg, TEXT("FloatArg")).description(TEXT("Float argument description that is really quite long and probably needs to be wrapped.")).value_description(TEXT("number")).default_value(10.0f)
             .add_argument(switchArg, TEXT("SwitchArg")).description(TEXT("Switch argument description.\nWith a new line.")).alias(TEXT("s"))
             .add_argument(optionalSwitchArg, TEXT("OptionalSwitchArg")).description(TEXT("Optional switch argument."))

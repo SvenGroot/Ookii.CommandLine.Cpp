@@ -162,6 +162,18 @@ namespace ookii
             return _storage.has_long_name;
         }
 
+        string_view_type short_or_long_name() const
+        {
+            if (has_short_name())
+            {
+                return string_view_type(&_storage.short_name, 1);
+            }
+            else
+            {
+                return name();
+            }
+        }
+
         //! \brief Gets the argument name with the appropriate prefix.
         //! \param parser The parser this argument belongs to.
         string_type name_with_prefix(const parser_type &parser) const

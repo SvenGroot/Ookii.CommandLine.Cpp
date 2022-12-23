@@ -34,6 +34,41 @@ namespace ookii
         none
     };
 
+    //! \brief Indicates which arguments should be included in the description list when printing usage.
+    enum class description_list_filter_mode
+    {
+        //! \brief Include arguments that have any information that is not included in the syntax,
+        //! such as aliases, a default value, or a description.
+        information,
+        //! \brief Include only arguments that have a description.
+        descripion,
+        //! \brief Include all arguments.
+        all,
+        //! \brief Omit the description list entirely.
+        none,
+    };
+
+    //! \brief Indicates how the arguments in the description list should be sorted.
+    enum class description_list_sort_mode
+    {
+        //! \brief The descriptions are listed in the same order as the usage syntax: first the
+        //! positional arguments, then the required named arguments sorted by name, then the
+        //! remaining arguments sorted by name.
+        usage_order,
+        //! \brief The descriptions are listed in alphabetical order by argument name. If the
+        //! parsing mode is parsing_mode::long_short, this uses the long name of the argument,
+        //! unless the argument has no long name, in which case the short name is used.
+        alphabetical,
+        //! \brief The same as alphabetical, but in reverse order.
+        alphabetical_descending,
+        //! \brief The descriptions are listed in alphabetical order by the short argument name. If
+        //! the argument has no short name, the long name is used. If the parsing mode is not
+        //! parsing_mode::long_short, this has the same effect as alphabetical.
+        alphabetical_short_name,
+        //! \brief The same as alphabetical_short_name, but in reverse order.
+        alphabetical_short_name_descending
+    };
+
     //! \brief Creates usage help for the basic_command_line_parser and basic_command_manager
     //! classes.
     //!
@@ -173,6 +208,10 @@ namespace ookii
         //!
         //! This value has no effect if the output stream is not using a line_wrapping_streambuf.
         size_t argument_description_indent{defaults::argument_description_indent};
+
+        description_list_filter_mode argument_description_list_filter{};
+
+        description_list_sort_mode argument_description_list_order{};
 
         //! \brief Indicates whether to use white space as the argument name separator in the usage
         //!        syntax.
@@ -625,14 +664,8 @@ namespace ookii
 
             output << set_indent(indent);
             bool first = true;
-            parser().for_each_argument_in_usage_order([this, &first](const auto &arg)
+            for_each_argument_in_description_order([this, &first](const auto &arg)
                 {
-                    // Exclude arguments without descriptions.
-                    if (arg.description().empty())
-                    {
-                        return true;
-                    }
-
                     if (first)
                     {
                         write_argument_description_list_header();
@@ -1158,7 +1191,132 @@ namespace ookii
             }
         }
 
+        template<typename Func>
+        void for_each_argument_in_description_order(Func f) const
+        {
+            if (argument_description_list_filter == description_list_filter_mode::none)
+            {
+                return;
+            }
+
+            if (argument_description_list_order == description_list_sort_mode::usage_order)
+            {
+                for (const auto &arg : parser().arguments())
+                {
+                    if (check_filter(arg))
+                    {
+                        f(arg);
+                    }
+                }
+
+                return;
+            }
+
+            std::vector<const argument_type *> arguments;
+            arguments.reserve(parser().argument_count());
+            auto source = parser().arguments();
+            std::transform(source.begin(), source.end(), std::back_inserter(arguments), [](const auto &arg) { return &arg; });
+            std::sort(arguments.begin(), arguments.end(), get_sort_function());
+            for (const auto &arg : arguments)
+            {
+                if (check_filter(*arg))
+                {
+                    f(*arg);
+                }
+            }
+        }
+
     private:
+
+        bool check_filter(const argument_type &arg) const
+        {
+            switch (argument_description_list_filter)
+            {
+            case description_list_filter_mode::information:
+                return has_information(arg);
+
+            case description_list_filter_mode::descripion:
+                return !arg.description().empty();
+
+            case description_list_filter_mode::all:
+                return true;
+
+            default:
+                return false;
+            }
+        }
+
+        bool has_information(const argument_type &arg) const
+        {
+            if (!arg.description().empty())
+            {
+                return true;
+            }
+
+            if (use_abbreviated_syntax && arg.position())
+            {
+                return true;
+            }
+
+            if (parser().mode() == parsing_mode::long_short && use_short_names_for_syntax)
+            {
+                if (arg.has_long_name())
+                {
+                    return true;
+                }
+            }
+            else if (arg.has_short_name())
+            {
+                return true;
+            }
+
+            if (include_aliases_in_description && (!arg.aliases().empty() || !arg.short_aliases().empty()))
+            {
+                return true;
+            }
+
+            if (include_default_value_in_description && arg.has_default_value())
+            {
+                return true;
+            }
+
+            return false;
+        }
+
+        std::function<bool(const argument_type *, const argument_type *)> get_sort_function() const
+        {
+            auto comparer = parser().argument_comparer();
+            switch (argument_description_list_order)
+            {
+            case description_list_sort_mode::alphabetical:
+                return [comparer](const argument_type *left, const argument_type *right)
+                {
+                    return comparer(left->name(), right->name());
+                };
+
+            case description_list_sort_mode::alphabetical_descending:
+                return [comparer](const argument_type *left, const argument_type *right)
+                {
+                    return comparer(right->name(), left->name());
+                };
+
+            case description_list_sort_mode::alphabetical_short_name:
+                return [comparer](const argument_type *left, const argument_type *right)
+                {
+                    return comparer(left->short_or_long_name(), right->short_or_long_name());
+                };
+
+            case description_list_sort_mode::alphabetical_short_name_descending:
+                return [comparer](const argument_type *left, const argument_type *right)
+                {
+                    return comparer(right->short_or_long_name(), left->short_or_long_name());
+                };
+
+            default:
+                throw std::logic_error("Invalid sort mode.");
+            }
+        }
+
         void write_usage_internal(const std::locale &loc, usage_help_request request = usage_help_request::full)
         {
             auto old_output_loc = output.imbue(loc);

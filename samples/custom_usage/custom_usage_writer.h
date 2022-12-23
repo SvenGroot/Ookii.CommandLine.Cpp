@@ -18,6 +18,9 @@ public:
         application_description_indent = 2;
         syntax_indent = 2;
 
+        // Sort by name.
+        argument_description_list_order = ookii::description_list_sort_mode::alphabetical;
+
         // Customize some of the colors.
         usage_prefix_color = ookii::vt::text_format::foreground_yellow;
         argument_description_color = ookii::vt::text_format::bold_bright;

@@ -479,19 +479,15 @@ public:
 
         auto parser = args.create_parser();
         
-        {
-            tline_wrapping_ostringstream stream{40};
-            basic_usage_writer<tchar_t> usage{stream};
-            parser.write_usage(&usage);
-            VERIFY_EQUAL(c_usageExpected, stream.view());
-        }
+        tline_wrapping_ostringstream stream{40};
+        basic_usage_writer<tchar_t> usage{stream};
+        parser.write_usage(&usage);
+        VERIFY_EQUAL(c_usageExpected, stream.view());
 
-        {
-            tline_wrapping_ostringstream stream{40};
-            basic_usage_writer<tchar_t> usage{stream, true};
-            parser.write_usage(&usage);
-            VERIFY_EQUAL(c_usageExpectedColor, stream.view());
-        }
+        stream.str(TEXT(""));
+        basic_usage_writer<tchar_t> usage2{stream, true};
+        parser.write_usage(&usage2);
+        VERIFY_EQUAL(c_usageExpectedColor, stream.view());
     }
 
     TEST_METHOD(TestUsageLongShort)
@@ -538,6 +534,82 @@ public:
         usage.use_abbreviated_syntax = true;
         parser.write_usage(&usage);
         VERIFY_EQUAL(c_usageExpectedLongShortAbbreviated, stream.view());
+    }
+
+    TEST_METHOD(TestUsageFilter)
+    {
+        UsageArguments args{};
+        auto parser = args.create_parser();
+
+        tline_wrapping_ostringstream stream{40};
+        basic_usage_writer<tchar_t> usage{stream};
+        usage.argument_description_list_filter = description_list_filter_mode::descripion;
+        parser.write_usage(&usage);
+        VERIFY_EQUAL(c_usageExpectedFilterDescription, stream.view());
+
+        stream.str(TEXT(""));
+        usage.argument_description_list_filter = description_list_filter_mode::all;
+        parser.write_usage(&usage);
+        VERIFY_EQUAL(c_usageExpectedFilterAll, stream.view());
+
+        stream.str(TEXT(""));
+        usage.argument_description_list_filter = description_list_filter_mode::none;
+        parser.write_usage(&usage);
+        VERIFY_EQUAL(c_usageExpectedFilterNone, stream.view());
+    }
+
+    TEST_METHOD(TestUsageSort)
+    {
+        UsageArguments args{};
+        auto parser = args.create_parser();
+
+        tline_wrapping_ostringstream stream{40};
+        basic_usage_writer<tchar_t> usage{stream};
+        usage.argument_description_list_order = description_list_sort_mode::alphabetical;
+        parser.write_usage(&usage);
+        VERIFY_EQUAL(c_usageExpectedAlphabetical, stream.view());
+
+        stream.str(TEXT(""));
+        usage.argument_description_list_order = description_list_sort_mode::alphabetical_descending;
+        parser.write_usage(&usage);
+        VERIFY_EQUAL(c_usageExpectedAlphabeticalDescending, stream.view());
+
+        stream.str(TEXT(""));
+        usage.argument_description_list_order = description_list_sort_mode::alphabetical_short_name;
+        parser.write_usage(&usage);
+        VERIFY_EQUAL(c_usageExpectedAlphabetical, stream.view());
+
+        stream.str(TEXT(""));
+        usage.argument_description_list_order = description_list_sort_mode::alphabetical_short_name_descending;
+        parser.write_usage(&usage);
+        VERIFY_EQUAL(c_usageExpectedAlphabeticalDescending, stream.view());
+    }
+
+    TEST_METHOD(TestUsageSortLongShort)
+    {
+        LongShortArguments args{};
+        auto parser = args.create_parser();
+
+        tline_wrapping_ostringstream stream{0};
+        basic_usage_writer<tchar_t> usage{stream};
+        usage.argument_description_list_order = description_list_sort_mode::alphabetical;
+        parser.write_usage(&usage);
+        VERIFY_EQUAL(c_usageExpectedLongShortAlphabeticalLongName, stream.view());
+
+        stream.str(TEXT(""));
+        usage.argument_description_list_order = description_list_sort_mode::alphabetical_descending;
+        parser.write_usage(&usage);
+        VERIFY_EQUAL(c_usageExpectedLongShortAlphabeticalLongNameDescending, stream.view());
+
+        stream.str(TEXT(""));
+        usage.argument_description_list_order = description_list_sort_mode::alphabetical_short_name;
+        parser.write_usage(&usage);
+        VERIFY_EQUAL(c_usageExpectedLongShortAlphabeticalShortName, stream.view());
+
+        stream.str(TEXT(""));
+        usage.argument_description_list_order = description_list_sort_mode::alphabetical_short_name_descending;
+        parser.write_usage(&usage);
+        VERIFY_EQUAL(c_usageExpectedLongShortAlphabeticalShortNameDescending, stream.view());
     }
 
     TEST_METHOD(TestWindowsOptionPrefix)

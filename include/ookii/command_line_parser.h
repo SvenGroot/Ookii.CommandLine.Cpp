@@ -359,6 +359,21 @@ namespace ookii
             };
         }
 
+        size_t argument_count() const
+        {
+            return _arguments.size();
+        }
+
+        auto argument_comparer() const
+        {
+            return _arguments_by_name.key_comp();
+        }
+
+        auto short_argument_comparer() const
+        {
+            return _arguments_by_short_name.key_comp();
+        }
+
         //! \brief Gets the number of positional arguments.
         //!
         //! Positional arguments are created using basic_parser_builder::argument_builder::positional().
