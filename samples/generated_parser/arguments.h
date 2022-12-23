@@ -23,6 +23,7 @@
 // 
 // [arguments]
 // [version_info: Ookii.CommandLine Sample 2.0]
+// [show_usage_on_error: syntax_only]
 // Sample command line application. The application parses the command line and prints the results,
 // but otherwise does nothing and none of the arguments are actually used for anything.
 struct arguments

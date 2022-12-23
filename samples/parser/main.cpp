@@ -17,6 +17,7 @@ int main(int argc, char *argv[])
     auto name = ookii::command_line_parser::get_executable_name(argc, argv);
     auto parser = ookii::parser_builder{name}
         .description("Sample command line application. The application parses the command line and prints the results, but otherwise does nothing and none of the arguments are actually used for anything.")
+        .show_usage_on_error(ookii::usage_help_request::syntax_only)
         // This defines a required positional argument called "Source". It can be set by name as
         // e.g. "-Source value", or by position by specifying "value" as the first positional argument.
         // Note that by default command line argument names are case insensitive, so this argument can

@@ -28,6 +28,13 @@ enum ArgumentKind {
     Action
 }
 
+enum UsageHelpRequest {
+    Unspecified
+    Full
+    SyntaxOnly
+    None
+}
+
 class CodeGenContext {
     [string] $CharType
     [string] $FieldPrefix
@@ -243,6 +250,7 @@ class CommandInfo {
     [bool] $IsGlobal
     [string] $CommonHelpArgument
     [bool] $AutoCommonHelpArgument
+    [UsageHelpRequest] $ShowUsageOnError
 
     [bool] NeedFileSystem() {
         return -not ([bool]$this.CommandName)
@@ -318,6 +326,22 @@ class CommandInfo {
                     }
                 }
             }
+            "show_usage_on_error" {
+                switch ($attribute.Value) {
+                    "full" {
+                        $this.ShowUsageOnError = [UsageHelpRequest]::Full
+                    }
+                    "syntax_only" {
+                        $this.ShowUsageOnError = [UsageHelpRequest]::SyntaxOnly
+                    }
+                    "none" {
+                        $this.ShowUsageOnError = [UsageHelpRequest]::None
+                    }
+                    default {
+                        throw "Unknown show_usage_on_error value $($attribute.Value)"
+                    }
+                }
+            }
             default {
                 Write-Warning "Unexpected command attribute $($attribute.Name)."
             }
@@ -362,6 +386,18 @@ class CommandInfo {
             }
             LongShort {
                 $result += "$($Context.ExtraIndent)        .mode(ookii::parsing_mode::long_short)"
+            }
+        }
+
+        switch ($this.ShowUsageOnError) {
+            Full {
+                $result += "$($Context.ExtraIndent)        .show_usage_on_error(ookii::usage_help_request::full)"
+            }
+            SyntaxOnly {
+                $result += "$($Context.ExtraIndent)        .show_usage_on_error(ookii::usage_help_request::syntax_only)"
+            }
+            None {
+                $result += "$($Context.ExtraIndent)        .show_usage_on_error(ookii::usage_help_request::none)"
             }
         }
 
