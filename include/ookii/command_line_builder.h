@@ -266,8 +266,8 @@ namespace ookii
             //! \brief Sets a short name for the argument that matches the first character of the
             //! long name.
             //!
-            //! \warning If you change the name of this argument after this call, the short name
-            //!          does not get updated.
+            //! \warning If you change the long name of this argument after this call, the short
+            //!          name does not get updated.
             BuilderType &short_name()
             {
                 this->storage().short_name = this->storage().name[0];
@@ -870,6 +870,7 @@ namespace ookii
 
         //! \brief Sets a value that indicates whether argument names are case sensitive.
         //! \param case_sensitive Indicates whether argument names are case sensitive.
+        //! \return A reference to this basic_parser_builder.
         //! 
         //! If set to `true`, argument names must be supplied on the command line using their exact
         //! case, and it's possible to have multiple arguments whose names only differ by case. If
@@ -885,6 +886,7 @@ namespace ookii
 
         //! \brief Sets the locale to use when converting argument values and writing usage help.
         //! \param loc The locale to use.
+        //! \return A reference to this basic_parser_builder.
         //! 
         //! The default value is a copy of the global locale when the basic_parser_builder was created.
         basic_parser_builder &locale(std::locale loc)
@@ -895,6 +897,7 @@ namespace ookii
 
         //! \brief Sets the command line parsing rules to use.
         //! \param mode One of the values of the parsing_mode enumeration.
+        //! \return A reference to this basic_parser_builder.
         basic_parser_builder &mode(parsing_mode mode)
         {
             if (mode < parsing_mode::default_mode || mode > parsing_mode::long_short)
@@ -909,6 +912,7 @@ namespace ookii
         //! \brief Sets the argument name prefixes accepted by the basic_command_line_parser.
         //! \tparam Range The type of a range containing the prefixes.
         //! \param prefixes A range containing the prefixes.
+        //! \return A reference to this basic_parser_builder.
         //!
         //! Any value that starts with the specified prefixes is considered an argument name (with
         //! the exception of a dash followed by a number, which is always considered to be a
@@ -932,6 +936,7 @@ namespace ookii
         //! \brief Sets the argument name prefixes accepted by the basic_command_line_parser.
         //! \tparam T The type of an element convertable to string_type.
         //! \param prefixes An initializer list containing the prefixes.
+        //! \return A reference to this basic_parser_builder.
         //!
         //! Any value that starts with the specified prefixes is considered an argument name (with
         //! the exception of a dash followed by a number, which is always considered to be a
@@ -948,6 +953,7 @@ namespace ookii
 
         //! \brief Sets the long argument name prefix accepted by the basic_command_line_parser.
         //! \param prefix The long argument name prefix.
+        //! \return A reference to this basic_parser_builder.
         //!
         //! This value is only used if the mode() function was used to set parsing_mode::long_short.
         //!
@@ -962,6 +968,7 @@ namespace ookii
         //!        by whitespace.
         //! \param allow A value that indicates whether argument names and values can be separated
         //!        by whitespace
+        //! \return A reference to this basic_parser_builder.
         //! 
         //! If set to `true`, argument can be specified like `-Name value` as well as `-Name:value`
         //! (or the custom separator set using argument_value_separator()). If set to `false`, only
@@ -976,6 +983,7 @@ namespace ookii
 
         //! \brief Sets a value that indicates whether arguments may be specified multiple times.
         //! \param allow A value that indicates whether duplicate arguments are allowed.
+        //! \return A reference to this basic_parser_builder.
         //! 
         //! If set to `true`, it's an error to supply an argument whose value was already supplied
         //! previously. If `false`, no error occurs and the last value supplied will be used.
@@ -992,6 +1000,7 @@ namespace ookii
 
         //! \brief Sets the character used to separate argument names and values.
         //! \param separator The haracter used to separate argument names and values.
+        //! \return A reference to this basic_parser_builder.
         //! 
         //! Using this separator, arguments can be supplied like `-Name:value` (where `:` is the
         //! separator).
@@ -1008,6 +1017,7 @@ namespace ookii
 
         //! \brief Sets a description for the application.
         //! \param description The description.
+        //! \return A reference to this basic_parser_builder.
         //!
         //! This description will be added to the usage help generated by basic_command_line_parser::write_usage().
         basic_parser_builder &description(string_type description)
@@ -1018,6 +1028,7 @@ namespace ookii
 
         //! \brief Set a value that indicates whether to create an automatic help argument.
         //! \param enable `true` to create an automatic help argument, otherwise; `false`.
+        //! \return A reference to this basic_parser_builder.
         //!
         //! If set to `true`, an argument will be added with the name "-Help" and the aliases "-?"
         //! and "-h". If the mode() was set to parsing_mode::long_short, it will have the long name
@@ -1035,6 +1046,20 @@ namespace ookii
         basic_parser_builder &automatic_help_argument(bool enable)
         {
             _options.automatic_help_argument = enable;
+            return *this;
+        }
+
+        //! \brief Sets a value that indicates how usage is shown after a parsing error occurred.
+        //! 
+        //! If the value set is not usage_help_request::full, the basic_command_line_parser and
+        //! basic_command_manager class will write the basic_usage_writer::write_more_info_message()
+        //! instead of the usage help.
+        //! 
+        //! \param request One of the values of the usage_help_request enumeration.
+        //! \return A reference to this basic_parser_builder.
+        basic_parser_builder& show_usage_on_error(usage_help_request request)
+        {
+            _storage.show_usage_on_error = request;
             return *this;
         }
 

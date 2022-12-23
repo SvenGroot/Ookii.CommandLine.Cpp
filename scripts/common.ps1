@@ -502,14 +502,17 @@ class CommandInfo {
             $result += "        .common_help_argument($($Context.StringPrefix)`"$helpArgument`")"
         }
 
-        $result += "        .configure_parser([](auto &parser)"
-        $result += "        {"
-        $result += "            parser"
         $Context.ExtraIndent = "        "
-        $result += $this.GenerateParserAttributes($Context)
-        $result[-1] += ";"
+        $attributes = $this.GenerateParserAttributes($Context)
         $Context.ExtraIndent = $null
-        $result += "        })"
+        if ($attributes.Length -gt 0) {
+            $result += "        .configure_parser([](auto &parser)"
+            $result += "        {"
+            $result += "            parser"
+            $result += $attributes
+            $result[-1] += ";"
+            $result += "        })"
+        }
 
         if ($this.Win32VersionInfo) {
             $result += "#ifdef _WIN32"

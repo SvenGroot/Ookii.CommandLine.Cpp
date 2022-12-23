@@ -255,8 +255,8 @@ namespace ookii
             : _commands{string_less{case_sensitive, locale}},
               _application_name{application_name},
               _locale{locale},
-              _case_sensitive{case_sensitive},
-              _string_provider{string_provider}
+              _string_provider{string_provider},
+              _case_sensitive{case_sensitive}
         {
             if (_string_provider == nullptr)
             {

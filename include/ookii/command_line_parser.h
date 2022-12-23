@@ -55,6 +55,7 @@ namespace ookii
             string_provider_type *string_provider;
             parsing_mode mode{};
             CharType argument_value_separator{':'};
+            usage_help_request show_usage_on_error{};
             bool allow_white_space_separator{true};
             bool allow_duplicate_arguments{false};
         };
@@ -464,6 +465,15 @@ namespace ookii
             return it->second;
         }
 
+        //! \brief Gets the help argument, if there is one.
+        //! \return If the automatic help argument is enabled, this will return either the created help
+        //! argument, or the manually defined argument which had a conflicting name. If the
+        //! automatic help argument is disabled, this always returns `nullptr`.
+        const argument_base_type *get_help_argument() const noexcept
+        {
+            return _help_argument;
+        }
+
         //! \brief Parses the arguments in the range specified by the iterators.
         //!
         //! \warning The range indicated by begin, end should *not* include the application name.
@@ -671,20 +681,21 @@ namespace ookii
         }
 
         //! \brief Writes usage help for this parser's arguments.
-        //!
-        //! \param usage The basic_usage_writer used for creating the usage help.
         //! 
         //! Usage will be written to basic_usage_writer::output. In the default basic_usage_writer,
         //! this is a basic_line_wrapping_ostream for the standard output stream.
-        void write_usage(usage_writer_type *usage = nullptr)
+        //!
+        //! \param usage The basic_usage_writer used for creating the usage help.
+        //! \param request The parts of usage to write.
+        void write_usage(usage_writer_type *usage = nullptr, usage_help_request request = usage_help_request::full)
         {
             if (usage == nullptr)
             {
-                usage_writer_type{}.write_parser_usage(*this);
+                usage_writer_type{}.write_parser_usage(*this, request);
             }
             else
             {
-                usage->write_parser_usage(*this);
+                usage->write_parser_usage(*this, request);
             }
         }
 
@@ -809,11 +820,11 @@ namespace ookii
             _arguments.push_back(std::move(argument));
         }
 
-        const argument_base_type *add_automatic_help_argument(creation_options_type &options)
+        void add_automatic_help_argument(creation_options_type &options)
         {
             if (!options.automatic_help_argument)
             {
-                return nullptr;
+                return;
             }
 
             auto name = _storage.string_provider->automatic_help_name();
@@ -856,7 +867,8 @@ namespace ookii
 
             if (existing_arg != nullptr)
             {
-                return existing_arg;
+                _help_argument = existing_arg;
+                return;
             }
 
             bool has_alias;
@@ -896,9 +908,8 @@ namespace ookii
             auto argument = std::make_unique<action_command_line_argument<bool, CharType, Traits, Alloc>>(
                 *this, std::move(storage), std::move(action_storage));
 
-            auto result = argument.get();
+            _help_argument = argument.get();
             add_argument(std::move(argument));
-            return result;
         }
 
         static bool automatic_help_handler(bool, basic_command_line_parser &)
@@ -910,10 +921,12 @@ namespace ookii
         {
             if (!result)
             {
-                // If parsing is cancelled that is not really an error, so we just show usage in
+                auto request = usage_help_request::full;
+                // If parsing is canceled that is not really an error, so we just show usage in
                 // that case.
                 if (result.error != parse_error::parsing_cancelled)
                 {
+                    request = _storage.show_usage_on_error;
                     if (usage == nullptr)
                     {
                         usage_writer_type{}.write_error(result.get_error_message());
@@ -926,7 +939,7 @@ namespace ookii
 
                 if (help_requested())
                 {
-                    write_usage(usage);
+                    write_usage(usage, request);
                 }
             }
         }
@@ -1025,11 +1038,11 @@ namespace ookii
             if (!value)
             {
                 assert(arg.is_switch());
-                result = arg.set_switch_value();
+                result = arg.set_switch_value(*this);
             }
             else 
             {
-                result = arg.set_value(*value, _storage.locale);
+                result = arg.set_value(*value, *this);
                 if (result == set_value_result::error)
                 {
                     return create_result(parse_error::invalid_value, arg.name());
@@ -1080,6 +1093,7 @@ namespace ookii
         std::map<CharType, argument_base_type *, char_less> _arguments_by_short_name;
         size_t _positional_argument_count{};
         on_parsed_callback _on_parsed_callback;
+        const argument_base_type* _help_argument{};
         bool _help_requested{};
     };
 

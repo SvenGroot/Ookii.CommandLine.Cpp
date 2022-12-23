@@ -2,6 +2,30 @@
 
 #include <ookii/command_line.h>
 
+struct UsageArguments
+{
+    ookii::tstring stringArg;
+    int intArg;
+    float floatArg;
+    bool switchArg;
+    std::vector<ookii::tstring> multiArg;
+    std::optional<bool> optionalSwitchArg;
+
+    auto create_parser(ookii::usage_help_request on_error = ookii::usage_help_request::full)
+    {
+        return ookii::basic_parser_builder<ookii::tchar_t>{TEXT("TestCommand")}
+            .description(TEXT("Application description."))
+            .show_usage_on_error(on_error)
+            .add_argument(stringArg, TEXT("StringArg")).positional().required().description(TEXT("String argument description."))
+            .add_argument(intArg, TEXT("IntArg")).required() // No description so it doesn't show up in the detailed help.
+            .add_argument(floatArg, TEXT("FloatArg")).description(TEXT("Float argument description that is really quite long and probably needs to be wrapped.")).value_description(TEXT("number")).default_value(10.0f)
+            .add_argument(switchArg, TEXT("SwitchArg")).description(TEXT("Switch argument description.\nWith a new line.")).alias(TEXT("s"))
+            .add_argument(optionalSwitchArg, TEXT("OptionalSwitchArg")).description(TEXT("Optional switch argument."))
+            .add_multi_value_argument(multiArg, TEXT("MultiArg")).description(TEXT("Multi-value argument description.")).alias(TEXT("multi")).alias(TEXT("m"))
+            .build();
+    }
+};
+
 struct LongShortArguments
 {
     int foo{};

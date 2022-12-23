@@ -20,13 +20,19 @@ namespace ookii
     template<typename CharType, typename Traits, typename Alloc>
     class command_info;
 
-    // TODO
-    // enum class usage_help_request
-    // {
-    //     full,
-    //     syntax_only,
-    //     none
-    // };
+
+    //! \brief Indicates if and how usage is shown if an error occurred parsing the command line.
+    enum class usage_help_request
+    {
+        //! \brief Full usage help is shown, including the argument descriptions.
+        full,
+        //! \brief Only the usage syntax is shown; the argument descriptions are not. In addition,
+        //! the basic_usage_writer::write_more_info_message() message is shown.
+        syntax_only,
+        //! \brief No usage help is shown. Instead, the
+        //! basic_usage_writer::write_more_info_message() message is shown.
+        none
+    };
 
     //! \brief Creates usage help for the basic_command_line_parser and basic_command_manager
     //! classes.
@@ -311,10 +317,11 @@ namespace ookii
         //! \brief Creates usage help for the specified parser.
         //!
         //! \param parser The basic_command_line_parser.
-        virtual void write_parser_usage(const parser_type &parser)
+        //! \param request The parts of usage to write.
+        virtual void write_parser_usage(const parser_type &parser, usage_help_request request = usage_help_request::full)
         {
             _parser = &parser;
-            write_usage_internal(parser.locale());
+            write_usage_internal(parser.locale(), request);
         }
 
         //! \brief Creates usage help for the specified command manager.
@@ -355,15 +362,31 @@ namespace ookii
         //! The base implementation writes the application description, followed by the usage
         //! syntax, followed by the class validator help messages, followed by a list of argument
         //! descriptions.
-        virtual void write_parser_usage_core()
+        //! 
+        //! \param request The parts of usage to write.
+        virtual void write_parser_usage_core(usage_help_request request)
         {
-            if (include_application_description && !parser().description().empty())
+            if (request == usage_help_request::none)
+            {
+                write_more_info_message();
+                return;
+            }
+
+            if (request == usage_help_request::full && include_application_description && !parser().description().empty())
             {
                 write_application_description(parser().description());
             }
 
             write_parser_usage_syntax();
-            write_argument_descriptions();
+            if (request == usage_help_request::full)
+            {
+                write_argument_descriptions();
+            }
+            else
+            {
+                output << reset_indent << set_indent(0);
+                write_more_info_message();
+            }
         }
 
         //! \brief Writes the application description, or command description in case of a
@@ -893,6 +916,26 @@ namespace ookii
             output << '.';
         }
 
+        //! \brief Writes a message telling to user how to get more detailed help.
+        //! 
+        //! The default implementation writes a message like "Run 'executable -Help' for more
+        //! information." or "Run 'executable command -Help' for more information."
+        //!
+        //! If the basic_command_line_parser::get_help_argument() method returns `nullptr`, nothing
+        //! is written.
+        //! 
+        //! This method is called by the base implementation of the write_parser_usage_core() method
+        //! if the requested help is not `usage_help_request::full`.
+        virtual void write_more_info_message()
+        {
+            auto arg = parser().get_help_argument();
+            if (arg != nullptr)
+            {
+                output << "Run '" << parser().command_name() << " " << arg->name_with_prefix(parser()) << "' for more information."
+                    << std::endl;
+            }
+        }
+
         //! \brief Creates the usage help for a basic_command_manager instance.
         //!
         //! This is the primary method used to generate usage help for the
@@ -1116,7 +1159,7 @@ namespace ookii
         }
 
     private:
-        void write_usage_internal(const std::locale &loc)
+        void write_usage_internal(const std::locale &loc, usage_help_request request = usage_help_request::full)
         {
             auto old_output_loc = output.imbue(loc);
             std::optional<std::locale> old_error_loc;
@@ -1138,9 +1181,10 @@ namespace ookii
             }
 
             auto color = enable_color();
+            output << set_indent(0) << reset_indent;
             if (_parser != nullptr)
             {
-                write_parser_usage_core();
+                write_parser_usage_core(request);
             }
             else
             {

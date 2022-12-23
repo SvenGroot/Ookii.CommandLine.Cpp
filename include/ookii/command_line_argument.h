@@ -124,18 +124,6 @@ namespace ookii
 
         command_line_argument_base &operator=(const command_line_argument_base &) = delete;
 
-        //! \brief Gets the basic_command_line_parser for this argument.
-        parser_type &parser() noexcept
-        {
-            return *_parser;
-        }
-
-        //! \brief Gets the basic_command_line_parser for this argument.
-        const parser_type &parser() const noexcept
-        {
-            return *_parser;
-        }
-
         //! \brief Gets the name of the argument.
         //!
         //! The argument's name is set using the basic_parser_builder::add_argument() method.
@@ -172,6 +160,20 @@ namespace ookii
         bool has_long_name() const noexcept
         {
             return _storage.has_long_name;
+        }
+
+        //! \brief Gets the argument name with the appropriate prefix.
+        //! \param parser The parser this argument belongs to.
+        string_type name_with_prefix(const parser_type &parser) const
+        {
+            if (has_long_name() && parser.mode() == parsing_mode::long_short)
+            {
+                return parser.long_prefix() + name();
+            }
+            else
+            {
+                return parser.prefixes()[0] + name();
+            }
         }
 
         //! \brief Gets a list of aliases that can be used instead of the argument's name.
@@ -302,7 +304,7 @@ namespace ookii
 
         //! \brief Sets the argument to the specified value.
         //! \param value The string value of the argument.
-        //! \param loc The locale to use to parse the argument value.
+        //! \param parser The parser that this argument belongs to.
         //! \return One of the values of the set_value_result enumeration.
         //! 
         //! When the value is set, this method converts to the string value to the actual type of
@@ -310,7 +312,7 @@ namespace ookii
         //! converter, which is the lexical_convert template.
         //! 
         //! For multi-value arguments, the new value will be added to the list of values.
-        virtual set_value_result set_value(string_view_type value, std::locale loc = {}) = 0;
+        virtual set_value_result set_value(string_view_type value, parser_type &parser) = 0;
 
         //! \brief Sets the variable holding the argument's value to the default value.
         //!
@@ -324,6 +326,7 @@ namespace ookii
         virtual void apply_default_value() = 0;
 
         //! \brief Applies the implicit value for a switch argument.
+        //! \param parser The parser that this argument belongs to.
         //! \return One of the values of the set_value_result enumeration.
         //! 
         //! If the argument is a switch argument (is_switch() returns `true`), the variable holding
@@ -331,7 +334,7 @@ namespace ookii
         //! set_value_result::error is returned.
         //! 
         //! For a multi-value switch argument, this adds a value of `true` to the container.
-        virtual set_value_result set_switch_value() = 0;
+        virtual set_value_result set_switch_value(parser_type &parser) = 0;
 
         //! \brief Writes the default value to the specified stream.
         //!
@@ -363,9 +366,8 @@ namespace ookii
         //! \brief Constructs a command line argument base from a command_line_argument_storage.
         //! \param parser The basic_command_line_parser this argument belongs to.
         //! \param storage Storage containing the argument's information.
-        command_line_argument_base(parser_type &parser, storage_type &&storage)
-            : _parser{&parser},
-              _storage{std::move(storage)}
+        command_line_argument_base(const parser_type &parser, storage_type &&storage)
+            : _storage{std::move(storage)}
         {
             // Normalize elements based on parsing mode.
             if (parser.mode() == parsing_mode::long_short)
@@ -395,7 +397,6 @@ namespace ookii
         }
 
     private:
-        parser_type *_parser;
         storage_type _storage;
         bool _has_value{};
     };
@@ -429,6 +430,8 @@ namespace ookii
         using string_view_type = typename base_type::string_view_type;
         //! \copydoc base_type::storage_type
         using typed_storage_type = details::typed_argument_storage<value_type, element_type, CharType, Traits>;
+        //! \copydoc base_type::parser_type
+        using parser_type = typename base_type::parser_type;
 
         //! \brief Initializes a new instance of the command_line_argument class.
         //! \param parser The basic_command_line_parser this argument belongs to.
@@ -437,7 +440,7 @@ namespace ookii
         //! 
         //! You do not normally construct instances of this class manually. Instead, use the
         //! basic_parser_builder.
-        command_line_argument(typename base_type::parser_type &parser, typename base_type::storage_type &&storage,
+        command_line_argument(const typename base_type::parser_type &parser, typename base_type::storage_type &&storage,
                               typed_storage_type &&typed_storage)
             : base_type{parser, std::move(storage)},
               _storage{std::move(typed_storage)}
@@ -455,13 +458,13 @@ namespace ookii
         }
 
         //! \copydoc base_type::set_value()
-        set_value_result set_value(string_view_type value, std::locale loc = {}) override
+        set_value_result set_value(string_view_type value, parser_type &parser) override
         {
             std::optional<element_type> converted;
             if (_storage.converter)
-                converted = _storage.converter(value, loc);
+                converted = _storage.converter(value, parser.locale());
             else
-                converted = lexical_convert<element_type, CharType, Traits, Alloc>::from_string(value, loc);
+                converted = lexical_convert<element_type, CharType, Traits, Alloc>::from_string(value, parser.locale());
 
             if (!converted)
                 return set_value_result::error;
@@ -472,7 +475,7 @@ namespace ookii
         }
 
         //! \copydoc base_type::set_switch_value()
-        set_value_result set_switch_value() override
+        set_value_result set_switch_value(parser_type &) override
         {
             return set_switch_value_core();
         }
@@ -546,6 +549,8 @@ namespace ookii
         using string_view_type = typename base_type::string_view_type;
         //! \copydoc base_type::storage_type
         using typed_storage_type = details::typed_argument_storage<T, element_type, CharType, Traits>;
+        //! \copydoc base_type::parser_type
+        using parser_type = typename base_type::parser_type;
 
         //! \brief Initializes a new instance of the multi_value_command_line_argument class.
         //! \param parser The basic_command_line_parser this argument belongs to.
@@ -554,7 +559,7 @@ namespace ookii
         //! 
         //! You do not normally construct instances of this class manually. Instead, use the
         //! basic_parser_builder.
-        multi_value_command_line_argument(typename base_type::parser_type &parser, typename base_type::storage_type &&storage,
+        multi_value_command_line_argument(const typename base_type::parser_type &parser, typename base_type::storage_type &&storage,
                                           typed_storage_type &&typed_storage)
             : base_type{parser, std::move(storage)},
               _storage{std::move(typed_storage)}
@@ -592,15 +597,15 @@ namespace ookii
         }
 
         //! \copydoc base_type::set_value()
-        set_value_result set_value(string_view_type value, std::locale loc = {}) override
+        set_value_result set_value(string_view_type value, parser_type &parser) override
         {
             for (auto element : tokenize{value, separator()})
             {
                 std::optional<element_type> converted;
                 if (_storage.converter)
-                    converted = _storage.converter(element, loc);
+                    converted = _storage.converter(element, parser.locale());
                 else
-                    converted = lexical_convert<element_type, CharType, Traits, Alloc>::from_string(element, loc);
+                    converted = lexical_convert<element_type, CharType, Traits, Alloc>::from_string(element, parser.locale());
 
                 if (!converted)
                     return set_value_result::error;
@@ -613,7 +618,7 @@ namespace ookii
         }
 
         //! \copydoc base_type::set_switch_value()
-        set_value_result set_switch_value() override
+        set_value_result set_switch_value(parser_type &) override
         {
             return set_switch_value_core();
         }
@@ -695,6 +700,8 @@ namespace ookii
         using typed_storage_type = details::action_argument_storage<value_type, CharType, Traits, Alloc>;
         //! \brief The type of the function used by this action argument.
         using function_type = typename typed_storage_type::function_type;
+        //! \copydoc base_type::parser_type
+        using parser_type = typename base_type::parser_type;
 
         //! \brief Initializes a new instance of the command_line_argument class.
         //! \param parser The basic_command_line_parser this argument belongs to.
@@ -703,7 +710,7 @@ namespace ookii
         //! 
         //! You do not normally construct instances of this class manually. Instead, use the
         //! basic_parser_builder.
-        action_command_line_argument(typename base_type::parser_type &parser, typename base_type::storage_type &&storage,
+        action_command_line_argument(const typename base_type::parser_type &parser, typename base_type::storage_type &&storage,
                               typed_storage_type &&typed_storage)
             : base_type{parser, std::move(storage)},
               _storage{std::move(typed_storage)}
@@ -721,25 +728,25 @@ namespace ookii
         }
 
         //! \copydoc base_type::set_value()
-        set_value_result set_value(string_view_type value, std::locale loc = {}) override
+        set_value_result set_value(string_view_type value, parser_type &parser) override
         {
             std::optional<element_type> converted;
             if (_storage.converter)
-                converted = _storage.converter(value, loc);
+                converted = _storage.converter(value, parser.locale());
             else
-                converted = lexical_convert<element_type, CharType, Traits, Alloc>::from_string(value, loc);
+                converted = lexical_convert<element_type, CharType, Traits, Alloc>::from_string(value, parser.locale());
 
             if (!converted)
                 return set_value_result::error;
 
             base_type::set_value();
-            return invoke_action(*converted);
+            return invoke_action(*converted, parser);
         }
 
         //! \copydoc base_type::set_switch_value()
-        set_value_result set_switch_value() override
+        set_value_result set_switch_value(parser_type &parser) override
         {
-            return set_switch_value_core();
+            return set_switch_value_core(parser);
         }
 
         //! \copydoc base_type::apply_default_value()
@@ -762,21 +769,21 @@ namespace ookii
         }
 
     private:
-        set_value_result invoke_action(const T &value)
+        set_value_result invoke_action(const T &value, parser_type &parser)
         {
-            bool result = _storage.action(value, this->parser());
+            bool result = _storage.action(value, parser);
             return result ? set_value_result::success : set_value_result::cancel;
         }
 
         template<typename T2 = T>
-        std::enable_if_t<details::is_switch<T2>::value, set_value_result> set_switch_value_core()
+        std::enable_if_t<details::is_switch<T2>::value, set_value_result> set_switch_value_core(parser_type &parser)
         {
             base_type::set_value();
-            return invoke_action(true);
+            return invoke_action(true, parser);
         }
 
         template<typename T2 = T>
-        std::enable_if_t<!details::is_switch<T2>::value, set_value_result> set_switch_value_core()
+        std::enable_if_t<!details::is_switch<T2>::value, set_value_result> set_switch_value_core(parser_type &)
         {
             return set_value_result::error;
         }

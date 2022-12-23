@@ -864,6 +864,21 @@ namespace ookii
     //! \brief A line wrapping stream for use with the `wchar_t` type.
     using wline_wrapping_ostream = ookii::basic_line_wrapping_ostream<wchar_t>;
 
+    namespace details
+    {
+        template <class T, class = void>
+        struct is_allocator : std::false_type
+        {
+        };
+
+        template <class T>
+        struct is_allocator<T, std::void_t<typename T::value_type, decltype(std::declval<T&>().deallocate(
+            std::declval<T&>().allocate(size_t{ 1 }), size_t{ 1 })) >>
+            : std::true_type
+        {
+        };
+    }
+
     //! \brief Output string stream that wraps lines on white-space characters at the specified line
     //!        length, and with support for indentation.
     //! 
@@ -921,7 +936,7 @@ namespace ookii
         //!
         //! To make sure the result contains all the written text, you must flush the string using
         //! ookii:flush(), specifying `true` to flush the final line.
-        template<typename SAlloc>
+        template<typename SAlloc, std::enable_if_t<details::is_allocator<SAlloc>::value, int> = 0>
         std::basic_string<CharType, Traits, SAlloc> str(const SAlloc &alloc) const
         {
             return _stringstream.str(alloc);

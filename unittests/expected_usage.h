@@ -176,3 +176,15 @@ static constexpr ookii::tstring_view c_usageExpectedLongShortAbbreviated = TEXT(
 
 )");
 
+static constexpr ookii::tstring_view c_usageExpectedSyntaxOnly = TEXT(R"(Usage: TestCommand [-StringArg] <string>
+   -IntArg <int> [-FloatArg <number>]
+   [-Help] [-MultiArg <string>...]
+   [-OptionalSwitchArg] [-SwitchArg]
+
+Run 'TestCommand -Help' for more
+information.
+)");
+
+static constexpr ookii::tstring_view c_usageExpectedNone = TEXT(R"(Run 'TestCommand -Help' for more
+information.
+)");

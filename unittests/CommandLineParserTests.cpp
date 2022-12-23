@@ -475,21 +475,9 @@ public:
 
     TEST_METHOD(TestUsage)
     {
-        tstring stringArg;
-        int intArg;
-        float floatArg;
-        bool switchArg;
-        std::vector<tstring> multiArg;
-        std::optional<bool> optionalSwitchArg;
+        UsageArguments args{};
 
-        auto parser = basic_parser_builder<tchar_t>{TEXT("TestCommand")}.description(TEXT("Application description."))
-            .add_argument(stringArg, TEXT("StringArg")).positional().required().description(TEXT("String argument description."))
-            .add_argument(intArg, TEXT("IntArg")).required() // No description so it doesn't show up in the detailed help.
-            .add_argument(floatArg, TEXT("FloatArg")).description(TEXT("Float argument description that is really quite long and probably needs to be wrapped.")).value_description(TEXT("number")).default_value(10.0f)
-            .add_argument(switchArg, TEXT("SwitchArg")).description(TEXT("Switch argument description.\nWith a new line.")).alias(TEXT("s"))
-            .add_argument(optionalSwitchArg, TEXT("OptionalSwitchArg")).description(TEXT("Optional switch argument."))
-            .add_multi_value_argument(multiArg, TEXT("MultiArg")).description(TEXT("Multi-value argument description.")).alias(TEXT("multi")).alias(TEXT("m"))
-            .build();
+        auto parser = args.create_parser();
         
         {
             tline_wrapping_ostringstream stream{40};
@@ -834,6 +822,57 @@ public:
             .build();
 
         VerifyArgument(parser2, TEXT("version"), false, true, false, {});
+    }
+
+    TEST_METHOD(TestParseWithUsage)
+    {
+        UsageArguments args{};
+        auto parser = args.create_parser();
+        tline_wrapping_ostringstream output{40};
+        basic_ostringstream<tchar_t> error;
+        basic_usage_writer<tchar_t> usage{output, error};
+
+        VerifyParseResult(parser.parse({ TEXT("foo"), TEXT("-IntArg"), TEXT("42") }, &usage), parser);
+        VERIFY_EQUAL(TEXT("foo"), args.stringArg);
+        VERIFY_EQUAL(42, args.intArg);
+        VERIFY_EQUAL(TEXT(""), output.str());
+        VERIFY_EQUAL(TEXT(""), error.str());
+
+        VerifyParseResult(parser.parse(std::vector<tstring>{}, &usage), parser, parse_error::missing_required_argument, TEXT("StringArg"));
+        VERIFY_EQUAL(c_usageExpected, output.str());
+        VERIFY_FALSE(error.str().empty());
+
+        output.str(TEXT(""));
+        error.str(TEXT(""));
+        VerifyParseResult(parser.parse({ TEXT("-Help") }, &usage), parser, parse_error::parsing_cancelled, TEXT("Help"));
+        VERIFY_EQUAL(c_usageExpected, output.str());
+        VERIFY_EQUAL(TEXT(""), error.str());
+
+        parser = args.create_parser(usage_help_request::syntax_only);
+        output.str(TEXT(""));
+        error.str(TEXT(""));
+        VerifyParseResult(parser.parse(std::vector<tstring>{}, & usage), parser, parse_error::missing_required_argument, TEXT("StringArg"));
+        VERIFY_EQUAL(c_usageExpectedSyntaxOnly, output.str());
+        VERIFY_FALSE(error.str().empty());
+
+        output.str(TEXT(""));
+        error.str(TEXT(""));
+        VerifyParseResult(parser.parse({ TEXT("-Help") }, &usage), parser, parse_error::parsing_cancelled, TEXT("Help"));
+        VERIFY_EQUAL(c_usageExpected, output.str());
+        VERIFY_EQUAL(TEXT(""), error.str());
+
+        parser = args.create_parser(usage_help_request::none);
+        output.str(TEXT(""));
+        error.str(TEXT(""));
+        VerifyParseResult(parser.parse(std::vector<tstring>{}, & usage), parser, parse_error::missing_required_argument, TEXT("StringArg"));
+        VERIFY_EQUAL(c_usageExpectedNone, output.str());
+        VERIFY_FALSE(error.str().empty());
+
+        output.str(TEXT(""));
+        error.str(TEXT(""));
+        VerifyParseResult(parser.parse({ TEXT("-Help") }, &usage), parser, parse_error::parsing_cancelled, TEXT("Help"));
+        VERIFY_EQUAL(c_usageExpected, output.str());
+        VERIFY_EQUAL(TEXT(""), error.str());
     }
 
 private:
