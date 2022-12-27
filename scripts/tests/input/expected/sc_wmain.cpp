@@ -48,6 +48,6 @@ int wmain(int argc, wchar_t *argv[])
 {
     auto name = ookii::basic_command_line_parser<wchar_t>::get_executable_name(argc, argv);
     auto manager = ookii::register_commands(name);
-    return manager.run_command(argc, argv);
+    return manager.run_command(argc, argv).value_or(1);
 }
 

@@ -238,10 +238,6 @@ namespace ookii
         //! \brief The specialized type of basic_localized_string_provider used.
         using string_provider_type = basic_localized_string_provider<CharType, Traits, Alloc>;
 
-        //! \brief The error exit code used by run_command() if no command name was supplied
-        //!        or the supplied command could not be found.
-        static constexpr int error_return_code = 1;
-
         //! \brief Initializes a new instance of the basic_command_manager class.
         //! 
         //! \param application_name The name of the application containing the command. This name
@@ -510,21 +506,21 @@ namespace ookii
         //!          skipped. The second argument must be the command name.
         //! 
         //! \param argc The number of arguments.
-        //! \param argv The arguments..
+        //! \param argv The arguments.
         //! \param usage A basic_usage_writer instance that will be used to format errors
         //!        and usage help.
-        //! \returns The exit code of the command, or error_return_code if the command could not
-        //!          be created.
-        int run_command(int argc, const CharType *const argv[], usage_writer_type *usage = nullptr) const
+        //! \returns The exit code of the command, or `std::nullopt` if the command could not be
+        //!          created.
+        std::optional<int> run_command(int argc, const CharType *const argv[], usage_writer_type *usage = nullptr) const
         {
             auto command = create_command(argc, argv, usage);
             if (!command)
-                return error_return_code;
+                return {};
 
             return command->run();
         }
 
-        //! \brief Creates an instance of a command based onthe specified arguments, and runs the
+        //! \brief Creates an instance of a command based on the specified arguments, and runs the
         //!        command.
         //! 
         //! If the command could not be found, a list of commands will be written. If an error
@@ -536,16 +532,16 @@ namespace ookii
         //! 
         //! \param name The name of the command.
         //! \param argc The number of arguments.
-        //! \param argv The arguments..
+        //! \param argv The arguments.
         //! \param usage A basic_usage_writer instance that will be used to format errors
         //!        and usage help.
-        //! \returns The exit code of the command, or error_return_code if the command could not
-        //!          be created.
-        int run_command(const string_type &name, int argc, const CharType *const argv[], usage_writer_type *usage = nullptr) const
+        //! \returns The exit code of the command, or `std::nullopt` if the command could not be
+        //!          created.
+        std::optional<int> run_command(const string_type &name, int argc, const CharType *const argv[], usage_writer_type *usage = nullptr) const
         {
             auto command = create_command(name, argc, argv, usage);
             if (!command)
-                return error_return_code;
+                return {};
 
             return command->run();
         }

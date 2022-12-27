@@ -177,7 +177,8 @@ public:
         tstringstream error;
         basic_usage_writer<tchar_t> options{output, error};
         auto result = run_command(manager, { TEXT("AnotherCommand"), TEXT("-Value"), TEXT("42") }, &options);
-        VERIFY_EQUAL(42, result);
+        VERIFY_NOT_NULL(result);
+        VERIFY_EQUAL(42, *result);
     }
 
     TEST_METHOD(TestCaseSensitive)
@@ -202,10 +203,11 @@ public:
             .add_command<Command2>();
 
         auto result = run_command(manager, { TEXT("AnotherCommand"), TEXT("--value"), TEXT("42") });
-        VERIFY_EQUAL(42, result);
+        VERIFY_NOT_NULL(result);
+        VERIFY_EQUAL(42, *result);
     }
 
-    static int run_command(const basic_command_manager<tchar_t> &manager, std::initializer_list<const tchar_t*> args, basic_usage_writer<tchar_t> *usage = nullptr)
+    static std::optional<int> run_command(const basic_command_manager<tchar_t> &manager, std::initializer_list<const tchar_t*> args, basic_usage_writer<tchar_t> *usage = nullptr)
     {
         std::vector<const tchar_t*> arguments{TEXT("Executable")};
         arguments.insert(arguments.end(), args);

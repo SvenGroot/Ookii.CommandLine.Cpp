@@ -20,5 +20,6 @@ int main(int argc, char *argv[])
 
     // Find and run the command based on the command line arguments, and print error messages and
     // usage help as appropriate.
-    return manager.run_command(argc, argv);
+    // If creating the command failed, we return an error exit code (1 in this case).
+    return manager.run_command(argc, argv).value_or(1);
 }
