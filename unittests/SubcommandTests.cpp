@@ -152,7 +152,7 @@ public:
         tline_wrapping_ostringstream output{0};
         tline_wrapping_ostringstream error{0};
         basic_usage_writer<tchar_t> options{output, error};
-        auto command = manager.create_command({ TEXT("AnotherCommand"), TEXT("-Value"), TEXT("42") }, &options);
+        auto command = create_command(manager, { TEXT("AnotherCommand"), TEXT("-Value"), TEXT("42") }, &options);
         VERIFY_NOT_NULL(command);
         auto actual = dynamic_cast<Command2*>(command.get());
         VERIFY_NOT_NULL(actual);
@@ -160,7 +160,7 @@ public:
         VERIFY_EQUAL(TEXT(""), output.str());
         VERIFY_EQUAL(TEXT(""), error.str());
 
-        command = manager.create_command({ TEXT("AnotherCommand") }, &options);
+        command = create_command(manager, { TEXT("AnotherCommand") }, &options);
         VERIFY_NULL(command);
         VERIFY_EQUAL(c_commandUsageExpected, output.str());
         VERIFY_EQUAL(c_commandErrorExpected, error.str());
@@ -176,7 +176,7 @@ public:
         tstringstream output;
         tstringstream error;
         basic_usage_writer<tchar_t> options{output, error};
-        auto result = manager.run_command({ TEXT("AnotherCommand"), TEXT("-Value"), TEXT("42") }, &options);
+        auto result = run_command(manager, { TEXT("AnotherCommand"), TEXT("-Value"), TEXT("42") }, &options);
         VERIFY_EQUAL(42, result);
     }
 
@@ -201,8 +201,22 @@ public:
         manager.configure_parser([](auto &parser) { parser.mode(parsing_mode::long_short); })
             .add_command<Command2>();
 
-        auto result = manager.run_command({ TEXT("AnotherCommand"), TEXT("--value"), TEXT("42") });
+        auto result = run_command(manager, { TEXT("AnotherCommand"), TEXT("--value"), TEXT("42") });
         VERIFY_EQUAL(42, result);
+    }
+
+    static int run_command(const basic_command_manager<tchar_t> &manager, std::initializer_list<const tchar_t*> args, basic_usage_writer<tchar_t> *usage = nullptr)
+    {
+        std::vector<const tchar_t*> arguments{TEXT("Executable")};
+        arguments.insert(arguments.end(), args);
+        return manager.run_command(static_cast<int>(arguments.size()), arguments.data(), usage);
+    }
+
+    static std::unique_ptr<basic_command<tchar_t>> create_command(const basic_command_manager<tchar_t> &manager, std::initializer_list<const tchar_t*> args, basic_usage_writer<tchar_t> *usage = nullptr)
+    {
+        std::vector<const tchar_t*> arguments{TEXT("Executable")};
+        arguments.insert(arguments.end(), args);
+        return manager.create_command(static_cast<int>(arguments.size()), arguments.data(), usage);
     }
 
     static constexpr tstring_view c_usageExpected = TEXT(R"(Application description.

@@ -423,6 +423,11 @@ namespace ookii
             return _locale;
         }
 
+        const localized_string_provider &string_provider() const noexcept
+        {
+            return *_string_provider;
+        }
+
         //! \brief Gets information about a subcommand by name.
         //! \param name The name of the subcommand.
         //! \return An instance of command_info describing the command, or `nullptr` if there
@@ -436,156 +441,6 @@ namespace ookii
             return &it->second;
         }
 
-        //! \brief Creates an instance of the specified command, parsing the specified arguments.
-        //! 
-        //! If the command could not be found, a list of commands will be written. If an error
-        //! occurred parsing the arguments, an error message and usage help for the command will
-        //! be written.
-        //! 
-        //! \warning The passed arguments must not include the application name or the command name.
-        //! 
-        //! \tparam Iterator The type of iterator for the arguments.
-        //! \param name The name of the subcommand.
-        //! \param begin An iterator to the first argument.
-        //! \param end An iterator after the last argument.
-        //! \param usage A basic_usage_writer instance that will be used to format errors
-        //!        and usage help.
-        //! \returns An instance of the subcommand type, or `nullptr` if the an error occurred.
-        template<typename Iterator>
-        std::unique_ptr<command_type> create_command(const string_type &name, Iterator begin, Iterator end, usage_writer_type *usage = nullptr) const
-        {
-            auto info = get_command(name);
-            if (info == nullptr)
-            {
-                write_usage(usage);
-                return {};
-            }
-
-            auto builder = create_parser_builder(*info);
-            auto command = info->create(builder);
-            auto parser = builder.build();
-            if (!parser.parse(begin, end, usage))
-                return {};
-
-            return command;
-        }
-
-        //! \brief Creates an instance of the specified command, parsing the specified arguments.
-        //! 
-        //! If the command could not be found, a list of commands will be written. If an error
-        //! occurred parsing the arguments, an error message and usage help for the command will
-        //! be written.
-        //! 
-        //! \warning The passed arguments must not include the application name or the command name.
-        //! 
-        //! \tparam Range The type of a range containing the arguments.
-        //! \param name The name of the subcommand.
-        //! \param range A range containing the arguments.
-        //! \param usage A basic_usage_writer instance that will be used to format errors
-        //!        and usage help.
-        //! \returns An instance of the subcommand type, or `nullptr` if the an error occurred.
-        template<typename Range>
-        std::unique_ptr<command_type> create_command(const string_type &name, Range range, usage_writer_type *usage = nullptr) const
-        {
-            // For ADL
-            using std::begin;
-            using std::end;
-            return create_command(name, begin(range), end(range), usage);
-        }
-
-        //! \brief Creates an instance of the specified command, parsing the specified arguments.
-        //! 
-        //! If the command could not be found, a list of commands will be written. If an error
-        //! occurred parsing the arguments, an error message and usage help for the command will
-        //! be written.
-        //! 
-        //! \warning The passed arguments must not include the application name or the command name.
-        //! 
-        //! \tparam T The type of the elements in the initializer list. This must be a string type
-        //!         that can be converted to std::basic_string<CharType, Traits, Alloc>.
-        //! \param name The name of the subcommand.
-        //! \param args An initializer list containing the arguments.
-        //! \param usage A basic_usage_writer instance that will be used to format errors
-        //!        and usage help.
-        //! \returns An instance of the subcommand type, or `nullptr` if the an error occurred.
-        template<typename T>
-        std::unique_ptr<command_type> create_command(const string_type &name, std::initializer_list<T> args, usage_writer_type *usage = nullptr) const
-        {
-            return create_command(name, args.begin(), args.end(), usage);
-        }
-
-        //! \brief Creates an instance of a command based on the specified arguments.
-        //! 
-        //! If no command was specified or the command could not be found, a list of commands will
-        //! be written. If an error occurred parsing the arguments, an error message and usage help
-        //! for the command will be written.
-        //! 
-        //! \warning The passed arguments must not include the application name, but the first
-        //!          argument must be the command name.
-        //! 
-        //! \tparam Iterator The type of iterator for the arguments.
-        //! \param begin An iterator to the first argument.
-        //! \param end An iterator after the last argument.
-        //! \param usage A basic_usage_writer instance that will be used to format errors
-        //!        and usage help.
-        //! \returns An instance of the subcommand type, or `nullptr` if the an error occurred.
-        template<typename Iterator>
-        std::unique_ptr<command_type> create_command(Iterator begin, Iterator end, usage_writer_type *usage = nullptr) const
-        {
-            if (begin == end)
-            {
-                write_usage(usage);
-                return {};
-            }
-
-            auto &name = *begin;
-            return create_command(name, ++begin, end, usage);
-        }
-
-        //! \brief Creates an instance of a command based on the specified arguments.
-        //! 
-        //! If no command was specified or the command could not be found, a list of commands will
-        //! be written. If an error occurred parsing the arguments, an error message and usage help
-        //! for the command will be written.
-        //! 
-        //! \warning The passed arguments must not include the application name, but the first
-        //!          argument must be the command name.
-        //! 
-        //! \tparam Range The type of a range containing the arguments.
-        //! \param range A range containing the arguments.
-        //! \param usage A basic_usage_writer instance that will be used to format errors
-        //!        and usage help.
-        //! \returns An instance of the subcommand type, or `nullptr` if the an error occurred.
-        template<typename Range>
-        std::unique_ptr<command_type> create_command(Range range, usage_writer_type *usage = nullptr) const
-        {
-            // For ADL
-            using std::begin;
-            using std::end;
-            return create_command(begin(range), end(range), usage);
-        }
-
-        //! \brief Creates an instance of a command based on the specified arguments.
-        //! 
-        //! If no command was specified or the command could not be found, a list of commands will
-        //! be written. If an error occurred parsing the arguments, an error message and usage help
-        //! for the command will be written.
-        //! 
-        //! \warning The passed arguments must not include the application name, but the first
-        //!          argument must be the command name.
-        //! 
-        //! \tparam T The type of the elements in the initializer list. This must be a string type
-        //!         that can be converted to std::basic_string<CharType, Traits, Alloc>.
-        //! \param args An initializer list containing the arguments.
-        //! \param usage A basic_usage_writer instance that will be used to format errors
-        //!        and usage help.
-        //! \returns An instance of the subcommand type, or `nullptr` if the an error occurred.
-        template<typename T>
-        std::unique_ptr<command_type> create_command(std::initializer_list<T> args, usage_writer_type *usage = nullptr) const
-        {
-            return create_command(args.begin(), args.end(), usage);
-        }
-
         //! \brief Creates an instance of a command based on the specified arguments.
         //! 
         //! If no command was specified or the command could not be found, a list of commands will
@@ -596,7 +451,7 @@ namespace ookii
         //!          skipped. The second argument must be the command name.
         //! 
         //! \param argc The number of arguments.
-        //! \param argv The arguments..
+        //! \param argv The arguments.
         //! \param usage A basic_usage_writer instance that will be used to format errors
         //!        and usage help.
         //! \returns An instance of the subcommand type, or `nullptr` if the an error occurred.
@@ -608,160 +463,43 @@ namespace ookii
                 return {};
             }
 
-            return create_command(argv + 1, argv + argc, usage);
+            return create_command(argv[1], argc - 2, argv + 2, usage);
         }
 
-        //! \brief Creates an instance of the specified command, parsing the specified arguments,
-        //!        and runs the command.
+        //! \brief Creates an instance of a command based on the specified arguments.
         //! 
         //! If the command could not be found, a list of commands will be written. If an error
-        //! occurred parsing the arguments, an error message and usage help for the command will
-        //! be written.
+        //! occurred parsing the arguments, an error message and usage help for the command will be
+        //! written.
         //! 
-        //! \warning The passed arguments must not include the application name or the command name.
+        //! The argv array must contain only the arguments for the command; the application name
+        //! and command name are assumed to be stripped already.
         //! 
-        //! \tparam Iterator The type of iterator for the arguments.
-        //! \param name The name of the subcommand.
-        //! \param begin An iterator to the first argument.
-        //! \param end An iterator after the last argument.
+        //! \param name The name of the command.
+        //! \param argc The number of arguments.
+        //! \param argv The arguments.
         //! \param usage A basic_usage_writer instance that will be used to format errors
         //!        and usage help.
-        //! \returns The exit code of the command, or error_return_code if the command could not
-        //!          be created.
-        template<typename Iterator>
-        int run_command(const string_type &name, Iterator begin, Iterator end, usage_writer_type *usage = nullptr) const
+        //! \returns An instance of the subcommand type, or `nullptr` if the an error occurred.
+        std::unique_ptr<command_type> create_command(const string_type &name, int argc, const CharType *const argv[], usage_writer_type *usage = nullptr) const
         {
-            auto command = create_command(name, begin, end, usage);
-            if (!command)
-                return error_return_code;
+            auto info = get_command(name);
+            if (info == nullptr)
+            {
+                write_usage(usage);
+                return {};
+            }
 
-            return command->run();
+            auto builder = create_parser_builder(*info);
+            auto command = info->create(builder);
+            auto parser = builder.build();
+            if (!parser.parse(argv, argv + argc, usage))
+                return {};
+
+            return command;
         }
 
-        //! \brief Creates an instance of the specified command, parsing the specified arguments,
-        //!        and runs the command.
-        //! 
-        //! If the command could not be found, a list of commands will be written. If an error
-        //! occurred parsing the arguments, an error message and usage help for the command will
-        //! be written.
-        //! 
-        //! \warning The passed arguments must not include the application name or the command name.
-        //! 
-        //! \tparam Range The type of a range containing the arguments.
-        //! \param name The name of the subcommand.
-        //! \param range A range containing the arguments.
-        //! \param usage A basic_usage_writer instance that will be used to format errors
-        //!        and usage help.
-        //! \returns The exit code of the command, or error_return_code if the command could not
-        //!          be created.
-        template<typename Range>
-        int run_command(const string_type &name, Range range, usage_writer_type *usage = nullptr) const
-        {
-            // For ADL
-            using std::begin;
-            using std::end;
-            return run_command(name, begin(range), end(range), usage);
-        }
-
-        //! \brief Creates an instance of the specified command, parsing the specified arguments,
-        //!        and runs the command.
-        //! 
-        //! If the command could not be found, a list of commands will be written. If an error
-        //! occurred parsing the arguments, an error message and usage help for the command will
-        //! be written.
-        //! 
-        //! \warning The passed arguments must not include the application name or the command name.
-        //! 
-        //! \tparam T The type of the elements in the initializer list. This must be a string type
-        //!         that can be converted to std::basic_string<CharType, Traits, Alloc>.
-        //! \param name The name of the subcommand.
-        //! \param args An initializer list containing the arguments.
-        //! \param usage A basic_usage_writer instance that will be used to format errors
-        //!        and usage help.
-        //! \returns The exit code of the command, or error_return_code if the command could not
-        //!          be created.
-        template<typename T>
-        int run_command(const string_type &name, std::initializer_list<T> args, usage_writer_type *usage = nullptr) const
-        {
-            return run_command(name, args.begin(), args.end(), usage);
-        }
-
-        //! \brief Creates an instance of a command based onthe specified arguments, and runs the
-        //!        command.
-        //! 
-        //! If no command was specified or the command could not be found, a list of commands will
-        //! be written. If an error occurred parsing the arguments, an error message and usage help
-        //! for the command will be written.
-        //! 
-        //! \warning The passed arguments must not include the application name, but the first
-        //!          argument must be the command name.
-        //! 
-        //! \tparam Iterator The type of iterator for the arguments.
-        //! \param begin An iterator to the first argument.
-        //! \param end An iterator after the last argument.
-        //! \param usage A basic_usage_writer instance that will be used to format errors
-        //!        and usage help.
-        //! \returns The exit code of the command, or error_return_code if the command could not
-        //!          be created.
-        template<typename Iterator>
-        int run_command(Iterator begin, Iterator end, usage_writer_type *usage = nullptr) const
-        {
-            auto command = create_command(begin, end, usage);
-            if (!command)
-                return error_return_code;
-
-            return command->run();
-        }
-
-        //! \brief Creates an instance of a command based onthe specified arguments, and runs the
-        //!        command.
-        //! 
-        //! If no command was specified or the command could not be found, a list of commands will
-        //! be written. If an error occurred parsing the arguments, an error message and usage help
-        //! for the command will be written.
-        //! 
-        //! \warning The passed arguments must not include the application name, but the first
-        //!          argument must be the command name.
-        //! 
-        //! \tparam Range The type of a range containing the arguments.
-        //! \param range A range containing the arguments.
-        //! \param usage A basic_usage_writer instance that will be used to format errors
-        //!        and usage help.
-        //! \returns The exit code of the command, or error_return_code if the command could not
-        //!          be created.
-        template<typename Range>
-        int run_command(Range range, usage_writer_type *usage = nullptr) const
-        {
-            // For ADL
-            using std::begin;
-            using std::end;
-            return run_command(begin(range), end(range), usage);
-        }
-
-        //! \brief Creates an instance of a command based onthe specified arguments, and runs the
-        //!        command.
-        //! 
-        //! If no command was specified or the command could not be found, a list of commands will
-        //! be written. If an error occurred parsing the arguments, an error message and usage help
-        //! for the command will be written.
-        //! 
-        //! \warning The passed arguments must not include the application name, but the first
-        //!          argument must be the command name.
-        //! 
-        //! \tparam T The type of the elements in the initializer list. This must be a string type
-        //!         that can be converted to std::basic_string<CharType, Traits, Alloc>.
-        //! \param args An initializer list containing the arguments.
-        //! \param usage A basic_usage_writer instance that will be used to format errors
-        //!        and usage help.
-        //! \returns The exit code of the command, or error_return_code if the command could not
-        //!          be created.
-        template<typename T>
-        int run_command(std::initializer_list<T> args, usage_writer_type *usage = nullptr) const
-        {
-            return run_command(args.begin(), args.end(), usage);
-        }
-
-        //! \brief Creates an instance of a command based onthe specified arguments, and runs the
+        //! \brief Creates an instance of a command based on the specified arguments, and runs the
         //!        command.
         //! 
         //! If no command was specified or the command could not be found, a list of commands will
@@ -780,6 +518,32 @@ namespace ookii
         int run_command(int argc, const CharType *const argv[], usage_writer_type *usage = nullptr) const
         {
             auto command = create_command(argc, argv, usage);
+            if (!command)
+                return error_return_code;
+
+            return command->run();
+        }
+
+        //! \brief Creates an instance of a command based onthe specified arguments, and runs the
+        //!        command.
+        //! 
+        //! If the command could not be found, a list of commands will be written. If an error
+        //! occurred parsing the arguments, an error message and usage help for the command will be
+        //! written.
+        //! 
+        //! The argv array must contain only the arguments for the command; the application name
+        //! and command name are assumed to be stripped already.
+        //! 
+        //! \param name The name of the command.
+        //! \param argc The number of arguments.
+        //! \param argv The arguments..
+        //! \param usage A basic_usage_writer instance that will be used to format errors
+        //!        and usage help.
+        //! \returns The exit code of the command, or error_return_code if the command could not
+        //!          be created.
+        int run_command(const string_type &name, int argc, const CharType *const argv[], usage_writer_type *usage = nullptr) const
+        {
+            auto command = create_command(name, argc, argv, usage);
             if (!command)
                 return error_return_code;
 
