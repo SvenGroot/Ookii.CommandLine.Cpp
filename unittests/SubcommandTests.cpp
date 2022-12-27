@@ -2,60 +2,9 @@
 #include "framework.h"
 #include <ookii/command_line.h>
 #include "custom_types.h"
+#include "command_types.h"
 using namespace std;
 using namespace ookii;
-
-class Command1 : public basic_command<tchar_t>
-{
-public:
-    Command1(builder_type &)
-    {
-    }
-
-    int run() override
-    {
-        return 0;
-    }
-};
-
-class Command2 : public basic_command<tchar_t>
-{
-public:
-    Command2(builder_type &builder)
-    {
-        builder.add_argument(value, TEXT("Value")).required();
-    }
-
-    int run() override
-    {
-        return value;
-    }
-
-    static tstring name()
-    {
-        return TEXT("AnotherCommand");
-    }
-
-    static tstring description()
-    {
-        return TEXT("This is a very long description that probably needs to be wrapped.");
-    }
-
-    int value{};
-};
-
-class Command3 : public basic_command<tchar_t>
-{
-public:
-    Command3(builder_type &)
-    {
-    }
-
-    int run() override
-    {
-        return 0;
-    }
-};
 
 class SubcommandTests : public test::TestClass
 {
@@ -205,6 +154,20 @@ public:
         auto result = run_command(manager, { TEXT("AnotherCommand"), TEXT("--value"), TEXT("42") });
         VERIFY_NOT_NULL(result);
         VERIFY_EQUAL(42, *result);
+    }
+
+    TEST_METHOD(TestCustomParsing)
+    {
+        basic_command_manager<tchar_t> manager{TEXT("TestApp")};
+        manager.add_command<CustomParsingCommand>();
+
+        auto info = manager.get_command("CustomParsingCommand");
+        VERIFY_TRUE(info->use_custom_argument_parsing());
+
+        auto command = create_command(manager, { TEXT("CustomParsingCommand"), "Hello" });
+        VERIFY_NOT_NULL(command);
+        auto actual = static_cast<CustomParsingCommand*>(command.get());
+        VERIFY_EQUAL("Hello", actual->Value);
     }
 
     static std::optional<int> run_command(const basic_command_manager<tchar_t> &manager, std::initializer_list<const tchar_t*> args, basic_usage_writer<tchar_t> *usage = nullptr)

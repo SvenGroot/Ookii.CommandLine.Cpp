@@ -64,7 +64,7 @@ namespace ookii
     //! \tparam CharType The character type used for arguments and other strings.
     //! \tparam Traits The character traits to use for strings. Defaults to `std::char_traits<CharType>`.
     //! \tparam Alloc The allocator to use for strings. Defaults to `std::allocator<CharType>`.
-    template<typename CharType = details::default_char_type, typename Traits = std::char_traits<CharType>, typename Alloc = std::allocator<CharType>>
+    template<typename CharType, typename Traits = std::char_traits<CharType>, typename Alloc = std::allocator<CharType>>
     class basic_command
     {
     public:
@@ -95,6 +95,21 @@ namespace ookii
     //! \brief Typedef for basic_command using `wchar_t` as the character type.
     using wcommand = basic_command<wchar_t>;
 
+    template<typename CharType, typename Traits = std::char_traits<CharType>, typename Alloc = std::allocator<CharType>>
+    class basic_command_with_custom_parsing : public basic_command<CharType, Traits, Alloc>
+    {
+    public:
+        using command_manager_type = basic_command_manager<CharType, Traits, Alloc>;
+        using usage_writer_type = basic_usage_writer<CharType, Traits, Alloc>;
+
+        virtual bool parse(int argc, const CharType *const argv[], const command_manager_type &manager, usage_writer_type *usage) = 0;
+    };
+
+    //! \brief Typedef for basic_command_with_custom_parsing using `char` as the character type.
+    using command_with_custom_parsing = basic_command_with_custom_parsing<char>;
+    //! \brief Typedef for basic_command_with_custom_parsing using `wchar_t` as the character type.
+    using wcommand_with_custom_parsing = basic_command_with_custom_parsing<wchar_t>;
+
     //! \brief Provides information about a subcommand.
     //! 
     //! \tparam CharType The character type used for arguments and other strings.
@@ -106,12 +121,14 @@ namespace ookii
     public:
         //! \brief The concrete type of basic_command used.
         using command_type = basic_command<CharType, Traits, Alloc>;
+        //! \brief The concrete type of basic_command_with_custom_parsing used.
+        using command_with_custom_parsing_type = basic_command_with_custom_parsing<CharType, Traits, Alloc>;
         //! \brief The concrete type of basic_parser_builder used.
         using builder_type = typename command_type::builder_type;
         //! \brief The concrete string type used.
         using string_type = std::basic_string<CharType, Traits, Alloc>;
         //! \brief The type of a function that instantiates a subcommand.
-        using creator = std::function<std::unique_ptr<command_type>(builder_type &)>;
+        using creator = std::function<std::unique_ptr<command_type>(builder_type *)>;
 
     public:
 
@@ -119,35 +136,76 @@ namespace ookii
         //! \param name The name of the subcommand.
         //! \param description The description of the subcommand.
         //! \param creator A function that instantiates the subcommand.
-        command_info(string_type name, string_type description, creator creator)
+        //! \param use_custom_argument_parsing Indicates whether this command uses
+        //!        basic_command_with_custom_parsing as a base type.
+        command_info(string_type name, string_type description, creator creator, bool use_custom_argument_parsing = false)
             : _name{name},
               _description{description},
-              _creator{creator}
+              _creator{creator},
+              _use_custom_argument_parsing{use_custom_argument_parsing}
         {
         }
 
-        //! \brief Creates a command_info instance for the specified type.
+        //! \brief Creates a command_info instance for the specified command type.
         //! 
         //! \tparam T The type of the subcommand, which must derive from basic_command.
         //! \param name The name of the subcommand.
         //! \param description The description of the subcommand.
-        template<typename T>
+        template<typename T, std::enable_if_t<!std::is_base_of_v<command_with_custom_parsing_type, T>, int> = 0>
         static command_info create(string_type name, string_type description)
         {
-            auto creator = [](builder_type &builder) -> std::unique_ptr<command_type>
+            auto creator = [](builder_type *builder) -> std::unique_ptr<command_type>
             {
-                return std::make_unique<T>(builder);
+                return std::make_unique<T>(*builder);
             };
 
             return {name, description, creator};
         }
 
+        //! \brief Creates a command_info instance for a command type that uses custom argument
+        //!        parsing.
+        //! 
+        //! \tparam T The type of the subcommand, which must derive from basic_command.
+        //! \param name The name of the subcommand.
+        //! \param description The description of the subcommand.
+        template<typename T, std::enable_if_t<std::is_base_of_v<command_with_custom_parsing_type, T>, int> = 0>
+        static command_info create(string_type name, string_type description)
+        {
+            auto creator = [](builder_type *) -> std::unique_ptr<command_type>
+            {
+                return std::make_unique<T>();
+            };
+
+            return {name, description, creator, true};
+        }
+
         //! \brief Creates an instance of the subcommand type.
         //! 
         //! \param builder The basic_parser_builder to pass to the subcommand type's constructor.
+        //! \return An instance of the subcommand type.
         std::unique_ptr<command_type> create(builder_type &builder) const
         {
-            return _creator(builder);
+            if (_use_custom_argument_parsing)
+            {
+                return {};
+            }
+
+            return _creator(&builder);
+        }
+
+        std::unique_ptr<command_type> create_custom_parsing() const
+        {
+            if (!_use_custom_argument_parsing)
+            {
+                return {};
+            }
+
+            return _creator(nullptr);
+        }
+
+        bool use_custom_argument_parsing() const noexcept
+        {
+            return _use_custom_argument_parsing;
         }
 
         //! \brief Gets the name of the subcommand.
@@ -166,6 +224,7 @@ namespace ookii
         string_type _name;
         string_type _description;
         creator _creator;
+        bool _use_custom_argument_parsing{};
     };
 
     namespace details
@@ -227,6 +286,8 @@ namespace ookii
         using builder_type = typename info_type::builder_type;
         //! \brief The concrete type of basic_command used.
         using command_type = typename info_type::command_type;
+        //! \brief The concrete type of basic_command_with_custom_parsing used.
+        using command_with_custom_parsing_type = typename info_type::command_with_custom_parsing_type;
         //! \brief The concrete type of basic_usage_writer used.
         using usage_writer_type = basic_usage_writer<CharType, Traits, Alloc>;
         //! \brief The concrete type of output stream used.
@@ -359,9 +420,9 @@ namespace ookii
         //! \return A reference to the basic_command_manager.
         basic_command_manager &add_version_command(version_function function)
         {
-            auto creator = [function = std::move(function)](builder_type &builder) -> std::unique_ptr<command_type>
+            auto creator = [function = std::move(function)](builder_type *builder) -> std::unique_ptr<command_type>
             {
-                return std::make_unique<details::version_command<CharType, Traits, Alloc>>(builder, function);
+                return std::make_unique<details::version_command<CharType, Traits, Alloc>>(*builder, function);
             };
 
             auto name = _string_provider->automatic_version_command_name();
@@ -486,11 +547,22 @@ namespace ookii
                 return {};
             }
 
-            auto builder = create_parser_builder(*info);
-            auto command = info->create(builder);
-            auto parser = builder.build();
-            if (!parser.parse(argv, argv + argc, usage))
-                return {};
+            std::unique_ptr<command_type> command;
+            if (info->use_custom_argument_parsing())
+            {
+                command = info->create_custom_parsing();
+                auto custom_command = static_cast<command_with_custom_parsing_type*>(command.get());
+                if (!custom_command->parse(argc, argv, *this, usage))
+                    return {};
+            }
+            else
+            {
+                auto builder = create_parser_builder(*info);
+                command = info->create(builder);
+                auto parser = builder.build();
+                if (!parser.parse(argv, argv + argc, usage))
+                    return {};
+            }
 
             return command;
         }
