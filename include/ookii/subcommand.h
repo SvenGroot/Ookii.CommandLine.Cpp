@@ -308,7 +308,7 @@ namespace ookii
         //! \param locale The locale to use when converting argument values. The default is a copy
         //!        of the current global locale.
         basic_command_manager(string_type application_name, bool case_sensitive = false, const std::locale &locale = {},
-            string_provider_type *string_provider = nullptr)
+            const string_provider_type *string_provider = nullptr)
             : _commands{string_less{case_sensitive, locale}},
               _application_name{application_name},
               _locale{locale},
@@ -483,6 +483,11 @@ namespace ookii
         const localized_string_provider &string_provider() const noexcept
         {
             return *_string_provider;
+        }
+
+        bool case_sensitive() const noexcept
+        {
+            return _case_sensitive;
         }
 
         //! \brief Gets information about a subcommand by name.
@@ -700,7 +705,7 @@ namespace ookii
         string_type _common_help_argument;
         std::locale _locale;
         configure_function _configure_function;
-        string_provider_type *_string_provider;
+        const string_provider_type *_string_provider;
         bool _case_sensitive;
     };
 

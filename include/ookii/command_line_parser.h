@@ -37,7 +37,7 @@ namespace ookii
             using string_type = std::basic_string<CharType, Traits, Alloc>;
             using string_provider_type = basic_localized_string_provider<CharType, Traits, Alloc>;
 
-            parser_storage(string_type command_name, string_provider_type *string_provider)
+            parser_storage(string_type command_name, const string_provider_type *string_provider)
                 : command_name{command_name},
                   string_provider{string_provider}
             {
@@ -52,7 +52,7 @@ namespace ookii
             std::vector<string_type> prefixes;
             string_type long_prefix;
             std::locale locale;
-            string_provider_type *string_provider;
+            const string_provider_type *string_provider;
             parsing_mode mode{};
             CharType argument_value_separator{':'};
             usage_help_request show_usage_on_error{};

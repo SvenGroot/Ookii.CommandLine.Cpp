@@ -604,7 +604,7 @@ namespace ookii
         //!        is the executable name of the application.
         //! \param string_provider The basic_localized_string_provider to use for error messages and
         //!        other strings, or `nullptr` to use the default.
-        basic_parser_builder(string_type command_name, string_provider_type *string_provider = nullptr)
+        basic_parser_builder(string_type command_name, const string_provider_type *string_provider = nullptr)
             : _storage{command_name, string_provider}
         {
         }
