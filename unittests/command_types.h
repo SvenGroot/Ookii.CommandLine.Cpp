@@ -55,10 +55,10 @@ public:
 class CustomParsingCommand : public ookii::basic_command_with_custom_parsing<ookii::tchar_t>
 {
 public:
-    virtual bool parse(int argc, const ookii::tchar_t *const argv[], const command_manager_type &, usage_writer_type *) override
+    virtual bool parse(std::span<const ookii::tchar_t *const> args, const command_manager_type &, usage_writer_type *) override
     {
-        VERIFY_EQUAL(1, argc);
-        Value = argv[0];
+        VERIFY_EQUAL(1u, args.size());
+        Value = args[0];
         return true;
     }
 

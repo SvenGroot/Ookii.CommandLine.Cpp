@@ -14,13 +14,13 @@
 // do whatever we want. In this case, we create another command_manager to find and create a
 // child command.
 //
-// Although this sample doesn't do this, you can use this to nest commands more than one
-// level deep just as easily.
+// Although this sample doesn't do this, you can use this to nest commands more than one level deep
+// just as easily.
 template<typename Command>
 class parent_command : public ookii::command_with_custom_parsing
 {
 public:
-    virtual bool parse(int argc, const char *const *argv, const ookii::command_manager &manager, ookii::usage_writer *usage) override
+    virtual bool parse(std::span<const char *const> args, const ookii::command_manager &manager, ookii::usage_writer *usage) override
     {
         // Append the name of this command to the application name so child command usage is correct.
         ookii::command_manager child_manager{manager.application_name() + ' ' + Command::name(),
@@ -33,15 +33,7 @@ public:
             .description(Command::description());
 
         register_children(child_manager);
-        if (argc == 0)
-        {
-            child_manager.write_usage(usage);
-            return false;
-        }
-
-        // We must use the overload with the command name, because the one without expects the
-        // argv array to start with the executable name.
-        _child = child_manager.create_command(argv[0], argc - 1, argv + 1, usage);
+        _child = child_manager.create_command(args, usage);
         return static_cast<bool>(_child);
     }
 

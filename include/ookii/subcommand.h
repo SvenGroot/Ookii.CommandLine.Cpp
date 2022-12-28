@@ -7,6 +7,7 @@
 #pragma once
 
 #include "command_line_builder.h"
+#include <span>
 
 namespace ookii
 {
@@ -102,7 +103,7 @@ namespace ookii
         using command_manager_type = basic_command_manager<CharType, Traits, Alloc>;
         using usage_writer_type = basic_usage_writer<CharType, Traits, Alloc>;
 
-        virtual bool parse(int argc, const CharType *const argv[], const command_manager_type &manager, usage_writer_type *usage) = 0;
+        virtual bool parse(std::span<const CharType *const> args, const command_manager_type &manager, usage_writer_type *usage) = 0;
     };
 
     //! \brief Typedef for basic_command_with_custom_parsing using `char` as the character type.
@@ -525,7 +526,32 @@ namespace ookii
                 return {};
             }
 
-            return create_command(argv[1], argc - 2, argv + 2, usage);
+            std::span args{argv, static_cast<size_t>(argc)};
+            return create_command(argv[1], args.subspan(2), usage);
+        }
+
+        //! \brief Creates an instance of a command based on the specified arguments.
+        //! 
+        //! If no command was specified or the command could not be found, a list of commands will
+        //! be written. If an error occurred parsing the arguments, an error message and usage help
+        //! for the command will be written.
+        //! 
+        //! \warning The args span must not contain the application name; the first argument must
+        //!          be the command name.
+        //! 
+        //! \param args A span containing the arguments.
+        //! \param usage A basic_usage_writer instance that will be used to format errors
+        //!        and usage help.
+        //! \returns An instance of the subcommand type, or `nullptr` if the an error occurred.
+        std::unique_ptr<command_type> create_command(std::span<const CharType *const> args, usage_writer_type *usage = nullptr) const
+        {
+            if (args.size() < 1)
+            {
+                write_usage(usage);
+                return {};
+            }
+
+            return create_command(args[0], args.subspan(1), usage);
         }
 
         //! \brief Creates an instance of a command based on the specified arguments.
@@ -534,16 +560,15 @@ namespace ookii
         //! occurred parsing the arguments, an error message and usage help for the command will be
         //! written.
         //! 
-        //! The argv array must contain only the arguments for the command; the application name
+        //! The args span must contain only the arguments for the command; the application name
         //! and command name are assumed to be stripped already.
         //! 
         //! \param name The name of the command.
-        //! \param argc The number of arguments.
-        //! \param argv The arguments.
+        //! \param args A span containing the arguments for the command.
         //! \param usage A basic_usage_writer instance that will be used to format errors
         //!        and usage help.
         //! \returns An instance of the subcommand type, or `nullptr` if the an error occurred.
-        std::unique_ptr<command_type> create_command(const string_type &name, int argc, const CharType *const argv[], usage_writer_type *usage = nullptr) const
+        std::unique_ptr<command_type> create_command(const string_type &name, std::span<const CharType *const> args, usage_writer_type *usage = nullptr) const
         {
             auto info = get_command(name);
             if (info == nullptr)
@@ -557,7 +582,7 @@ namespace ookii
             {
                 command = info->create_custom_parsing();
                 auto custom_command = static_cast<command_with_custom_parsing_type*>(command.get());
-                if (!custom_command->parse(argc, argv, *this, usage))
+                if (!custom_command->parse(args, *this, usage))
                     return {};
             }
             else
@@ -565,7 +590,7 @@ namespace ookii
                 auto builder = create_parser_builder(*info);
                 command = info->create(builder);
                 auto parser = builder.build();
-                if (!parser.parse(argv, argv + argc, usage))
+                if (!parser.parse(args, usage))
                     return {};
             }
 
@@ -600,23 +625,46 @@ namespace ookii
         //! \brief Creates an instance of a command based on the specified arguments, and runs the
         //!        command.
         //! 
-        //! If the command could not be found, a list of commands will be written. If an error
-        //! occurred parsing the arguments, an error message and usage help for the command will be
-        //! written.
+        //! If no command was specified or the command could not be found, a list of commands will
+        //! be written. If an error occurred parsing the arguments, an error message and usage help
+        //! for the command will be written.
         //! 
-        //! The argv array must contain only the arguments for the command; the application name
-        //! and command name are assumed to be stripped already.
+        //! \warning The args span must not contain the application name; the first argument must
+        //!          be the command name.
         //! 
-        //! \param name The name of the command.
-        //! \param argc The number of arguments.
-        //! \param argv The arguments.
+        //! \param args A span containing the arguments.
         //! \param usage A basic_usage_writer instance that will be used to format errors
         //!        and usage help.
         //! \returns The exit code of the command, or `std::nullopt` if the command could not be
         //!          created.
-        std::optional<int> run_command(const string_type &name, int argc, const CharType *const argv[], usage_writer_type *usage = nullptr) const
+        std::optional<int> run_command(std::span<const CharType *const> args, usage_writer_type *usage = nullptr) const
         {
-            auto command = create_command(name, argc, argv, usage);
+            auto command = create_command(args, usage);
+            if (!command)
+                return {};
+
+            return command->run();
+        }
+
+        //! \brief Creates an instance of a command based on the specified arguments, and runs the
+        //!        command.
+        //! 
+        //! If the command could not be found, a list of commands will be written. If an error
+        //! occurred parsing the arguments, an error message and usage help for the command will be
+        //! written.
+        //! 
+        //! The args span must contain only the arguments for the command; the application name
+        //! and command name are assumed to be stripped already.
+        //! 
+        //! \param name The name of the command.
+        //! \param args A span containing the arguments for the command.
+        //! \param usage A basic_usage_writer instance that will be used to format errors
+        //!        and usage help.
+        //! \returns The exit code of the command, or `std::nullopt` if the command could not be
+        //!          created.
+        std::optional<int> run_command(const string_type &name, std::span<const CharType *const> args, usage_writer_type *usage = nullptr) const
+        {
+            auto command = create_command(name, args, usage);
             if (!command)
                 return {};
 
