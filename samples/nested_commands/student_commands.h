@@ -146,8 +146,35 @@ private:
     // The ID of the course.
     int _course_id;
 
+    // We use an action argument to perform custom validation.
+    //
     // [argument, required, positional]
-    // The grade achieved in the course.
+    // The grade achieved in the course. Must be between 1 and 10.
+    bool grade(float value, ookii::command_line_parser &)
+    {
+        if (value < 1 || value > 10)
+        {
+            auto support = ookii::vt::virtual_terminal_support::enable_color(ookii::standard_stream::error);
+            auto error = ookii::line_wrapping_ostream::for_cerr();
+            if (support)
+            {
+                error << ookii::vt::text_format::foreground_red;
+            }
+
+            error << "The grade must be between 1 and 10.";
+            if (support)
+            {
+                error << ookii::vt::text_format::default_format;
+            }
+
+            error << std::endl;
+            return false;
+        }
+
+        _grade = value;
+        return true;
+    }
+
     float _grade;
 };
 
