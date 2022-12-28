@@ -161,13 +161,13 @@ public:
         basic_command_manager<tchar_t> manager{TEXT("TestApp")};
         manager.add_command<CustomParsingCommand>();
 
-        auto info = manager.get_command("CustomParsingCommand");
+        auto info = manager.get_command(TEXT("CustomParsingCommand"));
         VERIFY_TRUE(info->use_custom_argument_parsing());
 
-        auto command = create_command(manager, { TEXT("CustomParsingCommand"), "Hello" });
+        auto command = create_command(manager, { TEXT("CustomParsingCommand"), TEXT("Hello") });
         VERIFY_NOT_NULL(command);
         auto actual = static_cast<CustomParsingCommand*>(command.get());
-        VERIFY_EQUAL("Hello", actual->Value);
+        VERIFY_EQUAL(TEXT("Hello"), actual->Value);
     }
 
     static std::optional<int> run_command(const basic_command_manager<tchar_t> &manager, std::initializer_list<const tchar_t*> args, basic_usage_writer<tchar_t> *usage = nullptr)
