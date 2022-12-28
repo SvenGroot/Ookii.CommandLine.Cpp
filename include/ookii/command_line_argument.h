@@ -162,6 +162,10 @@ namespace ookii
             return _storage.has_long_name;
         }
 
+        //! \brief Gets the short name if the argument has one, otherwise the long name.
+        //! \return A string representation of the short name, or the long name. The returned
+        //! `std::basic_string_view` is valid only as long as this command_line_argument_base
+        //! instance exists.
         string_view_type short_or_long_name() const
         {
             if (has_short_name())
@@ -487,7 +491,7 @@ namespace ookii
         }
 
         //! \copydoc base_type::set_switch_value()
-        set_value_result set_switch_value(parser_type &) override
+        set_value_result set_switch_value([[maybe_unused]] parser_type &parser) override
         {
             return set_switch_value_core();
         }
@@ -630,7 +634,7 @@ namespace ookii
         }
 
         //! \copydoc base_type::set_switch_value()
-        set_value_result set_switch_value(parser_type &) override
+        set_value_result set_switch_value([[maybe_unused]] parser_type &parser) override
         {
             return set_switch_value_core();
         }

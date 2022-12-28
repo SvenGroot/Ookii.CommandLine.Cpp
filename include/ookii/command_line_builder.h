@@ -170,7 +170,7 @@ namespace ookii
                 return _parser_builder.add_version_argument(function);
             }
 
-#ifdef _WIN32
+#if defined(_WIN32) || defined(DOXYGEN)
             //! \copydoc basic_parser_builder::add_win32_version_argument()
             action_argument_builder<bool> &add_win32_version_argument()
             {
@@ -284,13 +284,13 @@ namespace ookii
                 return *static_cast<BuilderType*>(this);
             }
 
-            //! \copydoc argument_builder_base::name()
+            //! \copydoc ookii::basic_parser_builder::argument_builder_base::name()
             const string_type &name() const noexcept
             {
                 return argument_builder_base::name();
             }
 
-            //! \copydoc argument_builder_base::short_name()
+            //! \copydoc ookii::basic_parser_builder::argument_builder_base::short_name()
             const CharType &short_name() const noexcept
             {
                 return argument_builder_base::short_name();
@@ -580,7 +580,7 @@ namespace ookii
             {
             }
 
-            //! \copydoc typed_argument_builder::converter()
+            //! \copydoc ookii::basic_parser_builder::typed_argument_builder::converter()
             action_argument_builder &converter(converter_type converter)
             {
                 this->_typed_storage.converter = converter;
@@ -800,9 +800,12 @@ namespace ookii
             return argument;
         }
 
-#ifdef _WIN32
+#if defined(_WIN32) || defined(DOXYGEN)
         //! \brief Adds the standard version argument, using version information from the
-        //! VERSION_INFO resource.
+        //! [VERSIONINFO](https://learn.microsoft.com/windows/win32/menurc/versioninfo-resource)
+        //! resource.
+        //!
+        //! \warning This function is only available when compiling for Windows.
         //!
         //! This method adds an argument with the default name "Version", which when supplied will
         //! read the VERSION_INFO resource of the current executable, and print the product name,

@@ -1,3 +1,5 @@
+//! \file linux_helper.h
+//! \brief Provides platform-specific functionality for Linux and other POSIX-like platforms.
 #ifndef OOKII_LINUX_HELPER_H_
 #define OOKII_LINUX_HELPER_H_
 

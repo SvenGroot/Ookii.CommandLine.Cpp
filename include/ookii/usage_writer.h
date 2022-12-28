@@ -209,8 +209,16 @@ namespace ookii
         //! This value has no effect if the output stream is not using a line_wrapping_streambuf.
         size_t argument_description_indent{defaults::argument_description_indent};
 
+        //! \brief A value that indicates which arguments should be included in the list of argument
+        //! descriptions.
+        //!
+        //! The default value is description_list_filter_mode::information.
         description_list_filter_mode argument_description_list_filter{};
 
+        //! \brief A value that indicates the order of the arguments in the list of argument
+        //! descriptions.
+        //!
+        //! The default value is description_list_sort_mode::usage_order.
         description_list_sort_mode argument_description_list_order{};
 
         //! \brief Indicates whether to use white space as the argument name separator in the usage
@@ -1189,6 +1197,10 @@ namespace ookii
             }
         }
 
+        //! \brief Iterates over the arguments in the order set by the 
+        //! argument_description_list_order field, including only the arguments selected by the
+        //! argument_description_list_filter field.
+        //! \param f A function to invoke for each argument.
         template<typename Func>
         void for_each_argument_in_description_order(Func f) const
         {

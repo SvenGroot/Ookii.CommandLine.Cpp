@@ -1,3 +1,5 @@
+//! \file scope_helper.h
+//! \brief Provides RAII types.
 #ifndef OOKII_SCOPE_HELPER_H_
 #define OOKII_SCOPE_HELPER_H_
 

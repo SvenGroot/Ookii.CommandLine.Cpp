@@ -1,3 +1,5 @@
+//! \file vt_helper.h
+//! \brief Provides types for using virtual terminal sequences with console output.
 #ifndef OOKII_VT_HELPER_H_
 #define OOKII_VT_HELPER_H_
 

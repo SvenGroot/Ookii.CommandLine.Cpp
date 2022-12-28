@@ -1,3 +1,5 @@
+//! \file localized_string_provider.h
+//! \brief Provides the ookii::basic_localized_string_provider class.
 #ifndef OOKII_LOCALIZED_STRING_PROVIDER_H_
 #define OOKII_LOCALIZED_STRING_PROVIDER_H_
 

@@ -12,6 +12,9 @@
 namespace ookii
 {
     //! \brief Abstract base class for all subcommands.
+    //! \tparam CharType The character type used for arguments and other strings.
+    //! \tparam Traits The character traits to use for strings. Defaults to `std::char_traits<CharType>`.
+    //! \tparam Alloc The allocator to use for strings. Defaults to `std::allocator<CharType>`.
     //! 
     //! When you implement a subcommand, you must derive from the basic_command class, and
     //! implement the run() method.
@@ -57,14 +60,10 @@ namespace ookii
     //! 
     //! Several typedefs for common character types are provided:
     //! 
-    //! Type                    | Definition
-    //! ----------------------- | -------------------------------------
+    //! Type              | Definition
+    //! ----------------- | -------------------------------
     //! `ookii::command`  | `ookii::basic_command<char>`
     //! `ookii::wcommand` | `ookii::basic_command<wchar_t>`
-    //! 
-    //! \tparam CharType The character type used for arguments and other strings.
-    //! \tparam Traits The character traits to use for strings. Defaults to `std::char_traits<CharType>`.
-    //! \tparam Alloc The allocator to use for strings. Defaults to `std::allocator<CharType>`.
     template<typename CharType, typename Traits = std::char_traits<CharType>, typename Alloc = std::allocator<CharType>>
     class basic_command
     {
@@ -96,13 +95,36 @@ namespace ookii
     //! \brief Typedef for basic_command using `wchar_t` as the character type.
     using wcommand = basic_command<wchar_t>;
 
+    //! \brief Abstract base class for subcommands that do their own argument parsing.
+    //! \tparam CharType The character type used for arguments and other strings.
+    //! \tparam Traits The character traits to use for strings. Defaults to `std::char_traits<CharType>`.
+    //! \tparam Alloc The allocator to use for strings. Defaults to `std::allocator<CharType>`.
+    //!
+    //! Unlike commands that derive directly from the basic_command class, commands that derive from
+    //! the basic_command_with_custom_parsing class are not created with the
+    //! basic_command_line_parser class. Instead, they must have a public constructor with no
+    //! parameters, and must parse the arguments manually by implementing the parse() method.
+    //!
+    //! Several typedefs for common character types are provided:
+    //! 
+    //! Type                                  | Definition
+    //! ------------------------------------- | ---------------------------------------------------
+    //! `ookii::command_with_custom_parsing`  | `ookii::basic_command_with_custom_parsing<char>`
+    //! `ookii::wcommand_with_custom_parsing` | `ookii::basic_command_with_custom_parsing<wchar_t>`
     template<typename CharType, typename Traits = std::char_traits<CharType>, typename Alloc = std::allocator<CharType>>
     class basic_command_with_custom_parsing : public basic_command<CharType, Traits, Alloc>
     {
     public:
+        //! \brief The concrete type of basic_command_manager used.
         using command_manager_type = basic_command_manager<CharType, Traits, Alloc>;
+        //! \brief The concrete type of basic_usage_writer used.
         using usage_writer_type = basic_usage_writer<CharType, Traits, Alloc>;
 
+        //! \brief Parses the arguments for the command.
+        //! \param args A span containing the arguments for the command.
+        //! \param manager The command manager this command was created with.
+        //! \param usage The usage writer that was passed to basic_command_manager::create_command().
+        //! \return `true` if parsing was successful; otherwise, `false`.
         virtual bool parse(std::span<const CharType *const> args, const command_manager_type &manager, usage_writer_type *usage) = 0;
     };
 
@@ -184,6 +206,8 @@ namespace ookii
         //! 
         //! \param builder The basic_parser_builder to pass to the subcommand type's constructor.
         //! \return An instance of the subcommand type.
+        //!
+        //! This function returns `nullptr` if this command uses custom argument parsing.
         std::unique_ptr<command_type> create(builder_type &builder) const
         {
             if (_use_custom_argument_parsing)
@@ -194,6 +218,12 @@ namespace ookii
             return _creator(&builder);
         }
 
+        //! \brief Creates an instance of the subcommand type for commands that use custom argument
+        //! parsing.
+        //! \return An instance of the subcommand type. This can safely be cast to
+        //! the basic_command_with_custom_parsing class.
+        //!
+        //! This function returns `nullptr` if this command does not use custom argument parsing.
         std::unique_ptr<command_type> create_custom_parsing() const
         {
             if (!_use_custom_argument_parsing)
@@ -204,6 +234,9 @@ namespace ookii
             return _creator(nullptr);
         }
 
+        //! \brief Gets a value that indicates whether the command uses custom argument parsing.
+        //! \return `true` if the command type derives from the basic_command_with_custom_parsing
+        //! class; otherwise, `false`.
         bool use_custom_argument_parsing() const noexcept
         {
             return _use_custom_argument_parsing;
@@ -308,6 +341,10 @@ namespace ookii
         //!        sensitive. The default is false.
         //! \param locale The locale to use when converting argument values. The default is a copy
         //!        of the current global locale.
+        //! \param string_provider A pointer to an implementation of the
+        //!        basic_localized_string_provider class that will be used to get strings for error
+        //!        messages etc., or `nullptr` to use the default string provider. If not `nullptr`,
+        //!        this pointer must remain valid as long as the basic_command_manager exists.
         basic_command_manager(string_type application_name, bool case_sensitive = false, const std::locale &locale = {},
             const string_provider_type *string_provider = nullptr)
             : _commands{string_less{case_sensitive, locale}},
@@ -435,9 +472,12 @@ namespace ookii
             return *this;
         }
 
-#ifdef _WIN32
-        //! \brief Adds the standard version command, using version information from the
-        //! VERSION_INFO resource.
+#if defined(_WIN32) || defined(DOXYGEN)
+        //! \brief Adds the standard version argument, using version information from the
+        //! [VERSIONINFO](https://learn.microsoft.com/windows/win32/menurc/versioninfo-resource)
+        //! resource.
+        //!
+        //! \warning This function is only available when compiling for Windows.
         //!
         //! This method adds a command with the default name "version", which when invoked will
         //! read the VERSION_INFO resource of the current executable, and print the product name,
@@ -481,11 +521,19 @@ namespace ookii
             return _locale;
         }
 
-        const localized_string_provider &string_provider() const noexcept
+        //! \brief Gets the basic_localized_string_provider implementation used to get strings for
+        //! error messages etc.
+        //! \return An instance of a class derived from the basic_localized_string_provider class.
+        const string_provider_type &string_provider() const noexcept
         {
             return *_string_provider;
         }
 
+        //! \brief Gets a value that indicates whether command names are case sensitive.
+        //! \return `true` if command names are case sensitive; otherwise, `false`.
+        //!
+        //! If command names are case sensitive, argument names for the commands are too unless this
+        //! is overridden by the command.
         bool case_sensitive() const noexcept
         {
             return _case_sensitive;

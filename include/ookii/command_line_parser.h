@@ -8,7 +8,6 @@
 
 #pragma once
 
-#include <iterator>
 #include <map>
 #include <filesystem>
 #include "command_line_argument.h"
@@ -320,6 +319,14 @@ namespace ookii
             return _storage.locale;
         }
 
+        //! \brief Gets the basic_localized_string_provider implementation used to get strings for
+        //! error messages etc.
+        //! \return An instance of a class derived from the basic_localized_string_provider class.
+        const string_provider_type &string_provider() const noexcept
+        {
+            return *_storage.string_provider;
+        }
+
         //! \brief Sets a value that indicates help should be shown if parse() returns a
         //! parse_result with parse_error::parsing_cancelled.
         //! \param help_requested The new value.
@@ -332,7 +339,7 @@ namespace ookii
         //! parse_result with parse_error::parsing_cancelled.
         //!
         //! After calling parse(), if the result was parse_error::none, this method always returns
-        //! `false`. If the result was an error other than parse_error::parsing_cancelled`, it
+        //! `false`. If the result was an error other than parse_error::parsing_cancelled, it
         //! always returns `true`.
         //!
         //! Arguments cancelled using basic_parser_builder::argument_builder_common::cancel_parsing()
@@ -359,16 +366,24 @@ namespace ookii
             };
         }
 
+        //! \brief Gets the total number of arguments.
         size_t argument_count() const
         {
             return _arguments.size();
         }
 
+        //! \brief Gets the comparer used for argument names.
+        //!
+        //! If the mode() method returns parsing_mode::long_short, this is the argument comparer
+        //! for short names.
         auto argument_comparer() const
         {
             return _arguments_by_name.key_comp();
         }
 
+        //! \brief Gets the comparer used for short argument names.
+        //!
+        //! If the mode() method does not return parsing_mode::long_short, this will never be used.
         auto short_argument_comparer() const
         {
             return _arguments_by_short_name.key_comp();

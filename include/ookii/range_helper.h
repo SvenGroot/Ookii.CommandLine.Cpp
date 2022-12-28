@@ -1,3 +1,5 @@
+//! \file range_helper.h
+//! \brief Provides helpers for working with iterator ranges.
 #ifndef OOKII_RANGE_HELPER_H_
 #define OOKII_RANGE_HELPER_H_
 
@@ -7,6 +9,8 @@
 
 namespace ookii::details
 {
+    // This is similar to a combination of the filter and transform views in C++20, but those are
+    // not used because they don't work in clang.
     template<typename T, typename IteratorType>
     class range_filter
     {

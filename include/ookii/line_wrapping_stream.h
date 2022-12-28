@@ -5,7 +5,6 @@
 
 #include <cassert>
 #include <vector>
-#include "console_helper.h"
 #include "vt_helper.h"
 
 namespace ookii

@@ -1,3 +1,5 @@
+//! \file win32_helper.h
+//! \brief Provides platform-specific functionality for Windows.
 #ifndef OOKII_WIN32_HELPER_H_
 #define OOKII_WIN32_HELPER_H_
 
