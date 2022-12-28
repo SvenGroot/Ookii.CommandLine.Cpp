@@ -7,7 +7,7 @@
 #include <nlohmann/json.hpp>
 #include <fstream>
 
-// This is a base class that adds am argument and some functionality that is common to all the
+// This is a base class that adds an argument and some functionality that is common to all the
 // commands in this application.
 // Although we won't call the generated register_commands() function, we must still use [no_register],
 // because this class is abstract, and would therefore cause compile errors if that function tried

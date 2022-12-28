@@ -5,12 +5,7 @@
 
 #include <ookii/command_line.h>
 
-// This is a sample command that can be invoked by specifying "write" as the first argument to the
-// sample application.
-// 
-// The command's name is given as a value to the [command] attribute, and the description is
-// taken from the remainder of the comment. If omitted, they can also be defined using static
-// methods same as in the regular command sample.
+// See read_command.h for more information.
 // 
 // [command: write]
 // Writes lines to a file, wrapping them to the specified width.

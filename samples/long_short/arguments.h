@@ -1,10 +1,3 @@
-// This file contains the arguments used by this sample. It's passed to the New-Parser.ps1 script
-// as part of the build in CMakeLists.txt, which looks for the attributes in square brackets, and
-// generates an implementation of the parse() method that builds a parser and parses the arguments.
-// The generated source file is then included in the compilation.
-//
-// See https://github.com/SvenGroot/Ookii.CommandLine.cpp/blob/main/docs/Scripts.md for information
-// on how to use these scripts and attributes are available. 
 #ifndef ARGUMENTS_H_
 #define ARGUMENTS_H_
 
@@ -12,7 +5,7 @@
 
 #include <ookii/command_line_generated.h>
 
-// This struct defines the arguments for the sample. It uses the same arguments as the Parser
+// This struct defines the arguments for the sample. It uses the same arguments as the parser
 // sample, so see that sample for more detailed descriptions.
 //
 // This sample uses the alternate long/short parsing mode, transforms argument names to dash-case,
@@ -58,8 +51,8 @@ struct arguments
 
     // This argument's long name is "--verbose", with the short name "-v".
     //
-    // Instead of the alias used in the Parser samples, this argument now has a short name. Note
-    // that you can still use aliases in LongShort mode. Long name aliases are given with the
+    // Instead of the alias used in the parser sample, this argument now has a short name. Note
+    // that you can still use aliases in long/short mode. Long name aliases are given with the
     // [alias] attribute, and short name aliases with the [short_alias] attribute.
     // 
     // [argument, short_name]
@@ -69,6 +62,7 @@ struct arguments
     // Another switch argument, called "--process" with the short name "-v". Switch arguments with
     // short names can be combined; for example, "-vp" sets both the verbose and process switch
     // (this only works for switch arguments).
+    //
     // [argument, short_name]
     // Does the processing.
     bool process;
@@ -83,18 +77,6 @@ struct arguments
     // This is an example of a multi-value argument, which can be repeated multiple times to set
     // more than one value.
     std::vector<std::string> values;
-
-    // This field defines a switch argument named "Help", with the short name "?" and the short
-    // alias "h".
-    // 
-    // For this argument, the cancel_parsing attribute is used, which means that command line
-    // processing is stopped when this argument is supplied. That way, we can print usage
-    // regardless of what other arguments are present.
-    // 
-    // [argument, cancel_parsing, short_name: ?]
-    // [short_alias: h]
-    // Displays this help message.
-    bool help;
 
     OOKII_DECLARE_PARSE_METHOD(arguments);
 };

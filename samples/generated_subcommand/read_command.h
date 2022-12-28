@@ -5,14 +5,16 @@
 
 #include <ookii/command_line.h>
 
-// This is a sample command that can be invoked by specifying "read" as the first argument to the
-// sample application.
-// 
+// Subcommands are defined by a class that is preceded by the [command] attribute.
+//
 // The command's name is given as a value to the [command] attribute, and the description is
 // taken from the remainder of the comment. If omitted, they can also be defined using static
 // methods same as in the regular command sample.
-// 
-// 
+//
+// The command class can use the same attributes as an [arguments] struct, but these will then
+// only apply to this specific command. Use the [global] block (see global.h) or a common base
+// class for options that apply to all commands.
+//
 // [command: read]
 // Reads and displays data from a file, optionally limiting the number of lines.
 class read_command : public ookii::command

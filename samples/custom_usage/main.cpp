@@ -1,8 +1,3 @@
-// This sample shows how to customize the usage help. It uses the New-Parser.ps1 script to create
-// the arguments parser.
-//
-// After running the build, you can find the file generated/custom_usage_generated.cpp in the CMake build
-// output, if you want to see what the generated code looks like.
 #include <iostream>
 #include <chrono>
 #include <filesystem>

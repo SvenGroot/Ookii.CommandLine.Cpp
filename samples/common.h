@@ -1,3 +1,4 @@
+// Helper functions used by several samples.
 #ifndef OOKII_SAMPLE_COMMON_H_
 #define OOKII_SAMPLE_COMMON_H_
 
