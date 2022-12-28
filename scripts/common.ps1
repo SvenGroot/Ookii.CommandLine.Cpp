@@ -465,10 +465,14 @@ class CommandInfo {
 
         $Context.FieldPrefix = "this->"
         $result += "{"
-        $result += "    builder"
-        $result += $this.GenerateParserAttributes($Context)
-        $result += $this.GenerateArguments($Context)
-        $result[-1] += ";"
+        $builder = $this.GenerateParserAttributes($Context)
+        $builder += $this.GenerateArguments($Context)
+        if ($builder.Length -gt 0) {
+            $result += "    builder"
+            $result += $builder
+            $result[-1] += ";"
+        }
+
         $result += "}"
         $result += ""
         $result += ""

@@ -76,6 +76,7 @@ if (OOKIICL_SAMPLES)
         add_subdirectory("samples/generated_subcommand")
         add_subdirectory("samples/long_short")
         add_subdirectory("samples/custom_usage")
+        add_subdirectory("samples/nested_commands")
     endif()
 endif()
 

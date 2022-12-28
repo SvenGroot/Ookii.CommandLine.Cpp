@@ -1,4 +1,4 @@
-// This header file isn't included anywhere, because it doesn't contain any code. It just conains
+// This header file isn't included anywhere, because it doesn't contain any code. It just contains
 // global settings for the New-Subcommand.ps1 script. These settings will be applied to the
 // command_manager. These don't have to be in a separate header, but I did that here because they
 // don't belong to either read_command.h or write_command.h.
