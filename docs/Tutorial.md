@@ -129,7 +129,9 @@ int main(int argc, char *argv[])
 ```
 
 This code parses the arguments we defined, returns an error code if it was unsuccessful, and writes
-the contents of the file specified by the path argument to the console.
+the contents of the file specified by the path argument to the console. Note that error handling
+was omitted for simplicity, which because of how C++ file streams work means that it will silently
+fail if you e.g. specify a path that doesn't exist.
 
 So, let's build and run our application. For CMake, run the following from inside the "tutorial"
 directory.
@@ -1113,7 +1115,58 @@ Sometimes, you'll want some arguments to be available to all commands. With Ooki
 way to do this is to make a common base class.
 
 For example, if we wanted to make a common base class to share the `--path` argument between the
-`read` and `write` commands, we could do so like this:
+`read` and `write` commands, we could do so like this (without code generation):
+
+```c++
+class base_command : public ookii::command
+{
+public:
+    base_command(ookii::parser_builder &builder)
+    {
+        builder
+            .add_argument(_path, "path").required().positional()
+                .description("The path of the file.");
+    }
+
+protected:
+    std::string _path;
+};
+
+class read_command : public base_command
+{
+public:
+    read_command(ookii::parser_builder &builder)
+        : base_command{builder}
+    {
+        builder
+            .add_argument(_max_lines, "max-lines").alias("max").short_name()
+                .default_value(50).value_description("number")
+                .description("The maximum number of lines to output.")
+            .add_argument(_inverted, "inverted").short_name()
+                .description("Use black text on a white background.");
+    }
+
+    int run() override;
+
+private:
+    int _max_lines{};
+    bool _inverted{};
+};
+```
+
+The `write_command` changes would be identical; just change the base class, remove the `_path`
+field, and call the base class constructor.
+
+Now both commands share the `--path` argument defined in the base class, in addition to the
+arguments they define themselves. Note that `base_command` is not itself a valid command, because
+it's an abstract class (the `run()` method is still pure virtual), so trying to add it to the
+`command_manager` would cause compilation errors.
+
+If you apply other options to the `parser_builder` in the base class constructor, this is another
+way to share them between commands without having to use the `configure_parser()` method, a
+`[global]` block when using code generation.
+
+If using the code generation script, the common base class would look like this:
 
 ```c++
 // [command, no_register]
@@ -1124,7 +1177,7 @@ public:
 
 protected:
     // [argument, required, positional]
-    // The path of the file to read or write.
+    // The path of the file.
     std::string _path;
 };
 
@@ -1132,7 +1185,7 @@ protected:
 // Reads a file and displays the contents on the command line.
 class read_command : public base_command
 {
-    /* Remove the _path field, leave everything else */
+    /* Remove the _path field, leave everything else as is */
 }
 
 // [command: write]
@@ -1143,23 +1196,16 @@ class write_command : public base_command
 }
 ```
 
-Now both commands share the `--path` argument defined in the base class, in addition to the
-arguments they define themselves. Note that `base_command` is not itself a valid command, because
-it's an abstract class (the `run()` method is still pure virtual), so trying to add it to the
-`command_manager` would cause compilation errors. The `[no_register]` attribute tells the code
-generation script not to register that class.
+Because the base_command class cannot be used with the `command_manager` (and we don't want it to),
+the `[no_register]` attribute was added. It tells the code generation script not to register that
+class.
 
-You can also do this without the code generation script, of course; you just have to make sure to
-call your base class constructor from the constructor of `read_command` and `write_command`, which
-the code generation script does for you.
+In this case, you do not need to change anything about the constructors of the derived classes,
+because the code generation script will automatically call the base class constructor.
 
 > The code generation script always calls the base class constructor; for this reason,
 > `ookii::command` also has a constructor that takes a `parser_builder`, but it's empty so there's
 > no need to call it when not using the script.
-
-If you apply other options to the `parser_builder` in the base class constructor, this is another
-way to share them between commands without having to use a `[global]` block or the
-`configure_parser()` method.
 
 ## More information
 
