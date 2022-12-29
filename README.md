@@ -231,7 +231,7 @@ This will add a library called `Ookii.CommandLine::OOKIICL`, which you can use w
 You can also use FetchContent to easily incorporate Ookii.CommandLine:
 
 ```cmake
-cmake_minimum_required(3.15)
+cmake_minimum_required(VERSION 3.15)
 
 include(FetchContent)
 
@@ -240,7 +240,7 @@ set(CMAKE_CXX_STANDARD 20)
 
 FetchContent_Declare(OOKIICL
     GIT_REPOSITORY "https:://github.com/SvenGroot/Ookii.CommandLine.Cpp"
-    GIT_TAG "v1.0")
+    GIT_TAG "v2.0")
 
 FetchContent_MakeAvailable(OOKIICL)
 
@@ -291,6 +291,7 @@ Macro                       | Description
 
 Please check out the following to get started:
 
+- [Tutorial: getting started with Ookii.CommandLine for C++](docs/Tutorial.md)
 - [Documentation](docs/Documentation.md)
 - [Header file documentation](https://www.ookii.org/Link/CommandLineCppDoc)
 - [Sample applications](samples)
