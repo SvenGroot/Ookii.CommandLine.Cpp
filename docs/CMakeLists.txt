@@ -4,6 +4,7 @@ cmake_minimum_required (VERSION 3.15)
 find_package(Doxygen)
 
 if (DOXYGEN_FOUND)
+    set(DOXYGEN_GENERATE_TAGFILE "${CMAKE_CURRENT_BINARY_DIR}/Ookii.CommandLine.Cpp.tag")
     set(DOXYGEN_MACRO_EXPANSION YES)
     set(DOXYGEN_STRIP_FROM_INC_PATH "../include/")
     set(DOXYGEN_BUILTIN_STL_SUPPORT YES)

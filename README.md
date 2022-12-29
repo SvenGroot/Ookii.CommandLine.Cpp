@@ -1,41 +1,42 @@
 # Ookii.CommandLine for C++ [![NuGet](https://img.shields.io/nuget/v/Ookii.CommandLine.Cpp)](https://www.nuget.org/packages/Ookii.CommandLine.Cpp/)
 
-Ookii.CommandLine for C++ is a header-only library that enables comprehensive command line argument
-parsing for C++ applications. It allows you to easily define strongly-typed required, optional, positional and
-named arguments, parse the command line, and generate usage help which can be shown to the user. It
-is cross-platform and has been tested with several compilers (see [requirements](#requirements)).
+Ookii.CommandLine for C++ is a powerful and flexible command line argument parsing library for C++
+applications.
 
-Ookii.CommandLine for C++ is a port of [Ookii.CommandLine for .Net](https://github.com/SvenGroot/ookii.commandline),
+- Easily define strongly-typed arguments, with a simple builder API or using code-generation.
+- Create applications with multiple subcommands.
+- Generate fully customizable usage help.
+- Supports PowerShell-like and POSIX-like parsing rules.
+- Header-only library.
+
+Ookii.CommandLine for C++ is a port of [Ookii.CommandLine for .Net](https://github.com/SvenGroot/Ookii.Commandline),
 providing the same argument parsing semantics, but using an API that is suitable for C++. It has
-feature parity with Ookii.CommandLine for .Net 2.4, with the exception of dictionary arguments.
+feature parity with Ookii.CommandLine 2.4 for .Net, with the exception of dictionary argument,
+and some features from Ookii.CommandLine 3.0 for .Net.
 
 ## Overview
 
-Ookii.CommandLine is a library that helps you to parse command line arguments for your applications.
-It allows you to easily define a set of accepted arguments and their types, and then parse the command line supplied
-to your application for those arguments, converting the value of those arguments from a string to
-their specified type. In addition, it allows you to generate usage help from the arguments that you
-defined, which you can display to the user.
+Ookii.CommandLine is a library that lets you parse the command line arguments for your application
+into a set of strongly-typed, named values. You can easily define the accepted arguments, and then
+parse the command line supplied to your application for those arguments. In addition, you can
+generate usage help that can be displayed to the user.
 
-Ookii.CommandLine can be used with any kind of C++ application, whether console or GUI. Although a
-limited subset of functionality—particularly related around generating usage help text—is geared
-primarily towards console applications that are invoked from the command line, the main command line
-parsing functionality is usable in any application that needs to process command line arguments.
+Ookii.CommandLine can be used with any kind of .Net application, whether console or GUI. Some
+functions, such as creating usage help, are primarily designed for console applications, but even
+those can be easily adapted for use with other styles of applications.
 
-To define a set of command line arguments, first you create variables that will hold their values.
-Then, you use the `ookii::parser_builder` class to construct an `ookii::command_line_parser` to parse
-those arguments, specifying things such as the argument names, whether or not an argument is
-required, and descriptions used to customize the usage help, among other options.
+Two styles of [command line parsing rules](docs/Arguments.md) are supported: the default mode uses
+rules similar to those used by PowerShell, and the alternative [long/short mode](docs/Arguments.md#longshort-mode)
+uses a style influenced by POSIX conventions, where arguments have separate long and short names
+with different prefixes. Many aspects of the parsing rules are configurable.
 
-Command line parsing is done in a way that is similar to that used by PowerShell. Each argument has
-a name, and can be supplied by name on the command line. An argument can also be positional, in
-which case it can be supplied without the name. Arguments can be required or optional, and there is
-support for switch arguments (which don't need a value but are either present or not) and arguments
-with multiple values. Various aspects of the parsing, such as the argument name prefix (typically a
-`-` or a `/`), can be customized.
+To determine which arguments are accepted, first you create variables that will hold their values.
+Then, you use the `ookii::parser_builder` class to specify things such as the argument names,
+whether or not an argument is required, and descriptions used to customize the usage help, among
+other options. This creates an an `ookii::command_line_parser`, which can parse those arguments.
 
 For example, the following code defines four arguments: a required positional argument, an optional
-positional argument, a named argument, and a switch argument:
+positional argument, a named-only argument, and a switch argument (sometimes also called a flag):
 
 ```c++
 std::string required_argument;
@@ -43,57 +44,104 @@ int optional_argument;
 float named_argument;
 bool switch_argument;
 
-// argv[0] is used for the application name.
-auto parser = ookii::parser_builder{argv[0]}
+// argv[0] is used for the application executable name.
+auto name = ookii::command_line_parser::get_executable_name(argc, argv);
+auto parser = ookii::parser_builder{name}
     .add_argument(required_argument, "Required").required().positional()
+        .description("A required positional argument.")
     .add_argument(optional_argument, "Optional").positional()
+        .description("An optional positional argument.")
     .add_argument(named_argument, "Named")
+        .description("An argument that can only supplied by name.")
     .add_argument(switch_argument, "Switch")
+        .description("A switch argument, which doesn't require a value.")
     .build();
 ```
 
-The application using these arguments would have the following usage syntax (this kind of usage help
-can be generated by Ookii.CommandLine, and can be customized to include argument descriptions):
+Each argument has a different type that determines the kinds of values it can accept.
 
-```text
-Usage: MyApplication.exe [-Required] <string> [[-Optional] <int>] [-Named <float>] [-Switch]
+To parse these arguments, all you have to do is call the following on the generated parser.
+
+```c++
+ookii::parse_result result = parser.parse(argc, argv, {});
 ```
 
-An example invocation of this application, specifying all the arguments, would look like this:
+This code will parse the arguments in the `argv` array, will handle and print errors to the console,
+and will print usage help if needed. It returns an `ookii::parse_result` that indicates if the
+operation was successful (it can be converted to `bool` for this purpose).
+
+If the arguments are invalid, or help is requested, this application will print the following usage
+help:
 
 ```text
-./MyApplication foo 42 -Switch -Named 5.6
+Usage: sample_app [-Required] <string> [[-Optional] <int>] [-Help] [-Named <float>]
+   [-Switch] [-Version]
+
+    -Required <string>
+        A required positional argument.
+
+    -Optional <int>
+        An optional positional argument.
+
+    -Help [<bool>] (-?, -h)
+        Displays this help message.
+
+    -Named <float>
+        An argument that can only supplied by name.
+
+    -Switch [<bool>]
+        A switch argument, which doesn't require a value.
 ```
 
-Ookii.CommandLine also provides [scripts](docs/Scripts.md) that can generate the above code using a
-specially annotated struct or class. For example, the below generates the same arguments as above:
+The [usage help](docs/UsageHelp.md) includes the descriptions given for the arguments.
+
+See the [documentation for the samples](samples) for more examples of usage help generated by
+Ookii.CommandLine. The usage help format can also be [fully customized](samples/custom_usage).
+
+The application also has one argument that wasn't explicitly defined, `-Help`, which is
+automatically added by default. You can also easily add a default `-Version` argument. 
+
+An example invocation of this application, specifying all the arguments, would look like this
+(argument names are case insensitive by default):
+
+```text
+./MyApplication foo 42 -switch -named 5.6
+```
+
+Ookii.CommandLine also provides [code generation scripts](docs/Scripts.md) that can generate the
+above code using a specially annotated struct or class. For example, the below generates the same
+arguments as above:
 
 ```c++
 // [arguments]
+// [name_transform: PascalCase]
 struct arguments
 {
     // [argument, required, positional]
+    // A required positional argument.
     std::string required;
     // [argument, positional]
+    // An optional positional argument.
     int optional;
     // [argument]
+    // An argument that can only supplied by name.
     float named;
     // [argument: Switch]
+    // A switch argument, which doesn't require a value.
     bool switch_argument;
 
     OOKII_DECLARE_PARSE_METHOD(arguments);
 };
 ```
 
-In addition, Ookii.CommandLine can be used to create command line utilities that have multiple
-subcommands, each with their own arguments (these are called [shell commands](Documentation/ShellCommands.md)
-in Ookii.CommandLine).
+In addition, Ookii.CommandLine can be used to create applications that have [multiple subcommands](docs/Subcommands.md),
+each with their own arguments.
 
 ## Requirements
 
 Ookii.CommandLine for C++ requires the following:
 
-- A compiler supporting C++20 (tested with Visual C++ 2022, g++ 11, and Clang 14).
+- A compiler supporting C++20 (tested with Visual C++ 2022, g++ 11, and Clang 14 and 15).
 - A standard C++ library supporting the \<format> header, or;
   - [libfmt](https://github.com/fmtlib/fmt) if \<format> is not available.
 - [`line_wrapping_ostream`](docs/LineWrappingStream.md), used to generate usage help, relies on
@@ -123,9 +171,9 @@ This gets you all the core functionality, including subcommands.
 Building the tests and samples requires the following:
 
 - CMake 3.15 or later.
-- (optional) [PowerShell Core or PowerShell 6](https://github.com/powershell/powershell) or later
-  for the samples and tests using the [code-generation scripts](docs/Scripts.md) (tested using PowerShell 7.2
-  on both Windows and Linux).
+- (optional) [PowerShell 6](https://github.com/powershell/powershell) or later for the samples and
+  tests using the [code-generation scripts](docs/Scripts.md) (tested using PowerShell 7.3 on both
+  Windows and Linux).
   - The [Pester](https://pester.dev/) module is required to run the script tests.
 
 To build the included tests and samples, clone the repository to a local directory, create a folder
@@ -138,10 +186,11 @@ cmake ..
 cmake --build .
 ```
 
-There are three scripts provided to aid building on Linux: `scripts/build.sh`, which builds using
-your default compiler; `scripts/build_clang.sh`, which forces the use of Clang; and
-`scripts/build_docs.sh`, which builds the documentation (requires [doxygen](https://doxygen.nl/) and
-[dot](https://graphviz.org/)).
+A script is provided to aid building on Linux: `scripts/build.sh`. You can use the `--compiler`
+argument to use a C++ compiler other than the default on your system (specify only the binary name,
+e.g "clang++"), the `--clean` argument to reconfigure and rebuild, and the `--docs` argument to
+build documentation instead of the tests and samples (requires [doxygen](https://doxygen.nl/) and
+[dot](https://graphviz.org/))
 
 ### Running tests
 
@@ -161,24 +210,14 @@ ctest --output-on-failure
 If everything passes, your environment is supported. If you want to see more detailed output, you
 can run the unittests binary directly.
 
-You can also use `scripts/build.sh test` and `scripts/build_clang.sh test` to build and run the
-tests.
+You can also use `scripts/build.sh --test` to build and run the tests.
 
 ### Running samples
 
-After building, you will find several samples in the output. There are essentially two samples:
-one for regular command line parsing, and one to demonstrate [shell commands](docs/ShellCommands.md).
-Each sample comes in two variants, with identical functionality: one that manually builds the
-arguments, and one that uses the [code-generation scripts](docs/Scripts.md).
-
-Invoke each sample from the command line, and see their output. The parser sample doesn't do
-anything other than echo the arguments you provide back, and the shell command sample provides
-simple functionality for reading and writing a file. All will only print usage help (generated
-by this library) when invoked without arguments.
+After building, you will find several samples in the output. These samples are described in detail,
+with samples of their usage help output, in the [samples documentation](samples).
 
 ## CMake usage
-
-To use Ookii.CommandLine in your own project, the easiest option is to include it using CMake.
 
 Ookii.CommandLine provides a Config file for CMake. After installing the library, you can use:
 
@@ -212,23 +251,24 @@ target_link_libraries(foo PRIVATE Ookii.CommandLine::OOKIICL)
 
 ## Wide character support
 
-On Windows, you probably want to treat your arguments as wide characters (`wchar_t`), since that is the
-native character type used by Windows. For instance, that is the case if you're using the `int wmain()`
-entry point, or the `CommandLineToArgvW` function if you're using `WinMain`.
+On Windows, you probably want to treat your arguments as wide characters (`wchar_t`), since that is
+the native character type used by Windows. For instance, that is the case if you're using the
+`int wmain()` entry point, or the `CommandLineToArgvW` function if you're using `WinMain`.
 
 The entire Ookii.CommandLine library is implemented using templates which allow the selection of
-the character type, so they can support both `char` and `wchar_t`. The `std::command_line_parser`
-class is actually a typedef for `std::basic_command_line_parser<char>`, and there is a similar
-typedef `std::wcommand_line_parser` that translates to `std::basic_command_line_parser<wchar_t>`.
+the character type, so they can support both `char` and `wchar_t`. The `ookii::command_line_parser`
+class is actually a typedef for `ookii::basic_command_line_parser<char>`, and there is a similar
+typedef `ookii::wcommand_line_parser` that translates to `ookii::basic_command_line_parser<wchar_t>`.
 
-The same is true of `std::parser_builder`, `std::usage_options`, `std::command`, `std::command_manager`,
-and `std::shell_command_usage_options` which all have wide character versions starting with `w`.
+The same is true of `ookii::parser_builder`, `ookii::usage_options`, `ookii::command`,
+`ookii::command_manager`, and `ookii::shell_command_usage_options` which all have wide character
+versions starting with `w`.
 
-If you wish to test out Unicode support on Windows, you can compile the unit tests for Unicode
-by passing `-DOOKIICL_UNICODE=1` to CMake. This has no effect on platforms other than Windows, and
-only applies to the unit tests; no special define is needed for the library itself to use Unicode,
-except for the `<ookii/command_line_generated.h>` header (used in conjunction with the [code-generation scripts](docs/Scripts.md)),
-which requires the `_UNICODE` define.
+If you wish to test out Unicode support on Windows, you can compile the unit tests for Unicode by
+passing `-DOOKIICL_UNICODE=1` to CMake. This has no effect on platforms other than Windows, and only
+applies to the unit tests; no special define is needed for the library itself to use Unicode, except
+for the `<ookii/command_line_generated.h>` header (used in conjunction with the
+[code-generation scripts](docs/Scripts.md)), which requires the `_UNICODE` define.
 
 Due to limitations of some of the libraries used (in particular, `<format>`), character types
 other than `char` and `wchar_t` are not supported.
@@ -239,12 +279,13 @@ Use the following macros to control the behavior of Ookii.CommandLine, either us
 the appropriate compiler switch.
 
 Macro                       | Description
-----------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+----------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 `_UNICODE`                  | If defined, certain templates will default to `wchar_t` for the character type. The `<ookii/command_line_generated.h>` header (used in conjunction with the [code-generation scripts](docs/Scripts.md)), uses `wchar_t` for its declarations. Use on Windows to support Unicode arguments.
-`OOKII_CONSOLE_DEFINITION`  | See `OOKII_CONSOLE_NOT_INLINE`.
-`OOKII_CONSOLE_NOT_INLINE`  | Do not provide an inline definition of platform-specific console functionality. This avoids the need to include platform headers such as `<windows.h>` in every file that uses the `<ookii/command_line.h>` header. You must have exactly one C++ file where both `OOKII_CONSOLE_NOT_INLINE` and `OOKII_CONSOLE_DEFINITION` are defined prior to including `<ookii/console_helper.h>`, to provide a definition to the linker. See the [unit tests project](unittests) for an example how to do this. Implies `OOKII_NO_PLATFORM_HEADERS` unless `OOKII_CONSOLE_DEFINITION` is defined.
+`_WIN32`                    | If defined, the Windows-specific `parser_builder::add_win32_version_argument()` and `command_manager::add_win32_version_command()` methods will be available. These methods create a version command that reads information from the VERSIONINFO resource.
+`OOKII_PLATFORM_DEFINITION` | See `OOKII_PLATFORM_NOT_INLINE`.
+`OOKII_PLATFORM_NOT_INLINE` | Do not provide an inline definition of platform-specific functionality. This avoids the need to include platform headers such as `<windows.h>` in every file that uses the `<ookii/command_line.h>` header. You must have exactly one C++ file where both `OOKII_PLATFORM_NOT_INLINE` and `OOKII_PLATFORM_DEFINITION` are defined prior to including `<ookii/command_line.h>`, to provide a definition to the linker. See the [unit tests project](unittests) for an example how to do this. Implies `OOKII_NO_PLATFORM_HEADERS` unless `OOKII_PLATFORM_DEFINITION` is defined.
 `OOKII_FORCE_LIBFMT`        | Use the libfmt library even if the `<format>` header is available.
-`OOKII_NO_PLATFORM_HEADERS` | Do not include platform headers such as `<windows.h>`. Use this if you have already included them manually with different settings than the `<ookii/console_helper.h>` header uses. If you want to avoid including them at all, use `OOKII_CONSOLE_NOT_INLINE`.
+`OOKII_NO_PLATFORM_HEADERS` | Do not include platform headers such as `<windows.h>`. Use this if you have already included them manually with different settings than the `<ookii/platform_helper.h>` header uses. If you want to avoid including them at all, use `OOKII_PLATFORM_NOT_INLINE`.
 
 ## More information
 
