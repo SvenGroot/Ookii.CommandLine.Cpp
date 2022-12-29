@@ -513,7 +513,7 @@ Rather than requiring you to use the field names verbatim, the script can transf
 follow a difference convention, which we've done here with the `[name_transform]` attribute on the
 struct. All of the field names will be automatically transformed to dash-case, without having to
 set explicit names. Other possible name transformations are PascalCase, camelCase, snake_case, and
-trim (which just removed leading and trailing underscores, without other changes).
+trim (which just removes leading and trailing underscores, without other changes).
 
 The script will generate a `parse()` method for the struct, but this method must be declared in the
 struct first. We can't use the previous parse method, because it doesn't match the exact signature
