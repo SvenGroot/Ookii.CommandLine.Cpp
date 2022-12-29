@@ -208,7 +208,7 @@ The output is the same as above.
 
 Arguments don't have to be strings. In fact, they can have any type as long as there's a way to
 [convert to that type](Arguments.md#argument-value-conversion) from a string. All of the basic C++
-types are supported (like `int`, `float`, `bool`, etc.), and you can support for custom types as
+types are supported (like `int`, `float`, `bool`, etc.), and you can add support for custom types as
 well.
 
 Let's try this out by adding more arguments in the `arguments` struct. First add the following
@@ -518,7 +518,7 @@ struct first. We can't use the previous parse method, because it doesn't match t
 the script expects. The signature used by the script is as follows:
 
 ```c++
-static ::std::optional<arguments_type> parse(int argc, const char* const argv[], ookii::usage_writer *usage = nullptr,
+static std::optional<arguments_type> parse(int argc, const char* const argv[], ookii::usage_writer *usage = nullptr,
     ookii::localized_string_provider *string_provider = nullptr, const std::locale &locale = {})
 ```
 
@@ -577,7 +577,7 @@ returning `int` if it generates a `main()` method.
 Next, delete the existing `main()` function from main.cpp, and add the following argument to the
 script invocation in CMakeLists.txt:
 
-```text
+```cmake
 add_custom_command(
     OUTPUT ${GENERATED_OUTPUT}
     COMMAND ${POWERSHELL_PATH}
