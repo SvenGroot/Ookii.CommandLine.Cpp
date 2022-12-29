@@ -99,7 +99,7 @@ See the [documentation for the samples](samples) for more examples of usage help
 Ookii.CommandLine. The usage help format can also be [fully customized](samples/custom_usage).
 
 The application also has one argument that wasn't explicitly defined, `-Help`, which is
-automatically added by default. You can also easily add a default `-Version` argument. 
+automatically added by default. You can also easily add a default `-Version` argument.
 
 An example invocation of this application, specifying all the arguments, would look like this
 (argument names are case insensitive by default):

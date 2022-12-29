@@ -101,3 +101,6 @@ Usage: nested_commands student add [-FirstName] <string> [-LastName] <string> [[
 ```
 
 We can see the usage syntax shows both command names before the arguments.
+
+This sample uses the [JSON for modern C++](https://github.com/nlohmann/json) library to read and
+write JSON files.
