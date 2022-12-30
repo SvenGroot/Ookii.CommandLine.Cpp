@@ -1,18 +1,27 @@
 # Command line arguments
 
-Command line arguments are passed to your application when it is started, and are typically accessed
-through the parameter of the `int main(int argc, char *argv)` method (or `wmain` in Windows
-applications using Unicode). This provides the arguments as an array of strings, which is not
-terribly useful by itself. What Ookii.CommandLine allows you to do is to convert that array of
-strings into a strongly typed set of named values, which are stored in the variables you specify.
+If you've gone through the [tutorial](Tutorial.md), you'll already have some idea of how
+Ookii.CommandLine parses arguments. This page will explain the rules in detail, including all the
+possible kinds or arguments.
+
+Command line arguments are passed to your application when it is started, and are usually accessed
+through the parameters of the `int main(int argc, char *argv[])` method (or `int wmain(int argc, wchar_t *argv[])`
+or `CommandLineToArgvW` for Windows applications using Unicode). This provides the arguments as an
+array of strings, which Ookii.CommandLine will parse to extract strongly-typed, named values that
+you can easily access in your application.
 
 The method used to extract values from the array of string arguments is determined by the command
-line argument parsing rules. Ookii.CommandLine for C++ uses the same parsing rules as [Ookii.CommandLine for .Net](https://github.com/SvenGroot/ookii.commandline),
-which are very similar to how Microsoft PowerShell parses arguments for cmdlets, so if you have used
-PowerShell these rules will be familiar to you.
+line argument parsing rules. Ookii.CommandLine supports two sets of parsing rules: the default mode,
+which uses parsing rules similar to those used by PowerShell, and [long/short mode](#longshort-mode),
+which is more POSIX-like, and lets arguments have a long name and a short name, with different
+prefixes. Most of the below information applies to both modes, with the differences described at the
+end.
 
-Command line arguments follow the name of your application on the console, and typically take
-the following form:
+## Named arguments
+
+In Ookii.CommandLine, all command line arguments have a name, and can be assigned a value on the
+command line using that name. They follow the name of your application's executable on the command
+prompt, and typically take the following form:
 
 ```text
 -ArgumentName ArgumentValue
@@ -22,55 +31,66 @@ The argument name is preceded by the _argument name prefix_. This prefix is conf
 Ookii.CommandLine defaults to accepting a dash (`-`) and a forward slash (`/`) on Windows, and only
 a dash (`-`) on other platforms such as Linux or MacOS.
 
-The argument value follows the name, separated either by a space or a colon (`:`). You can configure
-how argument names and values can be separated by using the `ookii::parser_builder::allow_white_space_separator()`
-and the `ookii::parser_builder::argument_value_separator()` methods.
+Argument names are case insensitive by default, though this can be customized using the
+`parser_builder::case_sensitive()` method.
+
+The argument's value follow the name, separated by either white space (as a separate argument token),
+or by the argument name/value separator, which is a colon (`:`) by default. The following is
+identical to the previous example:
+
+```text
+-ArgumentName:value
+```
+
+Whether white-space is allowed to separate the name and value is configured using the
+`parser_builder::allow_whitespace_separator()` method, and the argument name/value separator can be
+customized using the `parser_builder::argument_value_separator()` method.
 
 Not all arguments require values; those that do not are called [_switch arguments_](#switch-arguments)
 and have a value determined by their presence or absence on the command line.
 
-An argument can have one or more aliases: alternative names that can also be used to specify the
-argument. For example, an argument named “Verbose” might use the alias “v” as a shorter to type
+An argument can have one or more aliases: alternative names that can also be used to supply the same
+argument. For example, an argument named `-Verbose` might use the alias `-v` as a shorter to type
 alternative.
 
 ## Positional arguments
 
-An argument can be _positional_, which means that its value can be specified either by name as
-indicated above, or by its position on the command line. In this case the name of the argument is
-not required, and the argument’s value can be supplied by specifying it in the correct position in
-relation to other positional arguments.
+An argument can be _positional_, which means in addition to being supplied by name, it can also be
+supplied without the name, using the position of the value. Which argument the value belongs to
+is determined by its position relative to other positional arguments.
 
 If an argument value is encountered without being preceded by a name, it is matched to the
-positional argument at the current position. For example, take the following command line arguments:
+next positional argument without a value. For example, take the following command line arguments:
 
 ```text
-Value1 –ArgumentName Value2 Value3
+value1 –ArgumentName value2 value3
 ```
 
-In this case, Value1 is not preceded by a name; therefore, it is matched to the first positional
-argument. Value2 follows a name, so it is matched to the argument with the name “ArgumentName”.
-Finally, Value3 is matched to the second positional argument.
+In this case, value1 is not preceded by a name; therefore, it is matched to the first positional
+argument. Value2 follows a name, so it is matched to the argument with the name `-ArgumentName`.
+Finally, value3 is matched to the second positional argument.
 
-A positional argument can still be supplied by explicitly supplying its name. If a positional
-argument is supplied by name, it cannot also be specified by position; in the previous example,
-if the argument named “ArgumentName” was the second positional argument, then Value3 becomes the
-value for the third positional argument, because the value for “ArgumentName” was already specified
-by name.
+A positional argument can still be supplied by name. If a positional argument is supplied by name,
+it cannot also be specified by position; in the previous example, if the argument named
+`-ArgumentName` was the second positional argument, then value3 becomes the value for the third
+positional argument, because the value for `-ArgumentName` was already specified by name. If
+`-ArgumentName` is the first positional argument, this would cause an error (unless duplicate
+arguments are allowed in the options), because it already had a value set by `value`.
 
 ## Required arguments
 
-A command line argument that is required must be present on all invocations of the application.
-If a required argument is not present, the `ookii::command_line_parser` class will return an
-error during parsing.
+A command line argument that is required must be supplied on all invocations of the application. If
+a required argument is not supplied, this is considered an error and parsing will fail.
 
 Any argument can be made required. Usually, it is recommended for any required argument to also be a
 positional argument, but this is not mandatory.
 
 ## Switch arguments
 
-A switch argument is an argument with a Boolean type (`bool`). Its value is determined by its
-presence or absence on the command line; the value will be true if the argument is supplied, and
-false if not. The following sets the switch argument named “Switch” to true:
+A switch argument, sometimes also called a flag, is an argument with a Boolean type (`bool`). Its
+value is determined by its presence or absence on the command line; the value will be true if the
+argument is supplied, and false if not. The following sets the switch argument named “Switch” to
+true:
 
 ```text
 -Switch
@@ -79,14 +99,15 @@ false if not. The following sets the switch argument named “Switch” to true:
 A switch argument’s value can be specified explicitly, as in the following example:
 
 ```text
--Switch:true
+-Switch:false
 ```
 
-You must use a colon (or your custom name-value separator if configured) to specify an explicit
-value for a switch argument; you cannot use white space to separate the name and the value.
+You must use the name/value separator (a colon by default) to specify an explicit value for a switch
+argument; you cannot use white space. If the command line contains `-Switch false`, then `false` is
+the value of the next positional argument, not the value for `-Switch`.
 
-If you use `std::optional<bool>` as the type of the argument, it will be `std::nullopt` if omitted,
-true if supplied, and false only if explicitly set to false using `-Switch:false`.
+If you use `std::optional<bool>` as the type of the argument, it will be `std::nullopt` if not
+supplied, `true` if supplied, and `false` only if explicitly set to false using `-Switch:false`.
 
 ## Arguments with multiple values
 
@@ -95,41 +116,39 @@ supplied multiple times, and each value is added to the set of values. For examp
 following command line arguments:
 
 ```text
--ArgumentName Value1 –ArgumentName Value2 –ArgumentName Value3
+-ArgumentName value1 –ArgumentName value2 –ArgumentName value3
 ```
 
-In this case, if "ArgumentName" is a multi-value argument, the value of the argument named will be a
-list holding all three values.
+In this case, if `-ArgumentName` is a multi-value argument, the value of the argument will be a list
+holding all three values.
 
-It’s possible to specify a separator for multi-value arguments using the `ookii::parser_builder::argument_builder::multi_value_separator()`
-method. This makes it possible to specify multiple values for the argument while the argument itself
-is specified only once. For example, if the separator is set to a comma, you can specify the values
-as follows:
+It’s possible to specify a separator for multi-value arguments using the
+`parser_builder::multi_value_argument_builder::separator()` method. This makes it possible to
+specify multiple values for the argument while the argument itself is specified only once. For
+example, if the separator is set to a comma, you can specify the values as follows:
 
 ```text
--ArgumentName Value1,Value2,Value3
+-ArgumentName value1,value2,value3
 ```
 
-In this case, the value of the argument named “ArgumentName” will be a list with the three values
-“Value1”, “Value2” and “Value3”.
+In this case, the value of the argument named `-ArgumentName` will be a list with the three values
+"value1", "value2" and "value3".
 
 **Note:** if you specify a separator for a multi-value argument, it is _not_ possible to have an
 argument value containing the separator. There is no way to escape the separator. Therefore, make
 sure you pick a separator that will never be used in the argument values, and be extra careful with
-culture-sensitive argument types (for example, if you use a comma as the separator for a multi-value
-argument of floating point numbers, locales that use a comma as the decimal separator will not be
-able to specify values properly).
-
-If an argument is not a multi-value argument, it is an error to supply it more than once, unless
-duplicate arguments were set to allowed using `ookii::parser_builder::allow_duplicate_arguments()`,
-in which case only the last value is used.
+culture-sensitive argument types.
 
 If a multi-value argument is positional, it must be the last positional argument. All remaining
 positional argument values will be considered values for the multi-value argument.
 
 If a multi-value argument is required, it means it must have at least one value.
 
-If the type of the argument is an container of Boolean values (e.g. `std::vector<bool>`), it will
+If an argument is not a multi-value argument, it is an error to supply it more than once, unless
+duplicate arguments were set to allowed using the `parser_builder::allow_duplicate_arguments()`
+method, in which case only the last value is used.
+
+If the type of the argument is a container of Boolean values (e.g. `std::vector<bool>`), it will
 act as a multi-value argument and a switch. A value of true (or the explicit value if one is given)
 gets added to the list for every time that the argument is supplied.
 
@@ -141,38 +160,121 @@ possible to convert that type to and from a string.
 String conversion is performed using the `ookii::lexical_cast` template. The default implementation
 uses stream extraction (`operator>>` on an `std::istringstream`), so if such an operator is defined
 for your type, this is sufficient. Note that the operator must consume the entire contents of the
-stream for conversion to be considered successful.
+stream, and leave the stream without `badbit` or `failbit` set, for conversion to be considered
+successful.
 
 You can also provide a template specialization of `ookii::lexical_cast` to perform conversion
-without depending on streams.
+without depending on streams. This template struct has a single method, `from_string()`, which
+you must implement. The method returns an `std::optional<T>`, and you should return `std::nullopt`
+if conversion failed.
+
+```c++
+template<>
+struct ookii::lexical_convert<your_type, char>
+{
+    static std::optional<your_type> from_string(std::string_view value, const std::locale &loc)
+    {
+        // Implement string conversion here.
+    }
+};
+```
+
+> If you are using Unicode arguments on Windows, use `wchar_t` and `std::wstring_view`.
 
 It is possible to override the default conversion for a type by specifying a custom conversion
-function using the `ookii::parser_builder::argument_builder::converter()` function. Note that even
+function using the `parser_builder::typed_argument_builder::converter()` method. Note that even
 if you supply a custom converter, a default one must still exist otherwise your code will not
 compile. The custom converter is intended for situations where a default conversion exists, but you
 wish to deviate from that behavior.
 
-In order to display default values, it must also be possible to convert the type back to a string
-using the `<format>` library (or libfmt if your compiler doesn't provide the `<format>` header).
-In this case it's necessary to provide a specialization of `std::formatter` (or `fmt::formatter` if
-using libfmt) for the type. An example of this can be seen in the [custom_types.h](../unittests/custom_types.h)
-file used by the unit tests.
+In order to display default values, it must also be possible to output the type using stream
+insertion (`operator<<`). This is always necessary, even if you don't use a default value for
+arguments of that type.
+
+An example of writing implementations of `operator<<` and `operator>>` for a custom type, as well as
+an example of directly specializing `ookii::lexical_cast`, can be seen in the
+[custom_types.h](../unittests/custom_types.h) file used by the unit tests.
 
 If the argument is a multi-value argument, string conversion must be available for the type indicated
 by the container's `value_type`. Usually, this is the type of element in the container (e.g. for
 `std::vector<int>` it would be `int`).
 
-If the argument uses the type `std::optional<T>`, string conversion must be available for the type T
-contained in the `std::optional<T>`.
+If the argument uses the type `std::optional<T>`, string conversion must be available for the
+contained type `T`.
+
+### Conversion locale
 
 For many types, the conversion can be locale dependent. For example, converting numbers or dates
-depends on the locale which defines the accepted formats and how they’re interpreted; some locales
-might use a period as the decimal separators, while others use a comma.
+depends on the `std::locale` which defines the accepted formats and how they’re interpreted; some
+locales might use a period as the decimal separators, while others use a comma.
 
 The locale used for argument value conversions is specified by the `ookii::parser_builder::locale()`
 method. If not specified, it defaults to the global locale set by `std::locale::global()`, which
 itself defaults to the invariant "C" locale.
 
-- [Defining Command Line Arguments](DefiningArguments.md)
-- [Parsing Command Line Arguments](ParsingArguments.md)
-- [Generating Usage Help](UsageHelp.md)
+For a consistent parsing experience, it's strongly recommended to always use an invariant locale
+for command line parsing. If you use the locale based on the user's current culture, the same
+command line may not be parsed the same for users with different regional settings (for example,
+if you use floating point numbers).
+
+## Long/short mode
+
+POSIX and GNU conventions specify that options use a dash (`-`) followed by a single character, and
+define the concept of long options, which use `--` followed by an a multi-character name. This style
+is used by many tools like `cmake`, `git`, and many others, and may be preferred if you are writing
+a cross-platform application.
+
+Ookii.CommandLine calls this style of parsing "long/short mode," and offers it as an alternative
+mode to augment the default parsing rules. In this mode, an argument can have the regular long name
+and an additional single-character short name, each with its own argument name prefix. By default,
+the prefix `--` is used for long names, and `-` (and `/` on Windows) for short names.
+
+This mode can be enabled by passing `parsing_mode::long_short` to the `parser_builder::mode()`
+method.
+
+POSIX conventions also specify the use of lower case argument names, with dashes separating words
+("dash-case"). If you are using the [code generation scripts](Scripts.md), you can easily achieve
+that using name transformation. It's also common to use case-sensitive argument names in this mode,
+which can be enabled with the `parser_builder::case_sensitive()` method.
+
+For example, an argument named `--path` could have a short name `-p`. It could then be supplied
+using either name:
+
+```text
+--path value
+```
+
+Or:
+
+```text
+-p value
+```
+
+Note that you must use the correct prefix: using `-path` or `--p` will not work.
+
+An argument can have either a short name or a long name, or both.
+
+Arguments in this mode can still have aliases. You can set separate long and short aliases, which
+follow the same rules as the long and short names.
+
+For switch arguments with short names, the switches can be combined in a single argument. For
+example, given the switches `-a`, `-b` and `-c`, the following command line sets all three switches:
+
+```text
+-abc
+```
+
+This is equivalent to:
+
+```text
+-a -b -c
+```
+
+This only works for switch arguments, and does not apply to long names.
+
+Besides these differences, long/short mode follows the same rules and conventions as the default
+mode outlined above, with all the same options.
+
+## More information
+
+Next, let's take a look at how to [define arguments](DefiningArguments.md).
