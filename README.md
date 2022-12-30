@@ -292,6 +292,6 @@ Macro                       | Description
 Please check out the following to get started:
 
 - [Tutorial: getting started with Ookii.CommandLine for C++](docs/Tutorial.md)
-- [Documentation](docs/Documentation.md)
+- [Documentation](docs/README.md)
 - [Header file documentation](https://www.ookii.org/Link/CommandLineCppDoc)
 - [Sample applications](samples)

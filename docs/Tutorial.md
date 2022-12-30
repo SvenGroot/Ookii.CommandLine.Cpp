@@ -1213,7 +1213,7 @@ I hope this tutorial helped you get started with Ookii.CommandLine. To learn mor
 following resources:
 
 - [Usage documentation](README.md)
-- [Class library documentation](https://www.ookii.org/Link/CommandLineCppDoc)
+- [Header file documentation](https://www.ookii.org/Link/CommandLineCppDoc)
 - [Sample applications](../samples)
 
 [`add_version_argument()`]: https://www.ookii.org/docs/commandline-cpp-2.0/classookii_1_1basic__parser__builder.html#a9abfabd3ea77bdda6b8c9c53010c6f9d
