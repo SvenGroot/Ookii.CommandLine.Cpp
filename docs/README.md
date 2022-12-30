@@ -10,6 +10,7 @@ explanations of what they do and examples of their output.
 
 ## Contents
 
+- [What's new in Ookii.CommandLine for C++](ChangeLog.md)
 - [Tutorial: getting started with Ookii.CommandLine for C++](Tutorial.md)
 - [Command Line Arguments Parsing Rules](Arguments.md)
   - [Defining Command Line Arguments](DefiningArguments.md)
