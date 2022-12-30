@@ -1,0 +1,305 @@
+{
+  "#apiPrefix": "https://en.cppreference.com/w/cpp/",
+  "#prefix": "https://www.ookii.org/docs/commandline-cpp-2.0/",
+  "#suffix": "",
+  "add_argument()": [
+    {
+      "name": "ookii::basic_parser_builder::add_argument(T &value, string_type name)",
+      "path": "classookii_1_1basic__parser__builder.html#aa4046a3e0aef810e41501c17572ced3d"
+    },
+    {
+      "name": "ookii::basic_parser_builder::add_argument(T &value, CharType short_name)",
+      "path": "classookii_1_1basic__parser__builder.html#a16b69672a4dd924cf5a402c419be3d05"
+    }
+  ],
+  "add_custom_command": null,
+  "add_executable": null,
+  "add_multi_value_argument()": [
+    {
+      "name": "ookii::basic_parser_builder::add_multi_value_argument(T &value, CharType short_name)",
+      "path": "classookii_1_1basic__parser__builder.html#ad3c06f01bab1d95b61daa8e4a048700b"
+    },
+    {
+      "name": "ookii::basic_parser_builder::add_multi_value_argument(T &value, string_type name)",
+      "path": "classookii_1_1basic__parser__builder.html#a35953740728918a4d3daa0f69d052e16"
+    }
+  ],
+  "add_version_argument()": [
+    {
+      "name": "ookii::basic_parser_builder::add_version_argument(version_function function)",
+      "path": "classookii_1_1basic__parser__builder.html#a9abfabd3ea77bdda6b8c9c53010c6f9d"
+    }
+  ],
+  "alias()": {
+    "name": "ookii::basic_parser_builder::argument_builder_common::alias(string_type alias)",
+    "path": "classookii_1_1basic__parser__builder_1_1argument__builder__common.html#a44d77984b1cd12b04764f7f2741269d4"
+  },
+  "arguments": {
+    "name": "ookii::basic_command_line_parser::arguments() const",
+    "path": "classookii_1_1basic__command__line__parser.html#ab29d6b51c259b4c868f52501614c76ad"
+  },
+  "automatic_help_argument(false)": "classookii_1_1basic__parser__builder.html#acf3a2fe08de1bdef7a69cf26cf94ba12",
+  "base_command": null,
+  "basic_parser_builder": {
+    "name": "ookii::basic_parser_builder",
+    "path": "classookii_1_1basic__parser__builder.html"
+  },
+  "bool": null,
+  "build()": [
+    {
+      "name": "ookii::basic_parser_builder::build()",
+      "path": "classookii_1_1basic__parser__builder.html#af66361855468fde2eb545fbe1631e042"
+    }
+  ],
+  "cargo": null,
+  "case_sensitive": [
+    {
+      "name": "ookii::basic_command_manager::case_sensitive() const noexcept",
+      "path": "classookii_1_1basic__command__manager.html#a01fa0814175511f5bc3e75f0071d47d5"
+    },
+    {
+      "name": "ookii::basic_parser_builder::case_sensitive(bool case_sensitive) noexcept",
+      "path": "classookii_1_1basic__parser__builder.html#a47a0c39a17d1dcca8b99455dab68dbb0"
+    }
+  ],
+  "case_sensitive()": [
+    {
+      "name": "ookii::basic_command_manager::case_sensitive() const noexcept",
+      "path": "classookii_1_1basic__command__manager.html#a01fa0814175511f5bc3e75f0071d47d5"
+    },
+    {
+      "name": "ookii::basic_parser_builder::case_sensitive(bool case_sensitive) noexcept",
+      "path": "classookii_1_1basic__parser__builder.html#a47a0c39a17d1dcca8b99455dab68dbb0"
+    }
+  ],
+  "command_line_parser": {
+    "name": "ookii::basic_command_line_parser",
+    "path": "classookii_1_1basic__command__line__parser.html"
+  },
+  "command_line_parser::parse()": [
+    {
+      "name": "ookii::basic_command_line_parser::parse(int argc, const CharType *const argv[], usage_writer_type *usage)",
+      "path": "classookii_1_1basic__command__line__parser.html#ae0c7b9990c29f41343182ac3d9918af7"
+    },
+    {
+      "name": "ookii::basic_command_line_parser::parse(const Range &range)",
+      "path": "classookii_1_1basic__command__line__parser.html#aa9f7d5a42eee4b9e388bbbe2c202e99c"
+    },
+    {
+      "name": "ookii::basic_command_line_parser::parse(Range range, usage_writer_type *usage)",
+      "path": "classookii_1_1basic__command__line__parser.html#ab63148284e56d22d468d8787cb097c36"
+    },
+    {
+      "name": "ookii::basic_command_line_parser::parse(std::initializer_list< T > args)",
+      "path": "classookii_1_1basic__command__line__parser.html#a391b092cfdb6709eb906acb9117da481"
+    },
+    {
+      "name": "ookii::basic_command_line_parser::parse(Iterator begin, Iterator end, usage_writer_type *usage)",
+      "path": "classookii_1_1basic__command__line__parser.html#aef535af7132b5534ef94cc46441685f5"
+    },
+    {
+      "name": "ookii::basic_command_line_parser::parse(Iterator begin, Iterator end)",
+      "path": "classookii_1_1basic__command__line__parser.html#afbea52dc851f3d4f4eda78ea7da6247d"
+    },
+    {
+      "name": "ookii::basic_command_line_parser::parse(int argc, const CharType *const argv[])",
+      "path": "classookii_1_1basic__command__line__parser.html#a0d003478f007f73567367118b02b7c3f"
+    },
+    {
+      "name": "ookii::basic_command_line_parser::parse(std::initializer_list< T > args, usage_writer_type *usage)",
+      "path": "classookii_1_1basic__command__line__parser.html#ab61377939d296f53ad83e1a8227f2d7f"
+    }
+  ],
+  "command_manager": {
+    "name": "ookii::basic_command_manager",
+    "path": "classookii_1_1basic__command__manager.html"
+  },
+  "configure_parser()": {
+    "name": "ookii::basic_command_manager::configure_parser(configure_function function)",
+    "path": "classookii_1_1basic__command__manager.html#a1a68ed8729ad0dfa2300a2a74691a0c6"
+  },
+  "create_command()": [
+    {
+      "name": "ookii::basic_command_manager::create_command(int argc, const CharType *const argv[], usage_writer_type *usage=nullptr) const",
+      "path": "classookii_1_1basic__command__manager.html#ac15dc514b638e514036256a42aa0a353"
+    },
+    {
+      "name": "ookii::basic_command_manager::create_command(const string_type &name, std::span< const CharType *const > args, usage_writer_type *usage=nullptr) const",
+      "path": "classookii_1_1basic__command__manager.html#a6caa6b848c1d83f0df1f73571086d1a2"
+    },
+    {
+      "name": "ookii::basic_command_manager::create_command(std::span< const CharType *const > args, usage_writer_type *usage=nullptr) const",
+      "path": "classookii_1_1basic__command__manager.html#a0e9d40eaddeb332200a3c5612c75f408"
+    }
+  ],
+  "description()": [
+    {
+      "name": "ookii::basic_command_line_parser::description() const noexcept",
+      "path": "classookii_1_1basic__command__line__parser.html#a82a4d86d1d09d2ec165678116fd1b03b"
+    },
+    {
+      "name": "ookii::basic_parser_builder::argument_builder_common::description(string_type description)",
+      "path": "classookii_1_1basic__parser__builder_1_1argument__builder__common.html#a1589adafc67093261b0a73237339593f"
+    },
+    {
+      "name": "ookii::basic_command_manager::description(string_type description)",
+      "path": "classookii_1_1basic__command__manager.html#a1ce6bb7ffd642322db2b8315036ab555"
+    },
+    {
+      "name": "ookii::command_line_argument_base::description() const noexcept",
+      "path": "classookii_1_1command__line__argument__base.html#a18ae2c112c7a37afa82b02788527f783"
+    },
+    {
+      "name": "ookii::basic_command_manager::description() const",
+      "path": "classookii_1_1basic__command__manager.html#a20b9088137088bb2662ad70e5eebbda3"
+    },
+    {
+      "name": "ookii::basic_parser_builder::description(string_type description)",
+      "path": "classookii_1_1basic__parser__builder.html#a6335f215145ce33767730cc2f5129537"
+    },
+    {
+      "name": "ookii::command_info::description() const noexcept",
+      "path": "classookii_1_1command__info.html#a8dbdb736cd429f85dbe17dd273048e4b"
+    }
+  ],
+  "find_program": null,
+  "float": null,
+  "get_command()": {
+    "name": "ookii::basic_command_manager::get_command(const string_type &name) const",
+    "path": "classookii_1_1basic__command__manager.html#af7c67cf9f0a6ffda1e870268968b4229"
+  },
+  "git": null,
+  "int": null,
+  "localized_string_provider": {
+    "name": "ookii::basic_localized_string_provider",
+    "path": "classookii_1_1basic__localized__string__provider.html"
+  },
+  "main()": null,
+  "mode()": [
+    {
+      "name": "ookii::basic_command_line_parser::mode() const noexcept",
+      "path": "classookii_1_1basic__command__line__parser.html#a55f5d801ea147e502ffa82e1e4e27c1f"
+    },
+    {
+      "name": "ookii::basic_parser_builder::mode(parsing_mode mode)",
+      "path": "classookii_1_1basic__parser__builder.html#a160689dea7f096c4e644634c48bae752"
+    }
+  ],
+  "ookii::command": {
+    "name": "ookii::basic_command",
+    "path": "classookii_1_1basic__command.html"
+  },
+  "ookii::command::run()": {
+    "name": "ookii::basic_command::run()=0",
+    "path": "classookii_1_1basic__command.html#a1f14c66512418948c9cafc81fd7b881b"
+  },
+  "ookii::register_commands()": {
+    "name": "command_line_generated.h::register_commands(std::basic_string< details::default_char_type > application_name, basic_localized_string_provider< details::default_char_type > *string_provider=nullptr, const std::locale &locale={})",
+    "path": "namespaceookii.html#ac514246d38c58d21cc168406737b4865"
+  },
+  "parse()": [
+    {
+      "name": "ookii::basic_command_line_parser::parse(int argc, const CharType *const argv[], usage_writer_type *usage)",
+      "path": "classookii_1_1basic__command__line__parser.html#ae0c7b9990c29f41343182ac3d9918af7"
+    },
+    {
+      "name": "ookii::basic_command_line_parser::parse(const Range &range)",
+      "path": "classookii_1_1basic__command__line__parser.html#aa9f7d5a42eee4b9e388bbbe2c202e99c"
+    },
+    {
+      "name": "ookii::basic_command_line_parser::parse(Range range, usage_writer_type *usage)",
+      "path": "classookii_1_1basic__command__line__parser.html#ab63148284e56d22d468d8787cb097c36"
+    },
+    {
+      "name": "ookii::basic_command_line_parser::parse(std::initializer_list< T > args)",
+      "path": "classookii_1_1basic__command__line__parser.html#a391b092cfdb6709eb906acb9117da481"
+    },
+    {
+      "name": "ookii::basic_command_line_parser::parse(Iterator begin, Iterator end, usage_writer_type *usage)",
+      "path": "classookii_1_1basic__command__line__parser.html#aef535af7132b5534ef94cc46441685f5"
+    },
+    {
+      "name": "ookii::basic_command_line_parser::parse(Iterator begin, Iterator end)",
+      "path": "classookii_1_1basic__command__line__parser.html#afbea52dc851f3d4f4eda78ea7da6247d"
+    },
+    {
+      "name": "ookii::basic_command_with_custom_parsing::parse(std::span< const CharType *const > args, const command_manager_type &manager, usage_writer_type *usage)=0",
+      "path": "classookii_1_1basic__command__with__custom__parsing.html#a870de32c0335e9c4dfc84141a9ae56c2"
+    },
+    {
+      "name": "ookii::basic_command_line_parser::parse(int argc, const CharType *const argv[])",
+      "path": "classookii_1_1basic__command__line__parser.html#a0d003478f007f73567367118b02b7c3f"
+    },
+    {
+      "name": "ookii::basic_command_line_parser::parse(std::initializer_list< T > args, usage_writer_type *usage)",
+      "path": "classookii_1_1basic__command__line__parser.html#ab61377939d296f53ad83e1a8227f2d7f"
+    }
+  ],
+  "parser_builder": {
+    "name": "ookii::basic_parser_builder",
+    "path": "classookii_1_1basic__parser__builder.html"
+  },
+  "parsing_mode::long_short": "namespaceookii.html#abf0aa62e29f4953f7cba303a3da407fd",
+  "read_command": null,
+  "read_file": null,
+  "read_file()": null,
+  "run_command()": [
+    {
+      "name": "ookii::basic_command_manager::run_command(const string_type &name, std::span< const CharType *const > args, usage_writer_type *usage=nullptr) const",
+      "path": "classookii_1_1basic__command__manager.html#aab05fa15fd6f844fccc16943bc8253e6"
+    },
+    {
+      "name": "ookii::basic_command_manager::run_command(std::span< const CharType *const > args, usage_writer_type *usage=nullptr) const",
+      "path": "classookii_1_1basic__command__manager.html#a61e98c55961c27f12f1285d084b1b308"
+    },
+    {
+      "name": "ookii::basic_command_manager::run_command(int argc, const CharType *const argv[], usage_writer_type *usage=nullptr) const",
+      "path": "classookii_1_1basic__command__manager.html#a4deb89f49a7ce6d03ed41cdbf8769d58"
+    }
+  ],
+  "run()": {
+    "name": "ookii::basic_command::run()=0",
+    "path": "classookii_1_1basic__command.html#a1f14c66512418948c9cafc81fd7b881b"
+  },
+  "short_alias()": {
+    "name": "ookii::basic_parser_builder::argument_builder_common::short_alias(CharType alias)",
+    "path": "classookii_1_1basic__parser__builder_1_1argument__builder__common.html#a30ecafbbf18070a6bd79581754b4182a"
+  },
+  "short_name()": [
+    {
+      "name": "ookii::basic_parser_builder::argument_builder_common::short_name()",
+      "path": "classookii_1_1basic__parser__builder_1_1argument__builder__common.html#acf0df83ada201975cc845ac63725904f"
+    },
+    {
+      "name": "ookii::command_line_argument_base::short_name() const noexcept",
+      "path": "classookii_1_1command__line__argument__base.html#a231a1e0cc8f4e986f438ea036420e558"
+    },
+    {
+      "name": "ookii::basic_parser_builder::argument_builder_common::short_name(CharType short_name)",
+      "path": "classookii_1_1basic__parser__builder_1_1argument__builder__common.html#a2b7a59866bc23888381b631b5f087f8e"
+    },
+    {
+      "name": "ookii::basic_parser_builder::argument_builder_common::short_name() const noexcept",
+      "path": "classookii_1_1basic__parser__builder_1_1argument__builder__common.html#a04be7ad25fd67df32a4c229a390d8260"
+    },
+    {
+      "name": "ookii::basic_parser_builder::argument_builder_base::short_name() const noexcept",
+      "path": "classookii_1_1basic__parser__builder_1_1argument__builder__base.html#a11a21bb681af98f72860b4e6332436a4"
+    }
+  ],
+  "std::nullopt": "#utility/optional/nullopt",
+  "std::optional<T>": "#utility/optional",
+  "std::vector<string>": "#container/vector",
+  "usage_writer": {
+    "name": "ookii::basic_usage_writer",
+    "path": "classookii_1_1basic__usage__writer.html"
+  },
+  "version": null,
+  "virtual_terminal_support": [
+    {
+      "name": "ookii::vt::virtual_terminal_support::virtual_terminal_support()=default",
+      "path": "classookii_1_1vt_1_1virtual__terminal__support.html#af9d2adc67cfa52c358a70864f75efb92"
+    }
+  ],
+  "write_command": null
+}
