@@ -3,18 +3,18 @@
 When you have [defined the command line arguments](DefiningArguments.md), you can now parse the
 command line to determine the argument values.
 
-After you call `build()` on the `ookii::parser_builder()` class, you are given an instance of the
-`ookii::command_line_parser` class. You can use this instance to inspect information about all the
+After you call [`build()`][] on the [`ookii::parser_builder`][] class, you are given an instance of the
+[`ookii::command_line_parser`][] class. You can use this instance to inspect information about all the
 arguments you created, and to [generate usage help](UsageHelp.md), but most importantly you can
-call one of the overloads of the `command_line_parser::parse()` method. Which overload you want to
+call one of the overloads of the [`command_line_parser::parse()`][command_line_parser::parse()_0] method. Which overload you want to
 use depends on how you wish to handle errors.
 
 ## Letting `command_line_parser` handle errors
 
-The `parse()` method has a number of overloads, and some of those overloads take a last argument
-that is a pointer to an `ookii::usage_writer` class. These overloads will handle errors, and print
+The [`parse()`][parse()_0] method has a number of overloads, and some of those overloads take a last argument
+that is a pointer to an [`ookii::usage_writer`][] class. These overloads will handle errors, and print
 an error message and usage help to the console if necessary. They will do this even if you pass
-`nullptr` for the `usage_writer` argument.
+`nullptr` for the [`usage_writer`][] argument.
 
 There are several of these overloads, but the one you will usually use is probably this one:
 
@@ -45,9 +45,9 @@ int main(int argc, char *argv[])
 
 See [here](DefiningArguments.md) for information about the omitted code to build the parser.
 
-The `parse()` method returns an instance of the `parse_result` class, which can be implicitly
+The [`parse()`][parse()_0] method returns an instance of the [`parse_result`][] class, which can be implicitly
 converted to a boolean for testing. If parsing is successful, the result will use
-`parse_error::success`, which evaluates as `true`. At that point, all the variables you used for
+[`parse_error::success`][], which evaluates as `true`. At that point, all the variables you used for
 your arguments will be set to the values specified on the command line.
 
 Argument parsing can fail for a number of reason, including:
@@ -59,23 +59,23 @@ Argument parsing can fail for a number of reason, including:
 - Too many positional argument values were supplied.
 - Argument value conversion failed for one of the arguments.
 
-See the `parse_error` enumeration for all possible error categories. In addition, parsing could
-have been canceled by an argument using the `parser_builder::argument_builder_common::cancel_parsing()`
+See the [`parse_error`][] enumeration for all possible error categories. In addition, parsing could
+have been canceled by an argument using the [`parser_builder::argument_builder_common::cancel_parsing()`][]
 method, an action argument, or the automatic `-Help` or `-Version` argument.
 
-If an error does occur, this overload of the `parse()` method will handle it by print an error
+If an error does occur, this overload of the [`parse()`][parse()_0] method will handle it by print an error
 message, and displaying the usage help if requested. This is done according to the passed
-`usage_writer`.
+[`usage_writer`][].
 
-If you pass `nullptr` for the `usage_writer`, as in this example, it means the default
-`usage_writer` will be used. The default instance will write usage help to the standard output,
+If you pass `nullptr` for the [`usage_writer`][], as in this example, it means the default
+[`usage_writer`][] will be used. The default instance will write usage help to the standard output,
 using the default format, with color enabled if the output supports it, and white-space wrapping the
 output at the console width. Error messages will be written to the standard error stream.
 
-You can customize the output by specifying a pointer to a `usage_writer` instance. See
+You can customize the output by specifying a pointer to a [`usage_writer`][] instance. See
 [usage help](UsageHelp.md) for more information.
 
-The `parse()` method still returns the `parse_result` indicating the result of the operation, but
+The [`parse()`][parse()_0] method still returns the [`parse_result`][] indicating the result of the operation, but
 since errors were already handled, you usually don't need to do anything other than exit the
 application if it indicates an error.
 
@@ -85,16 +85,16 @@ set by arguments supplied before the error occurred.
 ### Custom error messages
 
 If you wish to customize the error messages shown to the user if parsing fails, for example to
-localize them in another language, you can do that using the `localized_string_provider` class.
+localize them in another language, you can do that using the [`localized_string_provider`][] class.
 This class is used as the source for all error messages, as well as a number of other strings used
 by Ookii.CommandLine.
 
-Create a class that derives from the `localized_string_provider` class and override its members to
+Create a class that derives from the [`localized_string_provider`][] class and override its members to
 customize any strings you wish to change. You can specify a custom string provider using the
-constructor of the `parser_builder` class.
+constructor of the [`parser_builder`][] class.
 
 Alternatively, if you need more error information, you can use the manual parsing method below, and
-use the `parse_result::error` field to determine the cause of the error and create your own error
+use the [`parse_result::error`][] field to determine the cause of the error and create your own error
 message.
 
 ## Manual error handling
@@ -102,34 +102,34 @@ message.
 In most cases, the above method should be sufficient for your needs, but sometimes you may want
 more fine-grained control.
 
-In this case, call an overload that doesn't take a `usage_writer` pointer. These overloads do not
-handle errors or print help. They return the same `parse_result` class that all overloads do, which
+In this case, call an overload that doesn't take a [`usage_writer`][] pointer. These overloads do not
+handle errors or print help. They return the same [`parse_result`][] class that all overloads do, which
 you can use to determine how to handle the error.
 
-The `parse_result` type can be converted to a boolean to easily check if parsing was successful.
-If you want more information, check the `parse_result::error` field, which contains an enumeration
+The [`parse_result`][] type can be converted to a boolean to easily check if parsing was successful.
+If you want more information, check the [`parse_result::error`][] field, which contains an enumeration
 indicating the type of error that occurred. If no error occurred, the error will be
-`parse_error::none`, which is the only value that converts to `true`.
+[`parse_error::none`][], which is the only value that converts to `true`.
 
-A special error category is `parse_error::parsing_cancelled`, which isn't necessarily an error, but
+A special error category is [`parse_error::parsing_cancelled`][], which isn't necessarily an error, but
 indicates that parsing was cancelled by an argument using the
-`parser_builder::argument_builder_common::cancel_parsing()` method, an action argument, or the
+[`parser_builder::argument_builder_common::cancel_parsing()`][] method, an action argument, or the
 automatic `-Help` or `-Version` argument.
 
-The the `parse_error::error_arg_name` field indicates the argument that caused the error. Note that
+The the [`parse_result::error_arg_name`][] field indicates the argument that caused the error. Note that
 not all categories of error will have this value set. If an error wasn't related to a specific
 argument, this field will be blank. The name may also refer to a non-existent argument, if the user
 specified an unknown one.
 
-You can call `parse_result::get_error_message()` to get the default error message for the error,
-or use the `error` and `error_arg_name` fields to create your own. Note that `parse_error::none`
-and `parse_error::parsing_cancelled` don't have an error message and will return an empty string.
+You can call [`parse_result::get_error_message()`][] to get the default error message for the error,
+or use the [`error`][error_0] and [`error_arg_name`][] fields to create your own. Note that [`parse_error::none`][]
+and [`parse_error::parsing_cancelled`][] don't have an error message and will return an empty string.
 
 If an error occurred, it does not necessarily mean that help must be shown, as an action argument,
 including the `-Version` argument, can cancel parsing without requesting help. Therefore, you
-should always check the `command_line_parser::help_requested()` method to see if you should show
+should always check the [`command_line_parser::help_requested()`][command_line_parser::help_requested()_0] method to see if you should show
 help. This method will _always_ return `true` for any error other than
-`parse_error::parsing_cancelled`, and _always_ return `false` on success.
+[`parse_error::parsing_cancelled`][], and _always_ return `false` on success.
 
 Here is a small sample of this kind of usage:
 
@@ -160,7 +160,30 @@ int main(int argc, char *argv[])
 }
 ```
 
-The `write_usage()` method optionally takes a `usage_writer` parameter to customize the appearance
+The [`write_usage()`][write_usage()_1] method optionally takes a [`usage_writer`][] parameter to customize the appearance
 of the usage help.
 
 Speaking of usage help, let's take [a detailed look at how that works next](UsageHelp.md).
+
+[`build()`]: https://www.ookii.org/docs/commandline-cpp-2.0/classookii_1_1basic__parser__builder.html#af66361855468fde2eb545fbe1631e042
+[`error_arg_name`]: https://www.ookii.org/docs/commandline-cpp-2.0/structookii_1_1parse__result.html#a741b2fc17a449ebfc15b262e16540a84
+[`localized_string_provider`]: https://www.ookii.org/docs/commandline-cpp-2.0/classookii_1_1basic__localized__string__provider.html
+[`ookii::command_line_parser`]: https://www.ookii.org/docs/commandline-cpp-2.0/classookii_1_1basic__command__line__parser.html
+[`ookii::parser_builder`]: https://www.ookii.org/docs/commandline-cpp-2.0/classookii_1_1basic__parser__builder.html
+[`ookii::usage_writer`]: https://www.ookii.org/docs/commandline-cpp-2.0/classookii_1_1basic__usage__writer.html
+[`parse_error::none`]: https://www.ookii.org/docs/commandline-cpp-2.0/namespaceookii.html#afae8f4d80dbe46a2344bb46c522982ef
+[`parse_error::parsing_cancelled`]: https://www.ookii.org/docs/commandline-cpp-2.0/namespaceookii.html#afae8f4d80dbe46a2344bb46c522982ef
+[`parse_error::success`]: https://www.ookii.org/docs/commandline-cpp-2.0/namespaceookii.html#afae8f4d80dbe46a2344bb46c522982ef
+[`parse_error`]: https://www.ookii.org/docs/commandline-cpp-2.0/namespaceookii.html#afae8f4d80dbe46a2344bb46c522982ef
+[`parse_result::error_arg_name`]: https://www.ookii.org/docs/commandline-cpp-2.0/structookii_1_1parse__result.html#a741b2fc17a449ebfc15b262e16540a84
+[`parse_result::error`]: https://www.ookii.org/docs/commandline-cpp-2.0/structookii_1_1parse__result.html#a53281013c6ddafd091ba2d2ebb3ae0c3
+[`parse_result::get_error_message()`]: https://www.ookii.org/docs/commandline-cpp-2.0/structookii_1_1parse__result.html#ac600edb82cc6f15d78986c51bcf2580a
+[`parse_result`]: https://www.ookii.org/docs/commandline-cpp-2.0/structookii_1_1parse__result.html
+[`parser_builder::argument_builder_common::cancel_parsing()`]: https://www.ookii.org/docs/commandline-cpp-2.0/classookii_1_1basic__parser__builder_1_1argument__builder__common.html#a70953e9876bbede9132754595f76b6b3
+[`parser_builder`]: https://www.ookii.org/docs/commandline-cpp-2.0/classookii_1_1basic__parser__builder.html
+[`usage_writer`]: https://www.ookii.org/docs/commandline-cpp-2.0/classookii_1_1basic__usage__writer.html
+[command_line_parser::help_requested()_0]: https://www.ookii.org/docs/commandline-cpp-2.0/classookii_1_1basic__command__line__parser.html#a862a8834b107797b31a9c58efe8c06ea
+[command_line_parser::parse()_0]: https://www.ookii.org/docs/commandline-cpp-2.0/classookii_1_1basic__command__line__parser.html#ae0c7b9990c29f41343182ac3d9918af7
+[error_0]: https://www.ookii.org/docs/commandline-cpp-2.0/structookii_1_1parse__result.html#a53281013c6ddafd091ba2d2ebb3ae0c3
+[parse()_0]: https://www.ookii.org/docs/commandline-cpp-2.0/classookii_1_1basic__command__line__parser.html#ae0c7b9990c29f41343182ac3d9918af7
+[write_usage()_1]: https://www.ookii.org/docs/commandline-cpp-2.0/classookii_1_1basic__command__line__parser.html#a033f6d86054133266aa4f9bf5d8fa68b
