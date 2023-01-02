@@ -16,7 +16,7 @@ explanations of what they do and examples of their output.
   - [Defining Command Line Arguments](DefiningArguments.md)
   - [Parsing Command Line Arguments](ParsingArguments.md)
   - [Generating Usage Help](UsageHelp.md)
-- [Shell Commands](ShellCommands.md)
+- [subcommands](Subcommands.md)
 - [Code-generation scripts](Scripts.md)
 - [Line Wrapping Stream](LineWrappingStream.md)
 - [Header File Documentation](https://www.ookii.org/Link/CommandLineCppDoc)

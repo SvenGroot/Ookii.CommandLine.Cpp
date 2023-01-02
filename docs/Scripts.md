@@ -4,7 +4,7 @@ Although the `parser_builder` class provides a simple interface for defining com
 arguments, it's still less convenient than the way [Ookii.CommandLine for .Net](https://github.com/SvenGroot/ookii.commandline)
 works. To provide an easier method, which is also more similar to the .Net version,
 Ookii.CommandLine for C++ comes with two scripts, one to generate a stand-alone parser, and one to
-generate [shell commands](ShellCommands.md).
+generate [subcommands](Subcommands.md).
 
 These two scripts require [PowerShell Core or PowerShell 6](https://github.com/powershell/powershell)
 or later, which is available for Windows and other platforms such as Linux. Note, even on Windows,
@@ -69,8 +69,8 @@ The following attributes can be applied to the struct or class that contains arg
 Attribute                     | Description                                                                                                                                                                                                  | Value
 ------------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|------------------------------------------------------------------------------------------------------------
 **arguments**                 | Indicates the following struct or class defines arguments (`New-Parser.ps1` only) .                                                                                                                          | **(optional)** The application executable name; if omitted, defaults to the file name portion of `argv[0]`.
-**command**             | Indicates the following class is a shell command (`New-Subcommand.ps1` only).                                                                                                                              | **(optional)** The command name; if omitted, defaults to the static `name()` method or type name.
-**no_register**               | Indicates the shell command should not be registered with the `command_manager`. Use this for classes you intend to use as a common base class for other shell commands (`New-Subcommand.ps1` only). | **(none)**
+**command**             | Indicates the following class is a subcommand (`New-Subcommand.ps1` only).                                                                                                                              | **(optional)** The command name; if omitted, defaults to the static `name()` method or type name.
+**no_register**               | Indicates the subcommand should not be registered with the `command_manager`. Use this for classes you intend to use as a common base class for other subcommands (`New-Subcommand.ps1` only). | **(none)**
 **prefixes**                  | Specifies the argument name prefixes to use instead of the defaults.                                                                                                                                         | A comma-separated list of argument name prefixes.
 **case_sensitive**            | Indicates argument names should be treated as case sensitive.                                                                                                                                                | **(none)**
 **argument_value_separator**  | Specifies the separator to use between argument names and values, instead of the default ':'                                                                                                                 | The separator to use. May only be a single character.
@@ -104,9 +104,9 @@ struct or class.
 - The struct or class must follow the annotation comment with `[arguments]` or `[command]`,
   and have the form `(struct|class) name` with nothing preceding it on that line. Everything after
   the name is ignored, so you are free to add a base class or something like that.
-  - For shell commands, the base class must be specified on the same line with `class name : public base_name`.
+  - For subcommands, the base class must be specified on the same line with `class name : public base_name`.
     You may use the `public`, `private`, `protected` and `virtual` keywords before the base class
-    name. See [shell command base classes](#shell-command-base-classes).
+    name. See [subcommand base classes](#shell-command-base-classes).
 - The struct or class must end with a single line containing nothing but `};`.
 - The struct or class may not be in a namespace.
 - The struct or class may not be a template.
@@ -239,29 +239,29 @@ the code generation as a build step in CMake.
 ## New-Subcommand.ps1
 
 The [`scripts/New-Subcommand.ps1`](../scripts/New-Subcommand.ps1) script works very similar
-to the `New-Parser.ps1` script, but generates [shell commands](ShellCommands.md) instead of a
+to the `New-Parser.ps1` script, but generates [subcommands](Subcommands.md) instead of a
 stand-alone parser.
 
-It takes as input one or more C++ headers, which contain declarations of the shell commands, and
+It takes as input one or more C++ headers, which contain declarations of the subcommands, and
 generates argument parsers for them, as well as the `ookii::register_commands` function, which
-registers all the shell commands it found and returns a `command_manager`. To use this
+registers all the subcommands it found and returns a `command_manager`. To use this
 function, include `<ookii/command_line_generated.h>` _after_ you include `<ookii/command_line.h>`
 
-For the purposes of the code-generation scripts, the major differences between a shell command and
+For the purposes of the code-generation scripts, the major differences between a subcommand and
 a regular arguments struct or class are that:
 
 - The class must be annotated using the `[command]` attribute instead of `[arguments]`.
-- The class must derive from `ookii::command` as normal, or from another shell command class.
-- You must declare the normal shell command constructor taking a `ookii::command::builder_type &`
+- The class must derive from `ookii::command` as normal, or from another subcommand class.
+- You must declare the normal subcommand constructor taking a `ookii::command::builder_type &`
   as an argument; this constructor will be defined by the generated code.
 - You should _not_ declare a `parse` method.
 
 The `[command]` attribute can specify the name of the command, like `[command: name]`.
-If not specified, the [normal ways of determining the name](ShellCommands.md#shell-command-names-and-descriptions)
+If not specified, the [normal ways of determining the name](Subcommands.md#shell-command-names-and-descriptions)
 are used. The same is true for the description if there is none in the comment following the
 attribute.
 
-Here is an example of an annotated shell command, taken from the [included sample](../samples/generated_subcommand/):
+Here is an example of an annotated subcommand, taken from the [included sample](../samples/generated_subcommand/):
 
 ```c++
 // [command: read]
@@ -299,16 +299,16 @@ For more information on how to use the script, run `Get-Help ./New-Subcommand.ps
 A [full sample](../samples/generated_subcommand) is included, which also demonstrates how to
 incorporate the code generation as a build step in CMake.
 
-### Shell command base classes
+### subcommand base classes
 
 If you have common arguments, or common parser attributes you wish to use for every command, you
-may wish to use a common base class for your shell commands. `New-Subcommand.ps1` supports this
+may wish to use a common base class for your subcommands. `New-Subcommand.ps1` supports this
 scenario.
 
 To create the base class, add the `[no_register]` attribute to the class to prevent it from being
 registered as a command. Alternatively, you can manually write the base class instead of generating
 it. The base class must have a constructor that takes a `ookii::command::builder_type &`
-argument same as a normal shell command.
+argument same as a normal subcommand.
 
 When creating the derived class, just inherit from your base class. The generated constructor will
 invoke the base class constructor.
@@ -398,7 +398,7 @@ This assumes you used `FetchContent` to add Ookii.CommandLine to your library, o
 need to adjust the path to the scripts.
 
 Also see the [generated parser sample](../samples/generated_parser/CMakeLists.txt) and the
-[generated shell command sample](../samples/generated_subcommand/CMakeLists.txt) for working
+[generated subcommand sample](../samples/generated_subcommand/CMakeLists.txt) for working
 examples of how to do this.
 
 ### Visual Studio
@@ -463,7 +463,7 @@ The properties you can set for this script are `OokiiCommandNameTransform`, `Ook
 set the `OokiiCommandGenerateMain` property to `true` to pass the `-GenerateMain` argument to the
 script.
 
-For example, the following generates shell commands from two headers:
+For example, the following generates subcommands from two headers:
 
 ```xml
 <ItemGroup>
