@@ -342,9 +342,10 @@ cancel parsing, but will not show help.
 
 The `-Version` argument does not have any aliases or a short name by default.
 
-On Windows only, you can call the [`parser_builder::add_win32_version_argument()`][] to add a `-Version`
-argument that reads information from your executable's `VERSIONINFO` resource, and displays it on the
-console. It will print the product name, version, and copyright information if it's present.
+On Windows only, you can call the [`parser_builder::add_win32_version_argument()`][] method to add a
+`-Version` argument that reads information from your executable's `VERSIONINFO` resource, and
+displays it on the console. It will print the product name, version, and copyright information if
+it's present.
 
 To ensure consistent argument naming, both arguments will adjust their capitalization to match the
 first manually defined argument. If this argument does not start with a capital letter, the arguments

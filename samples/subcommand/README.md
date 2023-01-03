@@ -10,13 +10,12 @@ When invoked without arguments, a subcommand application prints the list of comm
 ```text
 Subcommand sample for Ookii.CommandLine.
 
-Usage: Subcommand <command> [arguments]
+Usage: subcommand <command> [arguments]
 
 The following commands are available:
 
     read
-        Reads and displays data from a file using the specified encoding, wrapping the text to fit
-        the console.
+        Reads and displays data from a file, optionally limiting the number of lines.
 
     version
         Displays version information.
@@ -24,7 +23,7 @@ The following commands are available:
     write
         Writes lines to a file, wrapping them to the specified width.
 
-Run 'Subcommand <command> -Help' for more information about a command.
+Run 'subcommand <command> -Help' for more information about a command.
 ```
 
 Like the usage help format for arguments, the command list format can also be customized using the

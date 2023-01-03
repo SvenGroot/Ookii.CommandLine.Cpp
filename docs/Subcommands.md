@@ -335,19 +335,182 @@ This sample also sets the case-sensitive parameter to `true`.
 
 ### Custom error handling
 
-TODO
+The `command_manager::run_command()` and `command_manager::create_command()` methods will handles
+errors and display usage help on the console if requested. However, if you need more control over
+the error handling process, there are several options.
+
+If you simply wish to customize the error messages, you can create a class that derives from
+`localized_string_provider`, and pass the instance to the `command_manager` constructor.
+
+If you need access to the error message or usage help output, for example to display it using
+something other than the console (like in a GUI app), the easiest way to accomplish this is to
+use the `line_wrapping_ostringstream` class in combination with the `usage_writer` class to redirect
+where error messages and usage help are written.
+
+```c++
+int main(int argc, char *argv[])
+{
+    auto name = ookii::command_line_parser::get_executable_name(argc, argv);
+    ookii::command_manager manager{name};
+    /* Set options and add commands here */
+
+    // You can specify a desired line wrapping width, or use 0 for no wrapping.
+    ookii::line_wrapping_ostringstream error{0};
+    ookii::line_wrapping_ostringstream output{0};
+    ookii::usage_writer usage{output, error};
+    auto result = manager.run_command(argc, argv, &usage);
+    if (!result)
+    {
+        // This still uses the console, but it's for demonstration purposes.
+        std::cerr << error.str() << std::endl;
+        std::cout << output.str() << std::endl;
+        return 1;
+    }
+
+    return *result;
+}
+```
+
+Finally, if you really need fine-grained control, you can manually handle creating a command class
+and parsing arguments. This means you have to handle things such as commands with custom parsing
+manually (unless your application does not use tha), which can get somewhat complex. Below is an
+example of what this would look like.
+
+```c++
+int main(int argc, char *argv[])
+{
+    auto name = ookii::command_line_parser::get_executable_name(argc, argv);
+    ookii::command_manager manager{name};
+    /* Set options and add commands here */
+
+    auto info = argc < 2 ? nullptr : manager.get_command(argv[1]);
+    if (info == nullptr)
+    {
+        manager.write_usage();
+        return 1;
+    }
+
+    std::unique_ptr<ookii::command> command;
+    std::span args{argv, static_cast<size_t>(argc)};
+    if (info->use_custom_argument_parsing())
+    {
+        command = info->create_custom_parsing();
+        auto custom_parsing = static_cast<ookii::command_with_custom_parsing *>(command.get());
+        if (!custom_parsing->parse(args.subspan(2), manager, nullptr))
+        {
+            // How parsing errors and usage are handled for a command with custom parsing is up to
+            // the command.
+            return 1;
+        }
+    }
+    else
+    {
+        auto builder = manager.create_parser_builder(*info);
+        command = info->create(builder);
+        auto parser = builder.build();
+        auto result = parser.parse(args.subspan(2));
+        if (!result)
+        {
+            if (result.error != ookii::parse_error::parsing_cancelled)
+            {
+                std::cerr << result.get_error_message() << std::endl << std::endl;
+            }
+
+            if (parser.help_requested())
+            {
+                parser.write_usage();
+            }
+
+            return 1;
+        }
+    }
+
+    return command->run();
+}
+```
 
 ## Subcommand usage help
 
-TODO
+Since subcommands are created using the `command_line_parser`, they support showing usage help when
+parsing errors occur, or the `-Help` argument is used. For example, with the [subcommand sample](../samples/subcommand)
+you could run the following to get help on the `read` command:
+
+```text
+./Subcommand read -help
+```
+
+In addition, the `command_manager` also prints usage help if no command name was supplied, or the
+supplied command name did not match any command defined in the application. In this case, it prints
+a list of commands, with their descriptions. This is what that looks like for the sample:
+
+```text
+Subcommand sample for Ookii.CommandLine.
+
+Usage: subcommand <command> [arguments]
+
+The following commands are available:
+
+    read
+        Reads and displays data from a file, optionally limiting the number of lines.
+
+    version
+        Displays version information.
+
+    write
+        Writes lines to a file, wrapping them to the specified width.
+
+Run 'subcommand <command> -Help' for more information about a command.
+```
+
+Usage help for a `command_manager` is also created using the `usage_writer`, and can be
+customized by setting the subcommand-specific properties of that class. In addition, you can set
+a few options on the `command_manager` itself.
+
+The `command_manager::description()` method sets an application description which will be included
+before the command list usage. The `command_manager::common_help_argument()` method sets the name
+of a help argument (including its prefix) that is common to all commands, which adds the bottom
+line to the usage help seen above.
+
+Fields on the `usage_writer` let you configure indentation and colors, among others.
+
+The actual help is created using a number of protected virtual methods on the `usage_writer`, so
+this can be further customized by deriving your own class from the `usage_writer` class. Creating
+command list usage help is driven by the `write_command_list_usage_core()` method. You can also
+override other methods to customize parts of the usage help, such as
+`write_command_list_usage_syntax()`, `write_command_description()`, and
+`write_command_help_instruction()`, to name just a few.
 
 ## Automatic commands
 
-TODO
+The `command_manager` provides an option to add an automatic `version` command to the list of
+commands.
+
+You can add this command using the `add_version_command()` method. It will have a default name
+and description (which can be customized using the `localized_string_provider` class), and will
+invoke the specified callback to show version information.
+
+```c++
+ookii::command_manager manager{name};
+
+manager
+    .add_version_command([]()
+        {
+            std::cout << "Awesome Application 1.0" << std::endl;
+        });
+```
+
+On Windows only, you can call the `add_win32_version_command()` method to add a `-Version`
+argument that reads information from your executable's `VERSIONINFO` resource, and displays it on the
+console. It will print the product name, version, and copyright information if it's present.
 
 ## Nested subcommands
 
-TODO
+Ookii.CommandLine does not natively support nested subcommands. However, the
+`ookii::command_with_custom_parsing` class provides the tools needed to implement support for this
+fairly easily.
+
+The [nested commands sample](../samples/nested_commands) shows a complete implementation of this
+functionality.
 
 ## Code-generation scripts
 
