@@ -6,16 +6,18 @@ works. To provide an easier method, which is also more similar to the .Net versi
 Ookii.CommandLine for C++ comes with two scripts, one to generate a stand-alone parser, and one to
 generate [subcommands](Subcommands.md).
 
-These two scripts require [PowerShell Core or PowerShell 6](https://github.com/powershell/powershell)
+These two scripts require [PowerShell 6](https://github.com/powershell/powershell)
 or later, which is available for Windows and other platforms such as Linux. Note, even on Windows,
 the new cross-platform PowerShell is required; the scripts use features not available in Windows
-PowerShell. The scripts were tested with PowerShell 7.2.
+PowerShell. The scripts were tested with PowerShell 7.3.
 
-Both of these scripts generate code that creates a `parser_builder` and adds arguments to it. It
-doesn't offer any features that manually writing code doesn't, it's just a more convenient way to do
-it.
+These scripts generate code that creates a `parser_builder` and adds arguments to it. It doesn't
+offer any features that manually writing code doesn't, it's just a more convenient way to do it.
 
-For information on how to generate these files as part of your build process, [see here](#including-the-scripts-in-your-build-process).
+This article first describes the attributes used to annotate your code, before explaining how each
+script must be used.
+
+For information on how to include code generation as part of your build process, [see here](#including-the-scripts-in-your-build-process).
 
 ## Argument attributes
 
@@ -34,13 +36,13 @@ struct args
 };
 ```
 
-The `arguments` attribute here indicates that the following struct or class contains arguments. The
+The `[arguments]` attribute here indicates that the following struct or class contains arguments. The
 fields with arguments are also annotated in the same way.
 
 Attributes can have values; for example, the `[arguments]` attribute can specify the name of the
-application. To specify a value, follow the attribute by a colon, and then the value. For example,
-`[arguments: name]`. If a colon is present, the entire remainder of the annotation is considered
-the value.
+application's executable. To specify a value, follow the attribute by a colon, and then the value;
+for example, `[arguments: name]`. If a colon is present, the entire remainder of the annotation is
+considered the value.
 
 If an argument doesn't have a value, you can combine multiple on a single line by separating them
 with a comma. For example, `[argument, positional]`. This is not possible if the attribute has a
@@ -66,31 +68,43 @@ std::string arg;
 
 The following attributes can be applied to the struct or class that contains arguments.
 
-Attribute                     | Description                                                                                                                                                                                                  | Value
-------------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|------------------------------------------------------------------------------------------------------------
-**arguments**                 | Indicates the following struct or class defines arguments (`New-Parser.ps1` only) .                                                                                                                          | **(optional)** The application executable name; if omitted, defaults to the file name portion of `argv[0]`.
-**command**             | Indicates the following class is a subcommand (`New-Subcommand.ps1` only).                                                                                                                              | **(optional)** The command name; if omitted, defaults to the static `name()` method or type name.
-**no_register**               | Indicates the subcommand should not be registered with the `command_manager`. Use this for classes you intend to use as a common base class for other subcommands (`New-Subcommand.ps1` only). | **(none)**
-**prefixes**                  | Specifies the argument name prefixes to use instead of the defaults.                                                                                                                                         | A comma-separated list of argument name prefixes.
-**case_sensitive**            | Indicates argument names should be treated as case sensitive.                                                                                                                                                | **(none)**
-**argument_value_separator**  | Specifies the separator to use between argument names and values, instead of the default ':'                                                                                                                 | The separator to use. May only be a single character.
-**no_whitespace_separator**   | Indicates that argument names and values cannot be separated by whitespace                                                                                                                                   | **(none)**
-**allow_duplicate_arguments** | Indicates that repeating an argument more than once is not an error, but the last value supplied will be used.                                                                                               | **(none)**
+Attribute                     | Description                                                                                                                                                                                                                                                                                                                                                  | Value
+------------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|-----------------------------------------------------------------------------------------------------------------------
+**arguments**                 | Indicates the following struct or class defines arguments (`New-Parser.ps1` only) .                                                                                                                                                                                                                                                                          | **(optional)** The application executable name; if omitted, defaults to the file name portion of `argv[0]`.
+**command**                   | Indicates the following class is a subcommand (`New-Subcommand.ps1` only).                                                                                                                                                                                                                                                                                   | **(optional)** The command name; if omitted, defaults to the static `name()` method or type name.
+**global**                    | Specifies options that apply to all commands, or the `command_manager` itself (`New-Subcommand.ps1` only)                                                                                                                                                                                                                                                    | **(none)**
+**allow_duplicate_arguments** | Indicates that repeating an argument more than once is not an error, but the last value supplied will be used.                                                                                                                                                                                                                                               | **(none)**
+**argument_value_separator**  | Specifies the separator to use between argument names and values, instead of the default ':'.                                                                                                                                                                                                                                                                | The separator to use. May only be a single character.
+**case_sensitive**            | Indicates argument names should be treated as case sensitive.                                                                                                                                                                                                                                                                                                | **(none)**
+**common_help_argument**      | Specifies the name of a help argument that is common to all subcommands, so that an instruction on how to get help for a command can be added to the usage help (`New-Subcommand.ps1`, in a `[global]` block, only).                                                                                                                                         | The name, including prefix, of the help argument (e.g. `-Help`).
+**long_prefix**               | Specifies the prefix to use for long argument names in [long/short mode](Arguments.md#longshort-mode), instead of the default `--`.                                                                                                                                                                                                                          | The long argument prefix.
+**mode**                      | Specifies the [parsing mode](Arguments.md#longshort-mode) to use.                                                                                                                                                                                                                                                                                            | Either `default` or `long_short`.
+**name_transform**            | Specifies the [name transformation](#name-transformation) to use when generating argument names from member names. If present, this overrides the `-NameTransform` script argument.                                                                                                                                                                          | One of the following values: `none` (the default), `PascalCase`, `camelCase`, `snake_case`, `dash-case`, or `trim`.
+**no_auto_help**              | Do not create the [automatic `-Help` argument](DefiningArguments.md#automatic-arguments)                                                                                                                                                                                                                                                                     | **(none)**
+**no_register**               | Indicates the subcommand should not be registered with the `command_manager`. Use this for classes you intend to use as a common base class for other subcommands (`New-Subcommand.ps1` only).                                                                                                                                                               | **(none)**
+**no_whitespace_separator**   | Indicates that argument names and values cannot be separated by whitespace                                                                                                                                                                                                                                                                                   | **(none)**
+**prefixes**                  | Specifies the argument name prefixes to use instead of the defaults. These are the short prefixes if using [long/short mode](Arguments.md#longshort-mode)                                                                                                                                                                                                    | A comma-separated list of argument name prefixes.
+**show_usage_on_error**       | Indicates how usage help should be printed if a parsing error occurs.                                                                                                                                                                                                                                                                                        | One of the following values: `full` (the default), `syntax_only`, or `none`.
+**version_info**              | Creates a `-Version` argument, or a `version` command (if used in a `[global]` block).                                                                                                                                                                                                                                                                       | The string to display when the argument or command is used. For multiple lines, repeat the `[version_info]` attribute.
+**win32_version**             | Creates a `-Version` argument, or a `version` command (if used in a `[global]` block), which shows version information extracted from the executable's `VERSIONINFO` resource. If used in combination with `[version_info]`, an `#ifdef` directive is generated so that the `[win32_version]` is used for Windows, and `[version_info]` for other platforms. | **(none)**
 
 ### Attributes for arguments
 
 The following attributes can be applied to the fields that define arguments.
 
-Attribute             | Description                                                                                                                                                         | Value
-----------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------
-**argument**          | Indicates the following field is a command line argument. This must always be the first attribute on an argument field.                                             | **(optional)** The name of the argument; if omitted, it defaults to the field name, possibly modified according to the script's `-NameTransform` argument.
-**required**          | Indicates the argument is [required](Arguments.md#required-arguments).                                                                                              | **(none)**
-**positional**        | Indicates the argument is [positional](Arguments.md#positional-arguments). The position depends on the order the positional arguments are defined in.               | **(none)**
-**value_description** | Specifies the [value description](UsageHelp.md#value-description) of the argument.                                                                                  | The value description.
-**alias**             | Specifies the [aliases](DefiningArguments.md#aliases) of an argument.                                                                                               | A comma-separated list of aliases.
-**default**           | Specifies the [default value](DefiningArguments.md#default-values) of an argument.                                                                                  | The default value. This is copied into the generated code verbatim, so it must be a valid C++ expression or literal; if the value is a string, this must have quotes.
-**multi_value**       | Indicates the argument is a [multi-value argument](Arguments.md#arguments-with-multiple-values). Requires the argument uses a suitable type (e.g. `std::vector<T>`) | **(none)**
-**cancel_parsing**    | Indicates the argument, when supplied, will [cancel parsing](DefiningArguments.md#arguments-that-cancel-parsing).                                                   | **(none)**
+Attribute             | Description                                                                                                                                                                                                                               | Value
+----------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+**argument**          | Indicates the following field is a command line argument. This must always be the first attribute on an argument field.                                                                                                                   | **(optional)** The name of the argument; if omitted, it defaults to the field name, possibly modified according to the name transformation in use. If using [long/short mode](Arguments.md#longshort-mode), this is the long name.
+**alias**             | Specifies the [aliases](DefiningArguments.md#aliases) of an argument. If using  [long/short mode](Arguments.md#longshort-mode), these are the long aliases, and are ignored if the argument has no long name.                             | A comma-separated list of aliases.
+**cancel_parsing**    | Indicates the argument, when supplied, will [cancel parsing](DefiningArguments.md#arguments-that-cancel-parsing).                                                                                                                         | **(none)**
+**default**           | Specifies the [default value](DefiningArguments.md#default-values) of an argument.                                                                                                                                                        | The default value. This is copied into the generated code verbatim, so it must be a valid C++ expression or literal; if the value is a string, this must have quotes.
+**multi_value**       | Indicates the argument is a [multi-value argument](Arguments.md#arguments-with-multiple-values). Requires the argument uses a suitable type (e.g. `std::vector<T>`)                                                                       | **(none)**
+**no_long_name**      | Indicates the argument has no long name, but only a short name. If not using  [long/short mode](Arguments.md#longshort-mode), this will create an argument using the short name as its name. Requires that the argument has a short name. | **(none)**
+**positional**        | Indicates the argument is [positional](Arguments.md#positional-arguments). The position depends on the order the positional arguments are defined in.                                                                                     | **(none)**
+**required**          | Indicates the argument is [required](Arguments.md#required-arguments).                                                                                                                                                                    | **(none)**
+**short_alias**       | Specifies the [short aliases](DefiningArguments.md#aliases) of an argument. Ignored if [long/short mode](Arguments.md#longshort-mode) is not used or the argument has no short name.                                                      | A comma-separated list of single-character short aliases.
+**short_name**        | Specifies the short name of an argument. Ignored if [long/short mode](Arguments.md#longshort-mode) is not used.                                                                                                                           | **(optional)** The single-character short name; if omitted, it defaults to the first character of the long name.
+**value_description** | Specifies the [value description](UsageHelp.md#value-description) of the argument.                                                                                                                                                        | The value description.
 
 ### Parsing limitations
 
@@ -106,13 +120,39 @@ struct or class.
   the name is ignored, so you are free to add a base class or something like that.
   - For subcommands, the base class must be specified on the same line with `class name : public base_name`.
     You may use the `public`, `private`, `protected` and `virtual` keywords before the base class
-    name. See [subcommand base classes](#shell-command-base-classes).
-- The struct or class must end with a single line containing nothing but `};`.
+    name. See [subcommand base classes](#subcommand-base-classes).
+- The struct or class must end with a single line containing nothing but `};` (besides whitespace).
+  - There must be no other line like that before the end of the struct, so beware when declaring
+    nested types.
 - The struct or class may not be in a namespace.
 - The struct or class may not be a template.
 - Every argument field must be on a single line (preceded by lines with annotation comments), with
   the last word before the semi-colon, or before an `=` or `{` token for initialization, being the
   name of the field. So, `int foo;`, `int foo = 0;`, and `int foo{};` are all supported.
+
+### Name transformation
+
+You can use the `-NameTransform` argument to either script, or the `[name_transform]` attribute, to
+indicate how argument names should be derived from the member names of the struct or class, if you
+didn't specify an explicit name.
+
+Value          | Description                                                                                                                                                                                                                                                  | Example
+---------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|----------------------------------------------------------------
+**None**       | Field names are used as-is, without changing them. This is the default.                                                                                                                                                                                      |
+**PascalCase** | Field names are transformed to PascalCase. This removes all underscores, and the first character and every character after an underscore is changed to uppercase. The case of other characters is not changed.                                               | `some_name`, `_some_name`, `_someName` => SomeName
+**CamelCase**  | Field names are transformed to camelCase. Similar to PascalCase, but the first character will not be uppercase.                                                                                                                                              | `some_name`, `_some_name`, `_SomeName`=> someName
+**SnakeCase**  | Field names are transformed to snake_case. This removes leading and trailing underscores, changes all characters to lower-case, and reduces consecutive underscores to a single underscore. An underscore is inserted before previously capitalized letters. | `some_name`, `_some__name`, `_someName` => some_name
+**DashCase**   | Field names are transformed to dash-case. Similar to SnakeCase, but uses a dash instead of an underscore.                                                                                                                                                    | `some_name`, `_some__name`, `_someName` => some-name
+**Trim**       | Removes leading and trailing underscores, but leaves the rest of the name alone.                                                                                                                                                                             | `some_name`, `_some_name` => some_name; `_someName` => someName
+
+This is convenient if your naming convention for fields in C++ is different than the convention you
+wish to use for argument names, and you don't want to specify every argument name manually. Keep in
+mind that argument names are case insensitive by default, so the capitalization of the names only
+affects how they are displayed in the usage help; they can still be specified using any case, unless
+you use `[case_sensitive]` on the arguments struct.
+
+If you do specify an argument name manually using `[argument: name]`, these are not affected by name
+transformations.
 
 ### Example
 
@@ -120,6 +160,9 @@ Here's an example of a struct that defines a number of arguments, using the anno
 
 ```c++
 // [arguments]
+// [name_transform: PascalCase]
+// [version_info: Ookii.CommandLine Sample 2.0]
+// [show_usage_on_error: syntax_only]
 // Sample command line application. The application parses the command line and prints the results,
 // but otherwise does nothing and none of the arguments are actually used for anything.
 struct arguments
@@ -140,7 +183,7 @@ struct arguments
     // [argument]
     // [value_description: number]
     // Provides the count for something to the application.
-    std::optional<int> count;
+    std::optional<float> count;
 
     // [argument]
     // [alias: v]
@@ -152,10 +195,6 @@ struct arguments
     // This is an example of a multi-value argument, which can be repeated multiple times to set
     // more than one value.
     std::vector<std::string> values;
-
-    // [argument, cancel_parsing, alias: ?]
-    // Displays this help message.
-    bool help;
 
     OOKII_DECLARE_PARSE_METHOD(arguments);
 };
@@ -172,11 +211,19 @@ the arguments. The struct or class and its fields must be annotated as described
 In addition, the struct must declare a static `parse` method with the following signature:
 
 ```c++
-static std::optional<type> parse(int argc, const char* const argv[], const ookii::usage_options &options = {});
+static std::optional<arguments_type> parse(int argc, const char* const argv[], ookii::usage_writer *usage = nullptr,
+    ookii::localized_string_provider *string_provider = nullptr, const std::locale &locale = {})
 ```
 
 Where `type` is the type of your arguments struct or class. By having the parse method be a member
 of the struct, it makes it possible to use private fields for arguments if you wish.
+
+If using the `-WideChar` script argument, this definition should look like this instead:
+
+```c++
+static std::optional<arguments_type> parse(int argc, const wchar_t* const argv[], ookii::wusage_writer *usage = nullptr,
+    ookii::wlocalized_string_provider *string_provider = nullptr, const std::locale &locale = {})
+```
 
 To make it easy to declare the method, you can include `<ookii/command_line_generated.h>` and use
 the following macro:
@@ -185,34 +232,26 @@ the following macro:
 OOKII_DECLARE_PARSE_METHOD(type);
 ```
 
-The script's output, written to the file specified by `-OutputPath`, will be a C++ source file
-that contains a definition for that parse method. Add this generated file to your compiler inputs
-to use the generated parse method.
+This macro will determine which character type to use based on whether the `_UNICODE` preprocessor
+definition exists.
 
-The generated `parse` method will create a `command_line_parser` using the information extracted
-from the annotation comments. It will then parse the arguments. If successful, it returns an instance
-of the arguments struct or class. If an error occurred, it will print the error message and usage
-help according to the supplied `usage_options`, and return `std::nullopt`.
+
+The script's output, written to the file specified by `-OutputPath`, will be a C++ source file that
+contains a definition for that `parse()` method. Add this generated file to your compiler inputs to
+use the generated parse method.
+
+The generated `parse()` method will create a `command_line_parser` using the information extracted
+from the annotation comments. It will then parse the arguments. If successful, it returns an
+instance of the arguments struct or class. If an error occurred, it will print the error message and
+usage help according to the supplied `usage_options`, and return `std::nullopt`.
+
+### Script arguments
+
+`-OutputPath` indicates the path of the generated C++ file.
 
 Use the script's `-NameTransform` argument to indicate that argument names derived from field names
-should be changed according to the supplied method. The following values are supported:
-
-Value          | Description                                                                                                                                                                                                                                                  | Example
----------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|----------------------------------------------------------------
-**None**       | Field names are used as-is, without changing them. This is the default.                                                                                                                                                                                      |
-**PascalCase** | Field names are transformed to PascalCase. This removes all underscores, and the first character and every character after an underscore is changed to uppercase. The case of other characters is not changed.                                               | `some_name`, `_some_name`, `_someName` => SomeName
-**CamelCase**  | Field names are transformed to camelCase. Similar to PascalCase, but the first character will not be uppercase.                                                                                                                                             | `some_name`, `_some_name`, `_SomeName`=> someName
-**SnakeCase**  | Field names are transformed to snake_case. This removes leading and trailing underscores, changes all characters to lower-case, and reduces consecutive underscores to a single underscore. An underscore is inserted before previously capitalized letters. | `some_name`, `_some__name`, `_someName` => some_name
-**DashCase**   | Field names are transformed to dash-case. Similar to SnakeCase, but uses a dash instead of an underscore.                                                                                                                                                    | `some_name`, `_some__name`, `_someName` => some-name
-**Trim**       | Removes leading and trailing underscores, but leaves the rest of the name alone.                                                                                                                                                                             | `some_name`, `_some_name` => some_name; `_someName` => someName
-
-This is convenient if your naming convention for fields in C++ is different than the convention you wish to use
-for argument names, and you don't want to specify every argument name manually. Keep in mind that argument names are
-case insensitive by default, so the capitalization of the names only affects how they are displayed in the usage help;
-they can still be specified using any case, unless you use `[case_sensitive]` on the arguments struct.
-
-If you do specify an argument name manually using `[argument: name]`, these are not affected by
-`-NameTransform`.
+should be changed according to the supplied [name transformation](#name-transformation).
+me alone.                                                                                                                                                                             | `some_name`, `_some_name` => some_name; `_someName` => someName
 
 By using the script's `-EntryPoint` argument, you can specify a function name that should serve as
 the entry point for your application. The script will then generate a `main()` function for you,
@@ -223,13 +262,19 @@ in the header you pass as input as well, so it's available when the generated fi
 The `-WideChar` argument can be used on Windows to generate code that uses wide characters (`wchar_t`)
 for the arguments. Make sure to define `_UNICODE` if you use `<ookii/command_line_generated.h>` so
 the `OOKII_DECLARE_PARSE_METHOD` macro will declare a method using `wchar_t` as well. When combined
-with `-EntryPoint`, this will generate a `wmain()` instead of `main()`.
+with `-EntryPoint`, this will generate a `wmain()` function instead of `main()`.
 
 The generated source file will include the headers for Ookii.CommandLine, as well as the header(s)
 the script was passed as input. If you need to include additional headers, like for example a
 pre-compiled header file, use the `-AdditionalHeaders` argument. These will be included before
 any other headers. Usually, it's easier to include other headers from the header(s) containing the
 argument structs or classes.
+
+A sample invocation of this script could look as follows:
+
+```pwsh
+./New-Parser.ps1 arguments.h -OutputPath generated.cpp -EntryPoint my_main
+```
 
 For more information on how to use the script, run `Get-Help ./New-Parser.ps1`.
 
@@ -243,7 +288,7 @@ to the `New-Parser.ps1` script, but generates [subcommands](Subcommands.md) inst
 stand-alone parser.
 
 It takes as input one or more C++ headers, which contain declarations of the subcommands, and
-generates argument parsers for them, as well as the `ookii::register_commands` function, which
+generates argument parsers for them, as well as the `ookii::register_commands()` function, which
 registers all the subcommands it found and returns a `command_manager`. To use this
 function, include `<ookii/command_line_generated.h>` _after_ you include `<ookii/command_line.h>`
 
@@ -257,7 +302,7 @@ a regular arguments struct or class are that:
 - You should _not_ declare a `parse` method.
 
 The `[command]` attribute can specify the name of the command, like `[command: name]`.
-If not specified, the [normal ways of determining the name](Subcommands.md#shell-command-names-and-descriptions)
+If not specified, the [normal ways of determining the name](Subcommands.md#subcommand-names-and-descriptions)
 are used. The same is true for the description if there is none in the comment following the
 attribute.
 
@@ -284,10 +329,33 @@ private:
 };
 ```
 
-Like `New-Parser.ps1`, the `New-Subcommand.ps1` script supports the `-NameTransform`, `-WideChar`
-and `-AdditionalHeaders` arguments, with the same behavior. Note that `-NameTransform` affects the
-auto-generated names of arguments, but does not affect the names of commands (which, if not explicitly
-specified, are determined at runtime and not by the script).
+### Global options
+
+If you wish to set options that apply to all commands (such as the parsing mode), you can use a
+comment block that starts with a `[global]` attribute. This will add a `configure_parser()`
+call in the generated `ookii::register_commands()` with those options, so they are used for every
+command.
+
+A `[name_transform]` attribute in the `[global]` block will cause this name transformation to be
+used for every generated command, for every header file.
+
+In addition, if the `[global]` block can contains `[version_info]` or `[win32_version]` attribute,
+these are used to generate a `version` command instead of an argument. The `[common_help_argument]`
+attribute is used to specify the name (including prefix) of a help argument shared by every command,
+which will be used in the usage help.
+
+If the `[global]` block is followed by any comment lines not containing attributes, these specify
+the application description to include before the command list usage help.
+
+The `[global]` block must end with either a non-comment line (like a blank line), or the end of the
+file.
+
+### Script arguments for `New-Subcommand.ps1`
+
+Like `New-Parser.ps1`, the `New-Subcommand.ps1` script supports the `-Output`, `-NameTransform`,
+`-WideChar` and `-AdditionalHeaders` arguments, with the same behavior. Note that `-NameTransform`
+affects the auto-generated names of arguments, but does not affect the names of commands (which, if
+not explicitly specified, are determined at runtime and not by the script).
 
 Use the `-GenerateMain` argument to include a `main()` function in the generated output file. This
 main method will call `ookii::register_commands`, and then use `command_manager::run_command`

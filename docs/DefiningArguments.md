@@ -252,7 +252,7 @@ auto parser = ookii::parser_builder{name}
 
 An alias is an alternative name that can be used to specify a command line argument. Aliases can be
 added to a command line argument by using the [`parser_builder::argument_builder_common::alias()`][]
-method. 
+method.
 
 For example, the following code defines a switch argument that can be specified using either the
 name `-Verbose` or the alias `-v`:
