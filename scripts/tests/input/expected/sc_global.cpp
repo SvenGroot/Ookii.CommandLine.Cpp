@@ -7,7 +7,8 @@ my_command::my_command(my_command::builder_type &builder)
     : ookii::command{builder}
 {
     builder
-        .add_argument(this->test_arg, "test-arg").required().positional();
+        .add_argument(this->test_arg, "test-arg").required().positional()
+    ;
 }
 
 ookii::basic_command_manager<char> ookii::register_commands(std::basic_string<char> application_name, ::ookii::basic_localized_string_provider<char> *string_provider, const std::locale& locale)
@@ -20,7 +21,8 @@ ookii::basic_command_manager<char> ookii::register_commands(std::basic_string<ch
         {
             parser
                 .mode(ookii::parsing_mode::long_short)
-                .prefixes({ "-", "/" });
+                .prefixes({ "-", "/" })
+            ;
         })
 #ifdef _WIN32
         .add_win32_version_command()
@@ -30,7 +32,8 @@ ookii::basic_command_manager<char> ookii::register_commands(std::basic_string<ch
             ookii::console_stream<char>::cout() << "Version info" << std::endl;
         })
 #endif
-        .add_command<my_command>("name", "Description of the command with a line break.\n\nAnd a paragraph.");
+        .add_command<my_command>("name", "Description of the command with a line break.\n\nAnd a paragraph.")
+    ;
 
     return manager;
 }

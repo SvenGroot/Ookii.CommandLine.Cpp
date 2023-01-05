@@ -43,6 +43,7 @@ class CodeGenContext {
     [string] $GlobalAttribute
     [string] $ExtraIndent
     [NameTransformMode] $NameTransform
+    [System.IO.TextWriter] $Writer
 }
 
 class AttributeInfo {
@@ -139,7 +140,7 @@ class ArgumentInfo {
         }
     }
 
-    [string] GenerateArgument([CodeGenContext]$Context) {
+    [void] GenerateArgument([CodeGenContext]$Context) {
         $method = "add_argument"
         switch ($this.Kind) {
             MultiValue { $method = "add_multi_value_argument" }
@@ -172,49 +173,48 @@ class ArgumentInfo {
             $target = "$($Context.FieldPrefix)$($this.MemberName)"
         }
 
-        $result = "        .$method($target, $($Context.StringPrefix)$primaryName)"
+        $Context.Writer.Write("        .$method($target, $($Context.StringPrefix)$primaryName)")
         if ($this.HasLongName -and $this.HasShortName) {
             if ($this.ShortName) {
-                $result += ".short_name($($Context.StringPrefix)'$($this.ShortName)')"
+                $Context.Writer.Write(".short_name($($Context.StringPrefix)'$($this.ShortName)')")
             } else {
-                $result += ".short_name()"
+                $Context.Writer.Write(".short_name()")
             }
         }
 
         if ($this.Required) {
-            $result += ".required()"
+            $Context.Writer.Write(".required()")
         }
 
         if ($this.Positional) {
-            $result += ".positional()"
+            $Context.Writer.Write(".positional()")
         }
 
         if ($this.CancelParsing) {
-            $result += ".cancel_parsing()"
+            $Context.Writer.Write(".cancel_parsing()")
         }
 
         if ($this.DefaultValue) {
-            $result += ".default_value($($this.DefaultValue))"
+            $Context.Writer.Write(".default_value($($this.DefaultValue))")
         }
 
         if ($this.ValueDescription) {
-            $result += ".value_description($($Context.StringPrefix)`"$($this.ValueDescription)`")"
+            $Context.Writer.Write(".value_description($($Context.StringPrefix)`"$($this.ValueDescription)`")")
         }
 
         foreach ($alias in $this.Aliases) {
-            $result += ".alias($($Context.StringPrefix)`"$alias`")"
+            $Context.Writer.Write(".alias($($Context.StringPrefix)`"$alias`")")
         }
 
         foreach ($alias in $this.ShortAliases) {
-            $result += ".short_alias($($Context.StringPrefix)'$alias')"
+            $Context.Writer.Write(".short_alias($($Context.StringPrefix)'$alias')")
         }
 
         if ($this.Description) {
-            $result += ".description($($Context.StringPrefix)`"$($this.Description)`")"
+            $Context.Writer.Write(".description($($Context.StringPrefix)`"$($this.Description)`")")
         }
 
-        $result
-        return $result;
+        $Context.Writer.WriteLine()
     }
 
     [void] GenerateName([NameTransformMode]$Transform) {
@@ -348,145 +348,139 @@ class CommandInfo {
         }
     }
 
-    [string[]] GenerateParser([CodeGenContext]$Context) {
-        $result = @()
+    [void] GenerateParser([CodeGenContext]$Context) {
         if ($this.CommandName) {
-            $result += "    command_name = $($Context.StringPrefix)`"$($this.CommandName)`";"
+            $Context.Writer.WriteLine("    command_name = $($Context.StringPrefix)`"$($this.CommandName)`";")
         }
 
         $Context.FieldPrefix = "this->"
-        $result += "    ookii::basic_parser_builder<$($Context.CharType)> builder{command_name, string_provider};"
-        $result += "    builder"
-        $result += "        .locale(locale)"
+        $Context.Writer.WriteLine("    ookii::basic_parser_builder<$($Context.CharType)> builder{command_name, string_provider};")
+        $Context.Writer.WriteLine("    builder")
+        $Context.Writer.WriteLine("        .locale(locale)")
         if ($this.Description) {
-            $result += "        .description($($Context.StringPrefix)`"$($this.Description)`")"
+            $Context.Writer.WriteLine("        .description($($Context.StringPrefix)`"$($this.Description)`")")
         }
         
-        $result += $this.GenerateParserAttributes($Context)
-        $result += $this.GenerateArguments($Context)
-        $result += "    ;"
-        $result += "";
-        $result += "    return builder;"
-        return $result;
+        $this.GenerateParserAttributes($Context)
+        $this.GenerateArguments($Context)
+        $Context.Writer.WriteLine("    ;")
+        $Context.Writer.WriteLine("")
+        $Context.Writer.WriteLine("    return builder;")
     }
 
-    [string[]] GenerateParserAttributes([CodeGenContext]$Context) {
-        $result = @()
+    [void] GenerateParserAttributes([CodeGenContext]$Context) {
         switch ($this.ParsingMode) {
             DefaultMode {
-                $result += "$($Context.ExtraIndent)        .mode(ookii::parsing_mode::default)"
+                $Context.Writer.WriteLine("$($Context.ExtraIndent)        .mode(ookii::parsing_mode::default)")
             }
             LongShort {
-                $result += "$($Context.ExtraIndent)        .mode(ookii::parsing_mode::long_short)"
+                $Context.Writer.WriteLine("$($Context.ExtraIndent)        .mode(ookii::parsing_mode::long_short)")
             }
         }
 
         switch ($this.ShowUsageOnError) {
             Full {
-                $result += "$($Context.ExtraIndent)        .show_usage_on_error(ookii::usage_help_request::full)"
+                $Context.Writer.WriteLine("$($Context.ExtraIndent)        .show_usage_on_error(ookii::usage_help_request::full)")
             }
             SyntaxOnly {
-                $result += "$($Context.ExtraIndent)        .show_usage_on_error(ookii::usage_help_request::syntax_only)"
+                $Context.Writer.WriteLine("$($Context.ExtraIndent)        .show_usage_on_error(ookii::usage_help_request::syntax_only)")
             }
             None {
-                $result += "$($Context.ExtraIndent)        .show_usage_on_error(ookii::usage_help_request::none)"
+                $Context.Writer.WriteLine("$($Context.ExtraIndent)        .show_usage_on_error(ookii::usage_help_request::none)")
             }
         }
 
         if ($this.Prefixes.Length -gt 0) {
             $prefixList = $this.Prefixes -join "`", $($Context.StringPrefix)`""
-            $result += "$($Context.ExtraIndent)        .prefixes({ $($Context.StringPrefix)`"$prefixList`" })"
+            $Context.Writer.WriteLine("$($Context.ExtraIndent)        .prefixes({ $($Context.StringPrefix)`"$prefixList`" })")
         }
 
         if ($this.LongPrefix) {
-            $result += "$($Context.ExtraIndent)        .long_prefix($($Context.StringPrefix)`"$($this.LongPrefix)`")"
+            $Context.Writer.WriteLine("$($Context.ExtraIndent)        .long_prefix($($Context.StringPrefix)`"$($this.LongPrefix)`")")
         }
 
         if (-not $this.IsGlobal -and $this.CaseSensitive) {
-            $result += "$($Context.ExtraIndent)        .case_sensitive(true)"
+            $Context.Writer.WriteLine("$($Context.ExtraIndent)        .case_sensitive(true)")
         }
 
         if (-not $this.AllowWhiteSpaceSeparator) {
-            $result += "$($Context.ExtraIndent)        .allow_whitespace_separator(false)"
+            $Context.Writer.WriteLine("$($Context.ExtraIndent)        .allow_whitespace_separator(false)")
         }
 
         if ($this.AllowDuplicateArguments) {
-            $result += "$($Context.ExtraIndent)        .allow_duplicate_arguments(true)"
+            $Context.Writer.WriteLine("$($Context.ExtraIndent)        .allow_duplicate_arguments(true)")
         }
 
         if ($this.Separator) {
-            $result += "$($Context.ExtraIndent)        .argument_value_separator($($Context.StringPrefix)'$($this.Separator)')"
+            $Context.Writer.WriteLine("$($Context.ExtraIndent)        .argument_value_separator($($Context.StringPrefix)'$($this.Separator)')")
         }
 
         if ($this.NoAutoHelp) {
-            $result += "$($Context.ExtraIndent)        .automatic_help_argument(false)"
+            $Context.Writer.WriteLine("$($Context.ExtraIndent)        .automatic_help_argument(false)")
         }
 
         if (-not $this.IsGlobal) {
             if ($this.Win32VersionInfo) {
-                $result += "#ifdef _WIN32"
-                $result += "$($Context.ExtraIndent)        .add_win32_version_argument()"
+                $Context.Writer.WriteLine("#ifdef _WIN32")
+                $Context.Writer.WriteLine("$($Context.ExtraIndent)        .add_win32_version_argument()")
                 if ($this.VersionInfo) {
-                    $result += "#else"
+                    $Context.Writer.WriteLine("#else")
                 }
             }
 
             if ($this.VersionInfo) {
-                $result += "$($Context.ExtraIndent)        .add_version_argument([]()"
-                $result += "$($Context.ExtraIndent)        {"
+                $Context.Writer.WriteLine("$($Context.ExtraIndent)        .add_version_argument([]()")
+                $Context.Writer.WriteLine("$($Context.ExtraIndent)        {")
                 foreach ($line in $this.VersionInfo) {
-                    $result += "$($Context.ExtraIndent)            ookii::console_stream<$($Context.CharType)>::cout() << $($Context.StringPrefix)`"$line`" << std::endl;"
+                    $Context.Writer.WriteLine("$($Context.ExtraIndent)            ookii::console_stream<$($Context.CharType)>::cout() << $($Context.StringPrefix)`"$line`" << std::endl;")
                 }
 
-                $result += "$($Context.ExtraIndent)        })"
+                $Context.Writer.WriteLine("$($Context.ExtraIndent)        })")
             }
 
             if ($this.Win32VersionInfo) {
-                $result += "#endif"
+                $Context.Writer.WriteLine("#endif")
             }
         }
-
-        return $result
     }
 
-    [string[]] GenerateSubcommand([CodeGenContext]$Context) {
-        $result = @("$($this.TypeName)::$($this.TypeName)($($this.TypeName)::builder_type &builder)")
+    [void] GenerateSubcommand([CodeGenContext]$Context) {
+        $Context.Writer.WriteLine("$($this.TypeName)::$($this.TypeName)($($this.TypeName)::builder_type &builder)")
         if ($this.BaseClass) {
-            $result += "    : $($this.BaseClass){builder}"
+            $Context.Writer.WriteLine("    : $($this.BaseClass){builder}")
         }
 
         $Context.FieldPrefix = "this->"
-        $result += "{"
-        $builder = $this.GenerateParserAttributes($Context)
-        $builder += $this.GenerateArguments($Context)
+        $Context.Writer.WriteLine("{")
+        $oldWriter = $Context.Writer
+        $Context.Writer = [System.IO.StringWriter]::new();
+        $this.GenerateParserAttributes($Context)
+        $this.GenerateArguments($Context)
+        $builder = $Context.Writer.ToString()
+        $Context.Writer = $oldWriter
         if ($builder.Length -gt 0) {
-            $result += "    builder"
-            $result += $builder
-            $result[-1] += ";"
+            $Context.Writer.WriteLine("    builder")
+            $Context.Writer.Write($builder)
+            $Context.Writer.WriteLine("    ;")
         }
 
-        $result += "}"
-        $result += ""
-        $result += ""
-        return $result
+        $Context.Writer.WriteLine("}")
+        $Context.Writer.WriteLine()
     }
 
-    [string[]] GenerateArguments([CodeGenContext]$Context) {
+    [void] GenerateArguments([CodeGenContext]$Context) {
         $nameTransform = $Context.NameTransform
         if ($null -ne $this.OverrideNameTransform) {
             $nameTransform = $this.OverrideNameTransform
         }
 
-        $result = @()
         foreach ($arg in $this.Arguments) {
             $arg.GenerateName($nameTransform)
-            $result += $arg.GenerateArgument($Context)
+            $arg.GenerateArgument($Context)
         }
-
-        return $result
     }
 
-    [string] GenerateRegistration([CodeGenContext]$Context) {
+    [void] GenerateRegistration([CodeGenContext]$Context) {
         $name = if ($this.CommandName) {
             "$($Context.StringPrefix)`"$($this.CommandName)`""
         } else {
@@ -499,13 +493,12 @@ class CommandInfo {
             "{}"
         }
 
-        return "        .add_command<$($this.TypeName)>($name, $commandDescription)"
+        $Context.Writer.WriteLine("        .add_command<$($this.TypeName)>($name, $commandDescription)")
     }
 
-    [string[]] GenerateGlobal([CodeGenContext]$Context) {
-        $result = @()
+    [void] GenerateGlobal([CodeGenContext]$Context) {
         if ($this.Description) {
-            $result += "        .description($($Context.StringPrefix)`"$($this.Description)`")"
+            $Context.Writer.WriteLine("        .description($($Context.StringPrefix)`"$($this.Description)`")")
         }
 
         $helpArgument = $this.CommonHelpArgument
@@ -531,44 +524,46 @@ class CommandInfo {
         }
 
         if ($helpArgument) {
-            $result += "        .common_help_argument($($Context.StringPrefix)`"$helpArgument`")"
+            $Context.Writer.WriteLine("        .common_help_argument($($Context.StringPrefix)`"$helpArgument`")")
         }
 
+        $oldWriter = $Context.Writer
+        $Context.Writer = [System.IO.StringWriter]::new()
         $Context.ExtraIndent = "        "
-        $attributes = $this.GenerateParserAttributes($Context)
+        $this.GenerateParserAttributes($Context)
+        $attributes = $Context.Writer.ToString();
+        $Context.Writer = $oldWriter
         $Context.ExtraIndent = $null
         if ($attributes.Length -gt 0) {
-            $result += "        .configure_parser([](auto &parser)"
-            $result += "        {"
-            $result += "            parser"
-            $result += $attributes
-            $result[-1] += ";"
-            $result += "        })"
+            $Context.Writer.WriteLine("        .configure_parser([](auto &parser)")
+            $Context.Writer.WriteLine("        {")
+            $Context.Writer.WriteLine("            parser")
+            $Context.Writer.Write($attributes)
+            $Context.Writer.WriteLine("            ;")
+            $Context.Writer.WriteLine("        })")
         }
 
         if ($this.Win32VersionInfo) {
-            $result += "#ifdef _WIN32"
-            $result += "$($Context.ExtraIndent)        .add_win32_version_command()"
+            $Context.Writer.WriteLine("#ifdef _WIN32")
+            $Context.Writer.WriteLine("$($Context.ExtraIndent)        .add_win32_version_command()")
             if ($this.VersionInfo) {
-                $result += "#else"
+                $Context.Writer.WriteLine("#else")
             }
         }
 
         if ($this.VersionInfo) {
-            $result += "$($Context.ExtraIndent)        .add_version_command([]()"
-            $result += "$($Context.ExtraIndent)        {"
+            $Context.Writer.WriteLine("$($Context.ExtraIndent)        .add_version_command([]()")
+            $Context.Writer.WriteLine("$($Context.ExtraIndent)        {")
             foreach ($line in $this.VersionInfo) {
-                $result += "$($Context.ExtraIndent)            ookii::console_stream<$($Context.CharType)>::cout() << $($Context.StringPrefix)`"$line`" << std::endl;"
+                $Context.Writer.WriteLine("$($Context.ExtraIndent)            ookii::console_stream<$($Context.CharType)>::cout() << $($Context.StringPrefix)`"$line`" << std::endl;")
             }
 
-            $result += "$($Context.ExtraIndent)        })"
+            $Context.Writer.WriteLine("$($Context.ExtraIndent)        })")
         }
 
         if ($this.Win32VersionInfo) {
-            $result += "#endif"
+            $Context.Writer.WriteLine("#endif")
         }
-
-        return $result
     }
 }
 

@@ -12,7 +12,8 @@ my_command::my_command(my_command::builder_type &builder)
         .add_argument(this->__test__arg2__, L"TestArg2").positional().default_value(1).value_description(L"desc").alias(L"test").description(L"Short description.")
         .add_multi_value_argument(this->test_arg3, L"foo").alias(L"t").alias(L"v")
         .add_argument(this->_testArg4, L"TestArg4").cancel_parsing()
-        .add_argument(this->TestArg5, L"TestArg5").default_value("foo");
+        .add_argument(this->TestArg5, L"TestArg5").default_value("foo")
+    ;
 }
 
 other_command::other_command(other_command::builder_type &builder)
@@ -24,14 +25,16 @@ other_command::other_command(other_command::builder_type &builder)
         .allow_whitespace_separator(false)
         .allow_duplicate_arguments(true)
         .argument_value_separator(L'=')
-        .add_argument(this->_some_arg, L"SomeArg");
+        .add_argument(this->_some_arg, L"SomeArg")
+    ;
 }
 
 third_command::third_command(third_command::builder_type &builder)
     : other_command{builder}
 {
     builder
-        .add_argument(this->_other_arg, L"OtherArg");
+        .add_argument(this->_other_arg, L"OtherArg")
+    ;
 }
 
 ookii::basic_command_manager<wchar_t> ookii::register_commands(std::basic_string<wchar_t> application_name, ::ookii::basic_localized_string_provider<wchar_t> *string_provider, const std::locale& locale)
@@ -39,7 +42,8 @@ ookii::basic_command_manager<wchar_t> ookii::register_commands(std::basic_string
     basic_command_manager<wchar_t> manager{application_name, false, locale, string_provider};
     manager
         .add_command<my_command>(L"name", L"Description of the command with a line break.\n\nAnd a paragraph.")
-        .add_command<third_command>({}, {});
+        .add_command<third_command>({}, {})
+    ;
 
     return manager;
 }
