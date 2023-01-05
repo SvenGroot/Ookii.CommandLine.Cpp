@@ -515,17 +515,18 @@ struct. All of the field names will be automatically transformed to dash-case, w
 set explicit names. Other possible name transformations are PascalCase, camelCase, snake_case, and
 trim (which just removes leading and trailing underscores, without other changes).
 
-The script will generate a `parse()` method for the struct, but this method must be declared in the
-struct first. We can't use the previous parse method, because it doesn't match the exact signature
-the script expects. The signature used by the script is as follows:
+The script will generate a `create_builder()` method for the struct, but this method must be
+declared in the struct first. The signature used by the script is as follows:
 
 ```c++
-static std::optional<arguments_type> parse(int argc, const char* const argv[], ookii::usage_writer *usage = nullptr,
-    ookii::localized_string_provider *string_provider = nullptr, const std::locale &locale = {})
+ookii::parser_builder create_builder(std::string command_name, 
+    ookii::string_provider *string_provider = nullptr, const std::locale &locale = {})
 ```
 
-To make sure you use the correct signature, use the `OOKII_GENERATED_METHODS` macro to declare
-the method, rather than doing it manually.
+To make sure you use the correct signature, use the [`OOKII_GENERATED_METHODS`][] macro to declare
+the method, rather than doing it manually. This macro will also add a static `parse()` method,
+similar to the one we used above, but with a few extra optional parameters. Most of the time, this
+`parse()` method is what you will call to parse your generated arguments.
 
 Of course, we need to run the script and add the generated output file to the build. You could do
 this manually, but it's much better to add this to the build. When using CMake, this can be done
@@ -1216,6 +1217,7 @@ following resources:
 - [Header file documentation](https://www.ookii.org/Link/CommandLineCppDoc)
 - [Sample applications](../samples)
 
+[`OOKII_GENERATED_METHODS`]: https://www.ookii.org/docs/commandline-cpp-2.0/command__line__generated_8h.html#a53b626c1994f1addfd297da8072c76f4
 [`add_version_argument()`]: https://www.ookii.org/docs/commandline-cpp-2.0/classookii_1_1basic__parser__builder.html#a9abfabd3ea77bdda6b8c9c53010c6f9d
 [`alias()`]: https://www.ookii.org/docs/commandline-cpp-2.0/classookii_1_1basic__parser__builder_1_1argument__builder__common.html#a44d77984b1cd12b04764f7f2741269d4
 [`arguments`]: https://www.ookii.org/docs/commandline-cpp-2.0/classookii_1_1basic__command__line__parser.html#ab29d6b51c259b4c868f52501614c76ad
