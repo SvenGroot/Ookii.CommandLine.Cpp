@@ -2,26 +2,21 @@
 #include <ookii/command_line.h>
 #include "../input/arguments.h"
     
-std::optional<my_arguments> my_arguments::parse(int argc, const wchar_t *const argv[], ookii::basic_usage_writer<wchar_t> *options, ookii::basic_localized_string_provider<wchar_t> *string_provider, const std::locale &locale)
+ookii::basic_parser_builder<wchar_t> my_arguments::create_builder(std::basic_string<wchar_t> command_name, ookii::basic_localized_string_provider<wchar_t> *string_provider, const std::locale &locale)
 {
-    auto name = L"name";
-    my_arguments args{};
-    auto parser = ookii::basic_parser_builder<wchar_t>{name, string_provider}
+    command_name = L"name";
+    ookii::basic_parser_builder<wchar_t> builder{command_name, string_provider};
+    builder
         .locale(locale)
         .description(L"Description of the arguments with a line break.\n\nAnd a paragraph.")
-        .add_argument(args.test_arg, L"TestArg").required().positional().description(L"Argument description with a line break.\n\nAnd another paragraph.")
-        .add_argument(args.__test__arg2__, L"TestArg2").positional().default_value(1).value_description(L"desc").alias(L"test").description(L"Short description.")
-        .add_multi_value_argument(args.test_arg3, L"foo").alias(L"t").alias(L"v")
-        .add_argument(args._testArg4, L"TestArg4").cancel_parsing()
-        .add_argument(args.TestArg5, L"TestArg5").default_value("foo")
-        .build();
+        .add_argument(this->test_arg, L"TestArg").required().positional().description(L"Argument description with a line break.\n\nAnd another paragraph.")
+        .add_argument(this->__test__arg2__, L"TestArg2").positional().default_value(1).value_description(L"desc").alias(L"test").description(L"Short description.")
+        .add_multi_value_argument(this->test_arg3, L"foo").alias(L"t").alias(L"v")
+        .add_argument(this->_testArg4, L"TestArg4").cancel_parsing()
+        .add_argument(this->TestArg5, L"TestArg5").default_value("foo")
+    ;
 
-    if (parser.parse(argc, argv, options))
-    {
-        return args;
-    }
-
-    return {};
+    return builder;
 }
 
 int wmain(int argc, wchar_t *argv[])

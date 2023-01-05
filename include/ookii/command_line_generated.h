@@ -7,27 +7,61 @@
 
 #include "command_line.h"
 
-//! \brief A script to declare the static parse member function that the New-Parser.ps1 script will
+//! \brief A macro to declare the static build() method that the New-Parser.ps1 script will
 //!        generate, using the specified character type.
 //! 
 //! When using New-Parser.ps1, the definition of this method will be generated. This macro makes
 //! it easy to define a method that matches the exact signature expected.
 //! 
+//! \param char_type The character type to use for strings.
+#define OOKII_DECLARE_CREATE_BUILDER_METHOD_EX(char_type) \
+    ::ookii::basic_parser_builder<char_type> create_builder(::std::basic_string<char_type> command_name, \
+        ::ookii::basic_localized_string_provider<char_type> *string_provider = nullptr, const std::locale &locale = {})
+
+//! \brief A macro to declare the methods that a struct used with New-Parser.ps1 must have, using
+//! the specified character type.
+//! 
+//! This will add a build() method, which creates a ookii::basic_parser_builder, and a static
+//! parse() method, which will parse the arguments and handle errors. The New-Parser.ps1 script
+//! generates the definition of the build() method; the parse() method is defined by this macro.
+//! 
 //! \param type The type of the struct or class that contains the arguments.
 //! \param char_type The character type to use for strings.
-#define OOKII_DECLARE_PARSE_METHOD_EX(type, char_type) \
-    static ::std::optional<type> parse(int argc, const char_type* const argv[], ::ookii::basic_usage_writer<char_type> *usage = nullptr, ::ookii::basic_localized_string_provider<char_type> *string_provider = nullptr, const std::locale &locale = {})
+#define OOKII_GENERATED_METHODS_EX(type, char_type) \
+    static ::std::optional<type> parse(int argc, const char_type* const argv[], ::ookii::basic_usage_writer<char_type> *usage = nullptr, \
+        ::ookii::basic_localized_string_provider<char_type> *string_provider = nullptr, const std::locale &locale = {}) \
+    { \
+        auto name = ::ookii::basic_command_line_parser<char_type>::get_executable_name(argc, argv); \
+        type args{}; \
+        auto parser = args.create_builder(name, string_provider, locale).build(); \
+        if (parser.parse(argc, argv, usage)) \
+        { \
+            return args; \
+        } \
+        return {}; \
+    } \
+    OOKII_DECLARE_CREATE_BUILDER_METHOD_EX(char_type)
 
-//! \brief A script to declare the static parse member function that the New-Parser.ps1 script will
-//!        generate, using the default character type.
+//! \brief A macro to declare the static build() method that the New-Parser.ps1 script will
+//!        generate, using the specified character type.
 //! 
 //! When using New-Parser.ps1, the definition of this method will be generated. This macro makes
 //! it easy to define a method that matches the exact signature expected.
 //! 
 //! The default character type is `wchar_t` if _UNICODE is defined; otherwise, it's `char`.
+#define OOKII_DECLARE_CREATE_BUILDER_METHOD() OOKII_DECLARE_CREATE_BUILDER_METHOD_EX(ookii::details::default_char_type)
+
+//! \brief A macro to declare the methods that a struct used with New-Parser.ps1 must have, using
+//! the default character type.
 //! 
+//! This will add a build() method, which creates a ookii::basic_parser_builder, and a static
+//! parse() method, which will parse the arguments and handle errors. The New-Parser.ps1 script
+//! generates the definition of the build() method; the parse() method is defined by this macro.
+//! 
+//! The default character type is `wchar_t` if _UNICODE is defined; otherwise, it's `char`.
+//!
 //! \param type The type of the struct or class that contains the arguments.
-#define OOKII_DECLARE_PARSE_METHOD(type) OOKII_DECLARE_PARSE_METHOD_EX(type, ookii::details::default_char_type)
+#define OOKII_GENERATED_METHODS(type) OOKII_GENERATED_METHODS_EX(type, ookii::details::default_char_type)
 
 namespace ookii
 {

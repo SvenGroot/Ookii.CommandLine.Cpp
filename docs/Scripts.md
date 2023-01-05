@@ -196,7 +196,7 @@ struct arguments
     // more than one value.
     std::vector<std::string> values;
 
-    OOKII_DECLARE_PARSE_METHOD(arguments);
+    OOKII_GENERATED_METHODS(arguments);
 };
 ```
 
@@ -229,7 +229,7 @@ To make it easy to declare the method, you can include `<ookii/command_line_gene
 the following macro:
 
 ```c++
-OOKII_DECLARE_PARSE_METHOD(type);
+OOKII_GENERATED_METHODS(type);
 ```
 
 This macro will determine which character type to use based on whether the `_UNICODE` preprocessor
@@ -251,7 +251,7 @@ usage help according to the supplied `usage_options`, and return `std::nullopt`.
 
 Use the script's `-NameTransform` argument to indicate that argument names derived from field names
 should be changed according to the supplied [name transformation](#name-transformation).
-me alone.                                                                                                                                                                             | `some_name`, `_some_name` => some_name; `_someName` => someName
+me alone.
 
 By using the script's `-EntryPoint` argument, you can specify a function name that should serve as
 the entry point for your application. The script will then generate a `main()` function for you,
@@ -261,7 +261,7 @@ in the header you pass as input as well, so it's available when the generated fi
 
 The `-WideChar` argument can be used on Windows to generate code that uses wide characters (`wchar_t`)
 for the arguments. Make sure to define `_UNICODE` if you use `<ookii/command_line_generated.h>` so
-the `OOKII_DECLARE_PARSE_METHOD` macro will declare a method using `wchar_t` as well. When combined
+the `OOKII_GENERATED_METHODS` macro will declare a method using `wchar_t` as well. When combined
 with `-EntryPoint`, this will generate a `wmain()` function instead of `main()`.
 
 The generated source file will include the headers for Ookii.CommandLine, as well as the header(s)

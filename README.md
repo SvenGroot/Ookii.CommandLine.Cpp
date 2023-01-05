@@ -130,7 +130,7 @@ struct arguments
     // A switch argument, which doesn't require a value.
     bool switch_argument;
 
-    OOKII_DECLARE_PARSE_METHOD(arguments);
+    OOKII_GENERATED_METHODS(arguments);
 };
 ```
 

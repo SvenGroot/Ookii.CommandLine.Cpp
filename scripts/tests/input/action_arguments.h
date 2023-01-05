@@ -14,5 +14,5 @@ struct my_arguments
         return true;
     }
 
-    OOKII_DECLARE_PARSE_METHOD(my_arguments);
+    OOKII_GENERATED_METHODS(my_arguments);
 };

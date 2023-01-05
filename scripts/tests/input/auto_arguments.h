@@ -5,5 +5,5 @@
 // [show_usage_on_error: syntax_only]
 struct my_arguments
 {
-    OOKII_DECLARE_PARSE_METHOD(my_arguments);
+    OOKII_GENERATED_METHODS(my_arguments);
 };

@@ -351,14 +351,12 @@ class CommandInfo {
     [string[]] GenerateParser([CodeGenContext]$Context) {
         $result = @()
         if ($this.CommandName) {
-            $result += "    auto name = $($Context.StringPrefix)`"$($this.CommandName)`";"
-        } else {
-            $result += "    auto name = ookii::basic_command_line_parser<$($Context.CharType)>::get_executable_name(argc, argv);"
+            $result += "    command_name = $($Context.StringPrefix)`"$($this.CommandName)`";"
         }
 
-        $Context.FieldPrefix = "args."
-        $result += "    $($this.TypeName) args{};"
-        $result += "    auto parser = ookii::basic_parser_builder<$($Context.CharType)>{name, string_provider}"
+        $Context.FieldPrefix = "this->"
+        $result += "    ookii::basic_parser_builder<$($Context.CharType)> builder{command_name, string_provider};"
+        $result += "    builder"
         $result += "        .locale(locale)"
         if ($this.Description) {
             $result += "        .description($($Context.StringPrefix)`"$($this.Description)`")"
@@ -366,15 +364,9 @@ class CommandInfo {
         
         $result += $this.GenerateParserAttributes($Context)
         $result += $this.GenerateArguments($Context)
-
-        $result += "        .build();"
-        $result += ""
-        $result += "    if (parser.parse(argc, argv, options))"
-        $result += "    {"
-        $result += "        return args;"
-        $result += "    }"
-        $result += ""
-        $result += "    return {};"
+        $result += "    ;"
+        $result += "";
+        $result += "    return builder;"
         return $result;
     }
 

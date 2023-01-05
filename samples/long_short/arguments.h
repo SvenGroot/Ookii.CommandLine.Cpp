@@ -78,7 +78,7 @@ struct arguments
     // more than one value.
     std::vector<std::string> values;
 
-    OOKII_DECLARE_PARSE_METHOD(arguments);
+    OOKII_GENERATED_METHODS(arguments);
 };
 
 int ookii_main(arguments args);

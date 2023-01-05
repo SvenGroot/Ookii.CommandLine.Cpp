@@ -6,7 +6,7 @@ struct other_arguments
     // [argument]
     int some_arg;
 
-    OOKII_DECLARE_PARSE_METHOD(other_arguments);
+    OOKII_GENERATED_METHODS(other_arguments);
 };
 
 // Tests multiple structs in one file.
@@ -16,5 +16,5 @@ struct third_arguments
     // [argument]
     int other_arg;
 
-    OOKII_DECLARE_PARSE_METHOD(third_arguments);
+    OOKII_GENERATED_METHODS(third_arguments);
 };

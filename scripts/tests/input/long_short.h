@@ -17,5 +17,5 @@ struct my_arguments
     // [short_name, no_long_name]
     int bar;
 
-    OOKII_DECLARE_PARSE_METHOD(my_arguments);
+    OOKII_GENERATED_METHODS(my_arguments);
 };

@@ -492,7 +492,7 @@ struct arguments
     // Invert the console colors for the output.
     bool inverted;
 
-    OOKII_DECLARE_PARSE_METHOD(arguments);
+    OOKII_GENERATED_METHODS(arguments);
 };
 ```
 
@@ -524,7 +524,7 @@ static std::optional<arguments_type> parse(int argc, const char* const argv[], o
     ookii::localized_string_provider *string_provider = nullptr, const std::locale &locale = {})
 ```
 
-To make sure you use the correct signature, use the `OOKII_DECLARE_PARSE_METHOD` macro to declare
+To make sure you use the correct signature, use the `OOKII_GENERATED_METHODS` macro to declare
 the method, rather than doing it manually.
 
 Of course, we need to run the script and add the generated output file to the build. You could do

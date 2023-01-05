@@ -31,5 +31,5 @@ struct my_arguments
 
     int not_an_arg{5};
 
-    OOKII_DECLARE_PARSE_METHOD(my_arguments);
+    OOKII_GENERATED_METHODS(my_arguments);
 };
