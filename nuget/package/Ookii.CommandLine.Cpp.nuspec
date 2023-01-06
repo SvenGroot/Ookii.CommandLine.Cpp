@@ -10,8 +10,13 @@
     <license type="expression">MIT</license>
     <licenseUrl>https://licenses.nuget.org/MIT</licenseUrl>
     <projectUrl>https://github.com/SvenGroot/Ookii.CommandLine.Cpp</projectUrl>
-    <description>Ookii.CommandLine is a powerful command line parsing library for C++ applications. Easily define strongly-typed arguments, create subcommands, parse the command line, and generate usage help.</description>
-    <releaseNotes>For details, please view: https://www.ookii.org/Link/CommandLineCppVersionHistory</releaseNotes>
+    <description>Ookii.CommandLine is a powerful command line parsing library for .Net applications.
+
+- Easily define arguments by creating a class with properties.
+- Create applications with multiple subcommands.
+- Generate fully customizable usage help.
+- Supports PowerShell-like and POSIX-like parsing rules.</description>
+    <releaseNotes>This version contains breaking changes compared to version 1.x. For details, please view: https://www.ookii.org/Link/CommandLineCppVersionHistory</releaseNotes>
     <copyright>Copyright © Sven Groot (Ookii.org)</copyright>
     <tags>command line arguments parsing parser parse argument args subcommand subcommands cmd console native C++</tags>
     <repository type="git" url="https://github.com/SvenGroot/Ookii.CommandLine.Cpp" />
