@@ -5,8 +5,8 @@ applications. In this guide, we will introduce the basic functionality using a t
 detail the command line parsing rules used and how to create various types of arguments, how to use
 and customize usage help, and explain other functionality such as subcommands.
 
-In addition to this documentation, several [samples](../src/Samples) are provided, all with
-explanations of what they do and examples of their output.
+In addition to this documentation, several [samples](../samples) are provided, all with explanations
+of what they do and examples of their output.
 
 ## Contents
 

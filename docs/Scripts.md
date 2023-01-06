@@ -119,7 +119,7 @@ Attribute             | Description                                             
 **required**          | Indicates the argument is [required](Arguments.md#required-arguments).                                                                                                                                                                    | **(none)**
 **short_alias**       | Specifies the [short aliases](DefiningArguments.md#aliases) of an argument. Ignored if [long/short mode](Arguments.md#longshort-mode) is not used or the argument has no short name.                                                      | A comma-separated list of single-character short aliases.
 **short_name**        | Specifies the short name of an argument. Ignored if [long/short mode](Arguments.md#longshort-mode) is not used.                                                                                                                           | **(optional)** The single-character short name; if omitted, it defaults to the first character of the long name.
-**value_description** | Specifies the [value description](UsageHelp.md#value-description) of the argument.                                                                                                                                                        | The value description.
+**value_description** | Specifies the [value description](UsageHelp.md#value-descriptions) of the argument.                                                                                                                                                       | The value description.
 
 ### Name transformation
 
