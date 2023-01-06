@@ -86,7 +86,7 @@ namespace ookii
         //! \brief Destructor for the basic_line_wrapping_streambuf class.
         //!
         //! This destructor will flush all contents, including the last line.
-        ~basic_line_wrapping_streambuf()
+        virtual ~basic_line_wrapping_streambuf()
         {
             sync(true);
         }
