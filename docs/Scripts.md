@@ -64,6 +64,21 @@ the `arg` field. The argument is required, positional, and has a description:
 std::string arg;
 ```
 
+The code generation scripts also support the use of [action arguments](DefiningArguments.md#action-arguments).
+To create an action argument, add the `[argument]` attribute (and any other attributes, except for
+`[default]`) to a method declaration. This method should have one of the following signatures:
+
+```c++
+/// [argument]
+static bool action_arg1(argument_type value, ookii::command_line_parser &parser);
+
+/// [argument]
+bool action_arg2(argument_type value, ookii::command_line_parser &parser);
+```
+
+A static method will be invoked directly. For an instance method, the script will generate a lambda
+capturing the `this` pointer to invoke the argument.
+
 ### Attributes for arguments types
 
 The following attributes can be applied to the struct or class that contains arguments.
@@ -105,30 +120,6 @@ Attribute             | Description                                             
 **short_alias**       | Specifies the [short aliases](DefiningArguments.md#aliases) of an argument. Ignored if [long/short mode](Arguments.md#longshort-mode) is not used or the argument has no short name.                                                      | A comma-separated list of single-character short aliases.
 **short_name**        | Specifies the short name of an argument. Ignored if [long/short mode](Arguments.md#longshort-mode) is not used.                                                                                                                           | **(optional)** The single-character short name; if omitted, it defaults to the first character of the long name.
 **value_description** | Specifies the [value description](UsageHelp.md#value-description) of the argument.                                                                                                                                                        | The value description.
-
-### Parsing limitations
-
-The code-generation scripts don't use a full-fledged C++ parser to interpret your code. Instead,
-they use a simple regular expressions based parser that looks for annotations and the struct and
-field definitions. As such, you must use the following conventions when declaring your argument
-struct or class.
-
-- Annotation comments, including the descriptions, must use single-line comments (`//`). Comment
-  blocks like `/* ... */` are not recognized. You can use any number of slashes to start the comment.
-- The struct or class must follow the annotation comment with `[arguments]` or `[command]`,
-  and have the form `(struct|class) name` with nothing preceding it on that line. Everything after
-  the name is ignored, so you are free to add a base class or something like that.
-  - For subcommands, the base class must be specified on the same line with `class name : public base_name`.
-    You may use the `public`, `private`, `protected` and `virtual` keywords before the base class
-    name. See [subcommand base classes](#subcommand-base-classes).
-- The struct or class must end with a single line containing nothing but `};` (besides whitespace).
-  - There must be no other line like that before the end of the struct, so beware when declaring
-    nested types.
-- The struct or class may not be in a namespace.
-- The struct or class may not be a template.
-- Every argument field must be on a single line (preceded by lines with annotation comments), with
-  the last word before the semi-colon, or before an `=` or `{` token for initialization, being the
-  name of the field. So, `int foo;`, `int foo = 0;`, and `int foo{};` are all supported.
 
 ### Name transformation
 
@@ -261,7 +252,7 @@ You can also use the `create_builder()` method directly. Since this method retur
 allows you to further customize the arguments and options before calling `parser_builder::build()`.
 Doing this also allows you to do things like custom error handling while still using code generation.
 
-### Script arguments
+### Script arguments for `New-Parser.ps1`
 
 `-OutputPath` indicates the path of the generated C++ file.
 
@@ -272,8 +263,9 @@ me alone. This will be ignored if the script uses the `[name_transform]` attribu
 By using the script's `-EntryPoint` argument, you can specify a function name that should serve as
 the entry point for your application. The script will then generate a `main()` function for you,
 which parses the arguments and invokes the specified function, passing it the arguments struct. This
-function should take the form `int entry_point(arguments args)`. Make sure to declare this function
-in the header you pass as input as well, so it's available when the generated file is compiled.
+function should take the form `int entry_point(arguments args)` (passing the arguments by reference
+or const reference is also allowed). Make sure to declare this function in the header you pass as
+input as well, so it's available when the generated file is compiled.
 
 The `-WideChar` argument can be used on Windows to generate code that uses wide characters (`wchar_t`)
 for the arguments. Make sure to define `_UNICODE` if you use `<ookii/command_line_generated.h>` so
@@ -294,8 +286,9 @@ A sample invocation of this script could look as follows:
 
 For more information on how to use the script, run `Get-Help ./New-Parser.ps1`.
 
-A [full sample](../samples/generated_parser) is included, which also demonstrates how to incorporate
-the code generation as a build step in CMake.
+Check the [generated parser sample](../samples/generated_parser) for a full example of how you can
+use this script. The [long short sample](../samples/long_short) and [custom usage sample](../samples/custom_usage)
+also use it.
 
 ## New-Subcommand.ps1
 
@@ -303,26 +296,31 @@ The [`scripts/New-Subcommand.ps1`](../scripts/New-Subcommand.ps1) script works v
 to the `New-Parser.ps1` script, but generates [subcommands](Subcommands.md) instead of a
 stand-alone parser.
 
-It takes as input one or more C++ headers, which contain declarations of the subcommands, and
-generates argument parsers for them, as well as the `ookii::register_commands()` function, which
-registers all the subcommands it found and returns a `command_manager`. To use this
-function, include `<ookii/command_line_generated.h>` _after_ you include `<ookii/command_line.h>`
+It takes as input one or more C++ headers, which contain declarations of the subcommand classes, and
+generates argument parsers for them. It also generates a function called
+`ookii::register_commands()`, which registers all the generated subcommands and returns a
+`command_manager` instance. To use this function in your code, include
+`<ookii/command_line_generated.h>` _after_ you include `<ookii/command_line.h>`
 
-For the purposes of the code-generation scripts, the major differences between a subcommand and
-a regular arguments struct or class are that:
+For the purposes of the code-generation scripts, the major differences between a subcommand class
+and a regular arguments struct or class are that:
 
 - The class must be annotated using the `[command]` attribute instead of `[arguments]`.
 - The class must derive from `ookii::command` as normal, or from another subcommand class.
-- You must declare the normal subcommand constructor taking a `ookii::command::builder_type &`
-  as an argument; this constructor will be defined by the generated code.
-- You should _not_ declare a `parse` method.
+- You must declare the normal subcommand constructor taking a `ookii::parser_builder &` as an
+  argument; the implementation of this constructor will be generated by the script.
+- You should _not_ use the [`OOKII_GENERATED_METHODS`][] macro, or otherwise declare a
+  `create_builder()` method.
 
 The `[command]` attribute can specify the name of the command, like `[command: name]`.
 If not specified, the [normal ways of determining the name](Subcommands.md#subcommand-names-and-descriptions)
 are used. The same is true for the description if there is none in the comment following the
 attribute.
 
-Here is an example of an annotated subcommand, taken from the [included sample](../samples/generated_subcommand/):
+Arguments are annotated in the same way as with `New-Parser.ps1`, with the same attributes.
+
+Here is an example of an annotated subcommand, taken from the
+[generated subcommand sample](../samples/generated_subcommand/):
 
 ```c++
 // [command: read]
@@ -348,8 +346,8 @@ private:
 ### Global options
 
 If you wish to set options that apply to all commands (such as the parsing mode), you can use a
-comment block that starts with a `[global]` attribute. This will add a `configure_parser()`
-call in the generated `ookii::register_commands()` with those options, so they are used for every
+comment block that starts with a `[global]` attribute. This will add a `configure_parser()` call in
+the generated `ookii::register_commands()` function with those options, so they are used for every
 command.
 
 A `[name_transform]` attribute in the `[global]` block will cause this name transformation to be
@@ -364,7 +362,7 @@ If the `[global]` block is followed by any comment lines not containing attribut
 the application description to include before the command list usage help.
 
 The `[global]` block must end with either a non-comment line (like a blank line), or the end of the
-file.
+file. There can be only one `[global]` block across all header files.
 
 ### Script arguments for `New-Subcommand.ps1`
 
@@ -383,19 +381,14 @@ For more information on how to use the script, run `Get-Help ./New-Subcommand.ps
 A [full sample](../samples/generated_subcommand) is included, which also demonstrates how to
 incorporate the code generation as a build step in CMake.
 
-### subcommand base classes
+### Subcommand base classes
 
-If you have common arguments, or common parser attributes you wish to use for every command, you
-may wish to use a common base class for your subcommands. `New-Subcommand.ps1` supports this
-scenario.
+If you wish to create a [common base class](Subcommands.md#multiple-commands-with-common-arguments)
+for some or all of your commands, you can do so using code generation as well. The `New-Subcommand.ps1`
+script will invoke your base classes constructor automatically.
 
-To create the base class, add the `[no_register]` attribute to the class to prevent it from being
-registered as a command. Alternatively, you can manually write the base class instead of generating
-it. The base class must have a constructor that takes a `ookii::command::builder_type &`
-argument same as a normal subcommand.
-
-When creating the derived class, just inherit from your base class. The generated constructor will
-invoke the base class constructor.
+If the base class itself is generated as well, you should add the `[no_register]` attribute to the
+class to prevent it from being treated as a command.
 
 For example:
 
@@ -429,10 +422,35 @@ private:
 };
 ```
 
-In this example, all commands deriving from `base_command` will have a "Path" argument, and use `=`
-as the separator between argument names and values.
+The [nested commands sample](../samples/nested_commands) has a detailed example of using a base
+class, as well as mixing generated and hand-written commands.
 
 ## Script limitations
+
+The code-generation scripts don't use a full-fledged C++ parser to interpret your code. Instead,
+they use a simple parser using regular expressions to identify the annotations and the struct and
+member definitions. As such, you must use the following conventions when declaring your argument
+struct or class.
+
+- Annotation comments, including the descriptions, must use single-line comments (`//`). Comment
+  blocks like `/* ... */` are not recognized. You can use any number of slashes to start the comment.
+- The struct or class must follow the annotation comment with `[arguments]` or `[command]`,
+  and have the form `(struct|class) name` with nothing preceding it on that line. Everything after
+  the name is ignored, so you are free to add a base class or something like that.
+  - For subcommands, the base class must be specified on the same line with `class name : public base_name`.
+    You may use the `public`, `private`, `protected` and `virtual` keywords before the base class
+    name. See [subcommand base classes](#subcommand-base-classes).
+- The struct or class must end with a single line containing nothing but `};` (besides whitespace).
+  - There must be no other line like that before the end of the struct, so take care when declaring
+    nested types.
+- The struct or class may not be in a namespace.
+- The struct or class may not be a template.
+- Every argument field must be on a single line (preceded by lines with annotation comments), with
+  the last word before the semi-colon, or before an `=` or `{` token for initialization, being the
+  name of the field. So, `int foo;`, `int foo = 0;`, and `int foo{};` are all supported.
+- The method declaration for an action argument must be on a single line, optionally start with
+  `static`, and then `bool name(argument_type` followed by a space or comma. Everything beyond that
+  is ignored by the script (but must still match the expected signature, of course).
 
 Some functionality is not available when using the code-generation scripts.
 
@@ -440,14 +458,14 @@ Some functionality is not available when using the code-generation scripts.
 - You cannot specify a separator for a multi-value argument.
 - You cannot assign descriptions using localized resources or any other method that isn't just
   string literals.
-- You cannot add arguments that aren't defined using the annotations.
 
 If you generate a main method using `-EntryPoint` or `-GenerateMain`, the following additional
 limitations apply:
 
-- You cannot customize the `usage_options`.
-- You cannot change the global locale before parsing happens; the standard "C" locale is always
+- You cannot customize the `usage_writer` or `localized_string_provider` used.
+- You cannot change the global locale before parsing happens; the default "C" locale is always
   used.
+- You cannot add arguments that aren't defined using the annotations.
 - For `New-Subcommand.ps1`, you cannot register commands that aren't defined using the
   annotations.
 
@@ -456,6 +474,9 @@ a pull request.
 
 ## Including the scripts in your build process
 
+Typically, you should include the code generation as a pre-build step in your build process. There
+are several ways to do this
+
 ### CMake
 
 If you use CMake, you can use a custom command to invoke the PowerShell scripts as part of the code
@@ -463,37 +484,70 @@ generation process. For example, you can use the following:
 
 ```cmake
 find_program(POWERSHELL_PATH NAMES pwsh NO_PACKAGE_ROOT_PATH NO_CMAKE_PATH NO_CMAKE_ENVIRONMENT_PATH NO_CMAKE_SYSTEM_PATH NO_CMAKE_FIND_ROOT_PATH)
+if (POWERSHELL_PATH)
+    message("-- Found PowerShell at ${POWERSHELL_PATH}")
+else()
+    message(FATAL_ERROR "-- PowerShell (pwsh) was not found.")
+endif()
 
-set(GENERATED_DIR "${CMAKE_BINARY_DIR}/generated")
-set(GENERATED_OUTPUT "${GENERATED_DIR}/parser_generated.cpp")
+set(GENERATED_OUTPUT "${CMAKE_BINARY_DIR}/generated.cpp")
 set(GENERATED_INPUT "${CMAKE_CURRENT_LIST_DIR}/arguments.h")
 
-make_directory("${GENERATED_DIR}")
-
+# Invoke the PowerShell script to generate the command line parser.
 add_custom_command(
     OUTPUT ${GENERATED_OUTPUT}
-    COMMAND ${POWERSHELL_PATH} -ExecutionPolicy Bypass "${FETCHCONTENT_BASE_DIR}/ookiicl-src/scripts/New-Parser.ps1" -Path "${GENERATED_INPUT}" -OutputPath "${GENERATED_OUTPUT}" -NameTransform PascalCase
+    COMMAND ${POWERSHELL_PATH}
+        -ExecutionPolicy Bypass
+        "${Ookii.CommandLine.Cpp_SOURCE_DIR}/scripts/New-Parser.ps1"
+        -Path "${GENERATED_INPUT}"
+        -OutputPath "${GENERATED_OUTPUT}"
     DEPENDS ${GENERATED_INPUT}
     VERBATIM
 )
+
+add_executable(application "source.cpp" ${GENERATED_OUTPUT})
 ```
 
-This assumes you used `FetchContent` to add Ookii.CommandLine to your library, otherwise you may
-need to adjust the path to the scripts.
+If you need to process multiple header files, you must use the `-Command` argument of the `pwsh`
+binary to be able to pass an array to the script. For `New-Subcommand.ps1`, you should not invoke
+the script separately for each file, because doing so will generate multiple conflicting definitions
+of the `ookii::register_commands()` function.
 
-Also see the [generated parser sample](../samples/generated_parser/CMakeLists.txt) and the
-[generated subcommand sample](../samples/generated_subcommand/CMakeLists.txt) for working
-examples of how to do this.
+Here is an example of passing multiple headers to `New-Subcommand.ps1`:
+
+```cmake
+set(GENERATED_OUTPUT "${CMAKE_BINARY_DIR}/generated.cpp")
+set(GENERATED_INPUT "${CMAKE_CURRENT_LIST_DIR}/read_command.h" "${CMAKE_CURRENT_LIST_DIR}/write_command.h")
+list(JOIN GENERATED_INPUT "," GENERATED_INPUT_LIST)
+
+# Invoke the PowerShell script to generate the subcommands
+add_custom_command(
+    OUTPUT ${GENERATED_OUTPUT}
+    COMMAND ${POWERSHELL_PATH}
+        -ExecutionPolicy Bypass
+        -Command "&{ \
+            ${Ookii.CommandLine.Cpp_SOURCE_DIR}/scripts/New-Subcommand.ps1 \
+                -Path ${GENERATED_INPUT_LIST} \
+                -OutputPath ${GENERATED_OUTPUT} \
+        }"
+    DEPENDS ${GENERATED_INPUT}
+    VERBATIM
+)
+
+add_executable(application "source.cpp" ${GENERATED_OUTPUT})
+```
+
+Also see the [various samples](../samples) for working examples of how to do this.
 
 ### Visual Studio
 
 If you use a Visual Studio project and are using the [NuGet package](https://www.nuget.org/packages/Ookii.CommandLine.Cpp)
 to add Ookii.CommandLine to your project, the scripts are included in the package.
 
-First, you can of course use the pre-build command or a custom build step to invoke the scripts.
-The scripts are located in the `packages\Ookii.CommandLine.Cpp.1.0.0\tools` folder under your
-solution root directory. The downside of this is that you would have to change the path if the
-package version number changes.
+You can of course use a pre-build command or a custom build step in your project settings to invoke
+the scripts. The scripts are located in the `packages\Ookii.CommandLine.Cpp.1.0.0\tools` folder
+under your solution root directory. The downside of this is that you would have to change the path
+if the package version number changes.
 
 Alternatively, the NuGet package includes MSBuild targets that make this easier. These targets are
 disabled by default, but can be used by defining specific items. To do this, you have to manually
@@ -509,10 +563,10 @@ Ookii.CommandLine.Cpp.targets file is imported:
 </ItemGroup>
 ```
 
-Doing this will automatically generate a command line parser for the specified header file, and
-include the generated file in the build. By default, the file is called "ookii.parser.generated.cpp"
-and will be placed in the intermediate output directory of your project (e.g. "x64\Debug"), but
-this can be overridden with the `OokiiParserOutput` property.
+Doing this will automatically invoke the script for the specified header file, and include the
+generated file in the build. By default, the file is called "ookii.parser.generated.cpp" and will be
+placed in the intermediate output directory of your project (e.g. "x64\Debug"), but this can be
+overridden with the `OokiiParserOutput` property.
 
 You can process multiple header files by using wild cards, or by using multiple `OokiiParserInput`
 items.
@@ -571,5 +625,7 @@ That line is generated by Visual Studio if you're using NuGet and will look some
     <Import Project="..\packages\Ookii.CommandLine.Cpp.1.0.0\build\native\Ookii.CommandLine.Cpp.targets" Condition="Exists('..\packages\Ookii.CommandLine.Cpp.1.0.0\build\native\Ookii.CommandLine.Cpp.targets')" />
   </ImportGroup>
 ```
+
+Next, we will look at some [utility types](Utilities.md) included with the library.
 
 [`OOKII_GENERATED_METHODS`]: https://www.ookii.org/docs/commandline-cpp-2.0/command__line__generated_8h.html#a53b626c1994f1addfd297da8072c76f4

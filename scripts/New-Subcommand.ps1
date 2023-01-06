@@ -121,6 +121,10 @@ process {
         $headers += "#include `"$fileName`""
         foreach ($info in (Convert-Arguments $contents $context)) {
             if ($info.IsGlobal) {
+                if ($global) {
+                    throw "There can be only one [global] block."
+                }
+                
                 $global = $info
                 if ($null -ne $global.OverrideNameTransform) {
                     $context.NameTransform = $global.OverrideNameTransform
