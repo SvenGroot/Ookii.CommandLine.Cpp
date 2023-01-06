@@ -57,6 +57,7 @@
     "name": "ookii::basic_parser_builder::argument_builder_common::alias(string_type alias)",
     "path": "classookii_1_1basic__parser__builder_1_1argument__builder__common.html#a44d77984b1cd12b04764f7f2741269d4"
   },
+  "arg": null,
   "arguments": {
     "name": "ookii::basic_command_line_parser::arguments() const",
     "path": "classookii_1_1basic__command__line__parser.html#ab29d6b51c259b4c868f52501614c76ad"
@@ -75,6 +76,7 @@
       "path": "classookii_1_1basic__parser__builder.html#af66361855468fde2eb545fbe1631e042"
     }
   ],
+  "camelCase": null,
   "cancel_parsing()": [
     {
       "name": "ookii::command_line_argument_base::cancel_parsing() const noexcept",
@@ -243,6 +245,7 @@
     "name": "ookii::basic_command_manager::configure_parser(configure_function function)",
     "path": "classookii_1_1basic__command__manager.html#a1a68ed8729ad0dfa2300a2a74691a0c6"
   },
+  "create_builder()": null,
   "create_command()": [
     {
       "name": "ookii::basic_command_manager::create_command(int argc, const CharType *const argv[], usage_writer_type *usage=nullptr) const",
@@ -315,6 +318,7 @@
       "path": "structookii_1_1lexical__convert.html#ac8ef25e2344f404f823e3f6d1046d010"
     }
   ],
+  "full": null,
   "get_command()": {
     "name": "ookii::basic_command_manager::get_command(const string_type &name) const",
     "path": "classookii_1_1basic__command__manager.html#af7c67cf9f0a6ffda1e870268968b4229"
@@ -347,6 +351,7 @@
     "name": "ookii::basic_localized_string_provider",
     "path": "classookii_1_1basic__localized__string__provider.html"
   },
+  "long_short": null,
   "main()": null,
   "mode()": [
     {
@@ -380,6 +385,7 @@
       "name": "ookii::basic_parser_builder::argument_builder_base::name() const noexcept"
     }
   ],
+  "none": null,
   "nullptr": null,
   "ookii::command": {
     "name": "ookii::basic_command",
@@ -616,7 +622,11 @@
     "path": "classookii_1_1basic__parser__builder_1_1typed__argument__builder.html#ab517dcc6b4ac48d8a46e31156c1736f4"
   },
   "parsing_mode::long_short": "namespaceookii.html#abf0aa62e29f4953f7cba303a3da407fd",
+  "private": null,
+  "protected": null,
+  "public": null,
   "push_back()": null,
+  "pwsh": null,
   "read": null,
   "read_command": null,
   "read_file": null,
@@ -665,6 +675,9 @@
       "path": "classookii_1_1basic__parser__builder_1_1argument__builder__base.html#a11a21bb681af98f72860b4e6332436a4"
     }
   ],
+  "snake_case": null,
+  "some_name": null,
+  "static": null,
   "std::basic_string": "#string/basic_string",
   "std::istringstream": "#io/basic_istringstream",
   "std::list<T>": "#container/list",
@@ -680,6 +693,9 @@
   "std::vector<T>": "#container/vector",
   "std::wstring_view": "#string/basic_string_view",
   "string": "#string/basic_string",
+  "syntax_only": null,
+  "this": null,
+  "trim": null,
   "true": null,
   "usage_writer": {
     "name": "ookii::basic_usage_writer",
@@ -733,6 +749,7 @@
   ],
   "value1": null,
   "version": null,
+  "virtual": null,
   "virtual_terminal_support": [
     {
       "name": "ookii::vt::virtual_terminal_support::virtual_terminal_support()=default",
@@ -740,6 +757,7 @@
     }
   ],
   "wchar_t": null,
+  "wmain()": null,
   "write_argument_description()": [
     {
       "name": "ookii::basic_usage_writer::write_argument_description(string_view_type description)",

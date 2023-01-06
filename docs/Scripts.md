@@ -1,6 +1,6 @@
 # Code-generation scripts
 
-Although the `parser_builder` class provides a simple interface for defining command line
+Although the [`parser_builder`][] class provides a simple interface for defining command line
 arguments, it's still less convenient than the way [Ookii.CommandLine for .Net](https://github.com/SvenGroot/ookii.commandline)
 works. To provide an easier method, which is also more similar to the .Net version,
 Ookii.CommandLine for C++ comes with two scripts, one to generate a stand-alone parser, and one to
@@ -11,7 +11,7 @@ or later, which is available for Windows and other platforms such as Linux. Note
 the new cross-platform PowerShell is required; the scripts use features not available in Windows
 PowerShell. The scripts were tested with PowerShell 7.3.
 
-These scripts generate code that creates a `parser_builder` and adds arguments to it. It doesn't
+These scripts generate code that creates a [`parser_builder`][] and adds arguments to it. It doesn't
 offer any features that manually writing code doesn't, it's just a more convenient way to do it.
 
 This article first describes the attributes used to annotate your code, before explaining how each
@@ -48,7 +48,7 @@ If an argument doesn't have a value, you can combine multiple on a single line b
 with a comma. For example, `[argument, positional]`. This is not possible if the attribute has a
 value, unless it's the last attribute. For example, `[positional, default: 5]` is valid, but
 `[default: 5, positional]` is _not_, because everything after the colon is part of the value for
-`default`.
+`[default]`.
 
 If there are any lines of comments after the annotations, these specify the description for that
 item. They will be concatenated into a single line, though if you have a blank line this will be
@@ -87,7 +87,7 @@ Attribute                     | Description                                     
 ------------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|-----------------------------------------------------------------------------------------------------------------------
 **arguments**                 | Indicates the following struct or class defines arguments (`New-Parser.ps1` only) .                                                                                                                                                                                                                                                                          | **(optional)** The application executable name; if omitted, defaults to the file name portion of `argv[0]`.
 **command**                   | Indicates the following class is a subcommand (`New-Subcommand.ps1` only).                                                                                                                                                                                                                                                                                   | **(optional)** The command name; if omitted, defaults to the static `name()` method or type name.
-**global**                    | Specifies options that apply to all commands, or the `command_manager` itself (`New-Subcommand.ps1` only)                                                                                                                                                                                                                                                    | **(none)**
+**global**                    | Specifies options that apply to all commands, or the [`command_manager`][] itself (`New-Subcommand.ps1` only)                                                                                                                                                                                                                                                | **(none)**
 **allow_duplicate_arguments** | Indicates that repeating an argument more than once is not an error, but the last value supplied will be used.                                                                                                                                                                                                                                               | **(none)**
 **argument_value_separator**  | Specifies the separator to use between argument names and values, instead of the default ':'.                                                                                                                                                                                                                                                                | The separator to use. May only be a single character.
 **case_sensitive**            | Indicates argument names should be treated as case sensitive.                                                                                                                                                                                                                                                                                                | **(none)**
@@ -96,7 +96,7 @@ Attribute                     | Description                                     
 **mode**                      | Specifies the [parsing mode](Arguments.md#longshort-mode) to use.                                                                                                                                                                                                                                                                                            | Either `default` or `long_short`.
 **name_transform**            | Specifies the [name transformation](#name-transformation) to use when generating argument names from member names. If present, this overrides the `-NameTransform` script argument.                                                                                                                                                                          | One of the following values: `none` (the default), `PascalCase`, `camelCase`, `snake_case`, `dash-case`, or `trim`.
 **no_auto_help**              | Do not create the [automatic `-Help` argument](DefiningArguments.md#automatic-arguments)                                                                                                                                                                                                                                                                     | **(none)**
-**no_register**               | Indicates the subcommand should not be registered with the `command_manager`. Use this for classes you intend to use as a common base class for other subcommands (`New-Subcommand.ps1` only).                                                                                                                                                               | **(none)**
+**no_register**               | Indicates the subcommand should not be registered with the [`command_manager`][]. Use this for classes you intend to use as a common base class for other subcommands (`New-Subcommand.ps1` only).                                                                                                                                                           | **(none)**
 **no_whitespace_separator**   | Indicates that argument names and values cannot be separated by whitespace                                                                                                                                                                                                                                                                                   | **(none)**
 **prefixes**                  | Specifies the argument name prefixes to use instead of the defaults. These are the short prefixes if using [long/short mode](Arguments.md#longshort-mode)                                                                                                                                                                                                    | A comma-separated list of argument name prefixes.
 **show_usage_on_error**       | Indicates how usage help should be printed if a parsing error occurs.                                                                                                                                                                                                                                                                                        | One of the following values: `full` (the default), `syntax_only`, or `none`.
@@ -113,7 +113,7 @@ Attribute             | Description                                             
 **alias**             | Specifies the [aliases](DefiningArguments.md#aliases) of an argument. If using  [long/short mode](Arguments.md#longshort-mode), these are the long aliases, and are ignored if the argument has no long name.                             | A comma-separated list of aliases.
 **cancel_parsing**    | Indicates the argument, when supplied, will [cancel parsing](DefiningArguments.md#arguments-that-cancel-parsing).                                                                                                                         | **(none)**
 **default**           | Specifies the [default value](DefiningArguments.md#default-values) of an argument.                                                                                                                                                        | The default value. This is copied into the generated code verbatim, so it must be a valid C++ expression or literal; if the value is a string, this must have quotes.
-**multi_value**       | Indicates the argument is a [multi-value argument](Arguments.md#arguments-with-multiple-values). Requires the argument uses a suitable type (e.g. `std::vector<T>`)                                                                       | **(none)**
+**multi_value**       | Indicates the argument is a [multi-value argument](Arguments.md#arguments-with-multiple-values). Requires the argument uses a suitable type (e.g. [`std::vector<T>`][])                                                                   | **(none)**
 **no_long_name**      | Indicates the argument has no long name, but only a short name. If not using  [long/short mode](Arguments.md#longshort-mode), this will create an argument using the short name as its name. Requires that the argument has a short name. | **(none)**
 **positional**        | Indicates the argument is [positional](Arguments.md#positional-arguments). The position depends on the order the positional arguments are defined in.                                                                                     | **(none)**
 **required**          | Indicates the argument is [required](Arguments.md#required-arguments).                                                                                                                                                                    | **(none)**
@@ -199,7 +199,7 @@ To generate an argument parser, you use the [`scripts/New-Parser.ps1`](../script
 script. This script takes as input a C++ header file that contains a struct or class that defines
 the arguments. The struct or class and its fields must be annotated as described above.
 
-In addition, the struct must declare a static `build()` method with the following signature:
+In addition, the struct must declare a static `create_builder()` method with the following signature:
 
 ```c++
 ookii::parser_builder create_builder(std::string command_name, 
@@ -227,10 +227,10 @@ The script's output will be a C++ source file that contains a definition for the
 method. Add this generated file to your compiler inputs to use the generated method.
 
 Most of the time, you'll want to use the `parse()` method added by the macro, which will call the
-`create_builder()` method to create a `command_line_parser` using the information extracted from the
+`create_builder()` method to create a [`command_line_parser`][] using the information extracted from the
 annotation comments. It will then parse the arguments. If successful, it returns an instance of the
 arguments struct or class. If an error occurred, it will print the error message and usage help
-according to the supplied `usage_options`, and return `std::nullopt`.
+according to the supplied [`usage_writer`][] (if any), and return [`std::nullopt`][].
 
 ```c++
 int main(int argc, char *argv[])
@@ -249,7 +249,7 @@ int main(int argc, char *argv[])
 ```
 
 You can also use the `create_builder()` method directly. Since this method returns the builder, it
-allows you to further customize the arguments and options before calling `parser_builder::build()`.
+allows you to further customize the arguments and options before calling [`parser_builder::build()`][].
 Doing this also allows you to do things like custom error handling while still using code generation.
 
 ### Script arguments for `New-Parser.ps1`
@@ -298,15 +298,15 @@ stand-alone parser.
 
 It takes as input one or more C++ headers, which contain declarations of the subcommand classes, and
 generates argument parsers for them. It also generates a function called
-`ookii::register_commands()`, which registers all the generated subcommands and returns a
-`command_manager` instance. To use this function in your code, include
+[`ookii::register_commands()`][], which registers all the generated subcommands and returns a
+[`command_manager`][] instance. To use this function in your code, include
 `<ookii/command_line_generated.h>` _after_ you include `<ookii/command_line.h>`
 
 For the purposes of the code-generation scripts, the major differences between a subcommand class
 and a regular arguments struct or class are that:
 
 - The class must be annotated using the `[command]` attribute instead of `[arguments]`.
-- The class must derive from `ookii::command` as normal, or from another subcommand class.
+- The class must derive from [`ookii::command`][] as normal, or from another subcommand class.
 - You must declare the normal subcommand constructor taking a `ookii::parser_builder &` as an
   argument; the implementation of this constructor will be generated by the script.
 - You should _not_ use the [`OOKII_GENERATED_METHODS`][] macro, or otherwise declare a
@@ -346,8 +346,8 @@ private:
 ### Global options
 
 If you wish to set options that apply to all commands (such as the parsing mode), you can use a
-comment block that starts with a `[global]` attribute. This will add a `configure_parser()` call in
-the generated `ookii::register_commands()` function with those options, so they are used for every
+comment block that starts with a `[global]` attribute. This will add a [`configure_parser()`][] call in
+the generated [`ookii::register_commands()`][] function with those options, so they are used for every
 command.
 
 A `[name_transform]` attribute in the `[global]` block will cause this name transformation to be
@@ -372,7 +372,7 @@ affects the auto-generated names of arguments, but does not affect the names of 
 not explicitly specified, are determined at runtime and not by the script).
 
 Use the `-GenerateMain` argument to include a `main()` function in the generated output file. This
-main method will call `ookii::register_commands`, and then use `command_manager::run_command`
+main method will call [`ookii::register_commands()`][], and then use [`command_manager::run_command()`][command_manager::run_command()_1]
 to run one of the commands. You don't need to define an entry point at all when using this; just the
 commands. If `-WideChar` is present, this generates a `wmain()` function instead.
 
@@ -462,7 +462,7 @@ Some functionality is not available when using the code-generation scripts.
 If you generate a main method using `-EntryPoint` or `-GenerateMain`, the following additional
 limitations apply:
 
-- You cannot customize the `usage_writer` or `localized_string_provider` used.
+- You cannot customize the [`usage_writer`][] or [`localized_string_provider`][] used.
 - You cannot change the global locale before parsing happens; the default "C" locale is always
   used.
 - You cannot add arguments that aren't defined using the annotations.
@@ -511,7 +511,7 @@ add_executable(application "source.cpp" ${GENERATED_OUTPUT})
 If you need to process multiple header files, you must use the `-Command` argument of the `pwsh`
 binary to be able to pass an array to the script. For `New-Subcommand.ps1`, you should not invoke
 the script separately for each file, because doing so will generate multiple conflicting definitions
-of the `ookii::register_commands()` function.
+of the [`ookii::register_commands()`][] function.
 
 Here is an example of passing multiple headers to `New-Subcommand.ps1`:
 
@@ -629,3 +629,15 @@ That line is generated by Visual Studio if you're using NuGet and will look some
 Next, we will look at some [utility types](Utilities.md) included with the library.
 
 [`OOKII_GENERATED_METHODS`]: https://www.ookii.org/docs/commandline-cpp-2.0/command__line__generated_8h.html#a53b626c1994f1addfd297da8072c76f4
+[`command_line_parser`]: https://www.ookii.org/docs/commandline-cpp-2.0/classookii_1_1basic__command__line__parser.html
+[`command_manager`]: https://www.ookii.org/docs/commandline-cpp-2.0/classookii_1_1basic__command__manager.html
+[`configure_parser()`]: https://www.ookii.org/docs/commandline-cpp-2.0/classookii_1_1basic__command__manager.html#a1a68ed8729ad0dfa2300a2a74691a0c6
+[`localized_string_provider`]: https://www.ookii.org/docs/commandline-cpp-2.0/classookii_1_1basic__localized__string__provider.html
+[`ookii::command`]: https://www.ookii.org/docs/commandline-cpp-2.0/classookii_1_1basic__command.html
+[`ookii::register_commands()`]: https://www.ookii.org/docs/commandline-cpp-2.0/namespaceookii.html#ac514246d38c58d21cc168406737b4865
+[`parser_builder::build()`]: https://www.ookii.org/docs/commandline-cpp-2.0/classookii_1_1basic__parser__builder.html#af66361855468fde2eb545fbe1631e042
+[`parser_builder`]: https://www.ookii.org/docs/commandline-cpp-2.0/classookii_1_1basic__parser__builder.html
+[`std::nullopt`]: https://en.cppreference.com/w/cpp/utility/optional/nullopt
+[`std::vector<T>`]: https://en.cppreference.com/w/cpp/container/vector
+[`usage_writer`]: https://www.ookii.org/docs/commandline-cpp-2.0/classookii_1_1basic__usage__writer.html
+[command_manager::run_command()_1]: https://www.ookii.org/docs/commandline-cpp-2.0/classookii_1_1basic__command__manager.html#a4deb89f49a7ce6d03ed41cdbf8769d58
