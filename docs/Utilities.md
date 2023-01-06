@@ -121,3 +121,27 @@ The `ookii::vt::text_format` namespace provides a number of constants for the pr
 and foreground colors and formats supported by the console, as well as a method to create a VT
 sequence for any 24-bit color. These can be used to change the default usage help colors, or to
 apply color to your own text.
+
+For example, you can use the following to write in color when supported:
+
+```c++
+auto support = ookii::vt::virtual_terminal_support::enable_color(ookii::standard_stream::output);
+if (support)
+{
+    std::cout << ookii::vt::text_format::foreground_green << ookii::vt::text_format::underline;
+}
+
+std::cout << "This text is green and underlined.";
+
+if (support)
+{
+    std::cout << ookii::vt::text_format::default_format;
+}
+
+std::cout << std::endl;
+```
+
+On Windows, VT support must be enabled for a process. In addition to checking for support, the
+`virtual_terminal_support::enable()` and `virtual_terminal_support::enable_color()` methods also
+enable it if necessary, and the returned object will revert the console mode when destructed. On
+other platforms, it only checks for support and destructing the returned instance does nothing.

@@ -123,106 +123,106 @@ namespace ookii::vt
         //! \brief Returns foreground and background colors to normal.
         constexpr const char *positive = "\x1b[27m";
         
-        //! \brief Sets the foreground color to Black.
+        //! \brief Sets the foreground color to black.
         constexpr const char *foreground_black = "\x1b[30m";
         
-        //! \brief Sets the foreground color to Red.
+        //! \brief Sets the foreground color to red.
         constexpr const char *foreground_red = "\x1b[31m";
         
-        //! \brief Sets the foreground color to Green.
+        //! \brief Sets the foreground color to green.
         constexpr const char *foreground_green = "\x1b[32m";
         
-        //! \brief Sets the foreground color to Yellow.
+        //! \brief Sets the foreground color to yellow.
         constexpr const char *foreground_yellow = "\x1b[33m";
         
-        //! \brief Sets the foreground color to Blue.
+        //! \brief Sets the foreground color to blue.
         constexpr const char *foreground_blue = "\x1b[34m";
         
-        //! \brief Sets the foreground color to Magenta.
+        //! \brief Sets the foreground color to magenta.
         constexpr const char *foreground_magenta = "\x1b[35m";
         
-        //! \brief Sets the foreground color to Cyan.
+        //! \brief Sets the foreground color to cyan.
         constexpr const char *foreground_cyan = "\x1b[36m";
         
-        //! \brief Sets the foreground color to White.
+        //! \brief Sets the foreground color to white.
         constexpr const char *foreground_white = "\x1b[37m";
         
-        //! \brief Sets the foreground color to Default.
+        //! \brief Sets the foreground color to default.
         constexpr const char *foreground_default = "\x1b[39m";
         
-        //! \brief Sets the background color to Black.
+        //! \brief Sets the background color to black.
         constexpr const char *background_black = "\x1b[40m";
         
-        //! \brief Sets the background color to Red.
+        //! \brief Sets the background color to red.
         constexpr const char *background_red = "\x1b[41m";
         
-        //! \brief Sets the background color to Green.
+        //! \brief Sets the background color to green.
         constexpr const char *background_green = "\x1b[42m";
         
-        //! \brief Sets the background color to Yellow.
+        //! \brief Sets the background color to yellow.
         constexpr const char *background_yellow = "\x1b[43m";
         
-        //! \brief Sets the background color to Blue.
+        //! \brief Sets the background color to blue.
         constexpr const char *background_blue = "\x1b[44m";
         
-        //! \brief Sets the background color to Magenta.
+        //! \brief Sets the background color to magenta.
         constexpr const char *background_magenta = "\x1b[45m";
         
-        //! \brief Sets the background color to Cyan.
+        //! \brief Sets the background color to cyan.
         constexpr const char *background_cyan = "\x1b[46m";
         
-        //! \brief Sets the background color to White.
+        //! \brief Sets the background color to white.
         constexpr const char *background_white = "\x1b[47m";
         
-        //! \brief Sets the background color to Default.
+        //! \brief Sets the background color to default.
         constexpr const char *background_default = "\x1b[49m";
         
-        //! \brief Sets the foreground color to bright Black.
+        //! \brief Sets the foreground color to bright black.
         constexpr const char *bright_foreground_black = "\x1b[90m";
         
-        //! \brief Sets the foreground color to bright Red.
+        //! \brief Sets the foreground color to bright red.
         constexpr const char *bright_foreground_red = "\x1b[91m";
         
-        //! \brief Sets the foreground color to bright Green.
+        //! \brief Sets the foreground color to bright green.
         constexpr const char *bright_foreground_green = "\x1b[92m";
         
-        //! \brief Sets the foreground color to bright Yellow.
+        //! \brief Sets the foreground color to bright yellow.
         constexpr const char *bright_foreground_yellow = "\x1b[93m";
         
-        //! \brief Sets the foreground color to bright Blue.
+        //! \brief Sets the foreground color to bright blue.
         constexpr const char *bright_foreground_blue = "\x1b[94m";
         
-        //! \brief Sets the foreground color to bright Magenta.
+        //! \brief Sets the foreground color to bright magenta.
         constexpr const char *bright_foreground_magenta = "\x1b[95m";
         
-        //! \brief Sets the foreground color to bright Cyan.
+        //! \brief Sets the foreground color to bright cyan.
         constexpr const char *bright_foreground_cyan = "\x1b[96m";
         
-        //! \brief Sets the foreground color to bright White.
+        //! \brief Sets the foreground color to bright white.
         constexpr const char *bright_foreground_white = "\x1b[97m";
         
-        //! \brief Sets the background color to bright Black.
+        //! \brief Sets the background color to bright black.
         constexpr const char *bright_background_black = "\x1b[100m";
         
-        //! \brief Sets the background color to bright Red.
+        //! \brief Sets the background color to bright red.
         constexpr const char *bright_background_red = "\x1b[101m";
         
-        //! \brief Sets the background color to bright Green.
+        //! \brief Sets the background color to bright green.
         constexpr const char *bright_background_green = "\x1b[102m";
         
-        //! \brief Sets the background color to bright Yellow.
+        //! \brief Sets the background color to bright yellow.
         constexpr const char *bright_background_yellow = "\x1b[103m";
         
-        //! \brief Sets the background color to bright Blue.
+        //! \brief Sets the background color to bright blue.
         constexpr const char *bright_background_blue = "\x1b[104m";
         
-        //! \brief Sets the background color to bright Magenta.
+        //! \brief Sets the background color to bright magenta.
         constexpr const char *bright_background_magenta = "\x1b[105m";
         
-        //! \brief Sets the background color to bright Cyan.
+        //! \brief Sets the background color to bright cyan.
         constexpr const char *bright_background_cyan = "\x1b[106m";
         
-        //! \brief Sets the background color to bright White.
+        //! \brief Sets the background color to bright white.
         constexpr const char *bright_background_white = "\x1b[107m";
 
         
@@ -232,7 +232,7 @@ namespace ookii::vt
         //! \param red The red component of the color, between 0 and 255.
         //! \param green The green component of the color, between 0 and 255.
         //! \param blue The blue component of the color, between 0 and 255.
-        //! \param foreground `true` to apply the color to the background; otherwise, it's applied
+        //! \param foreground `true` to apply the color to the foreground; otherwise, it's applied
         //! to the background.
         //! \return A string with the virtual terminal sequence.
         template<typename CharType = ookii::details::default_char_type>
