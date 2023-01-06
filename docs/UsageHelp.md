@@ -12,7 +12,7 @@ customized using the [`usage_writer`][] class. Various overloads of the [`comman
 method that take a parameter of type [`usage_writer`][] also automatically print usage help if an
 error occurred while parsing.
 
-By default, the [`usage_writer`][] class will use an [`ookii::line_wrapping_ostream`](LineWrappingStream.md)
+By default, the [`usage_writer`][] class will use an [`ookii::line_wrapping_ostream`](Utilities.md)
 for the standard output, white-space wrapping the generated output at the console line width.
 
 The following example shows the usage help generated for the [parser sample](../samples/parser)

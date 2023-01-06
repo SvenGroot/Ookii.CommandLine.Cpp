@@ -15,6 +15,14 @@
 
 namespace ookii
 {
+    namespace details
+    {
+#ifdef _UNICODE
+        using default_char_type = wchar_t;
+#else
+        using default_char_type = char;
+#endif
+    }
 
     //! \brief A version of the std::less predicate for strings that supports case insensitive
     //!        comparison.

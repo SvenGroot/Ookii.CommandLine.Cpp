@@ -24,12 +24,6 @@ namespace ookii
 {
     namespace details
     {
-#ifdef _UNICODE
-        using default_char_type = wchar_t;
-#else
-        using default_char_type = char;
-#endif
-
         template<typename CharType, typename Traits, typename Alloc>
         struct parser_storage
         {

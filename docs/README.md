@@ -18,5 +18,5 @@ explanations of what they do and examples of their output.
   - [Generating Usage Help](UsageHelp.md)
 - [subcommands](Subcommands.md)
 - [Code-generation scripts](Scripts.md)
-- [Line Wrapping Stream](LineWrappingStream.md)
+- [Line Wrapping Stream](Utilities.md)
 - [Header File Documentation](https://www.ookii.org/Link/CommandLineCppDoc)

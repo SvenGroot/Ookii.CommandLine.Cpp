@@ -144,7 +144,7 @@ Ookii.CommandLine for C++ requires the following:
 - A compiler supporting C++20 (tested with Visual C++ 2022, g++ 11, and Clang 14 and 15).
 - A standard C++ library supporting the \<format> header, or;
   - [libfmt](https://github.com/fmtlib/fmt) if \<format> is not available.
-- [`line_wrapping_ostream`](docs/LineWrappingStream.md), used to generate usage help, relies on
+- [`line_wrapping_ostream`](docs/Utilities.md), used to generate usage help, relies on
   `dynamic_cast` and will require RTTI to be enabled to function correctly.
 
 Ookii.CommandLine for C++ should support any operating system (tested on Windows and Linux). If you
