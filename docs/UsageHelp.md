@@ -136,7 +136,7 @@ arguments; the user can instead use the argument description list to see what ar
 available.
 
 If you are using [long/short mode](Arguments.md#longshort-mode), you can set the
-[`usage_writer::use_short_names_for_syntax`][] property to use short arguments names instead of long
+[`usage_writer::use_short_names_for_syntax`][] field to use short arguments names instead of long
 names, for arguments that have a short name, in the usage syntax.
 
 ### Value descriptions
@@ -213,15 +213,15 @@ default value. You can choose to include only arguments with descriptions (this 
 behavior before version 2.0), all arguments, or to omit the description list entirely.
 
 You can also choose the sort order of the description list using the
-[`usage_writer::argument_description_list_order`][] property. This defaults to the same order as the
+[`usage_writer::argument_description_list_order`][] field. This defaults to the same order as the
 usage syntax, but you can also choose to sort by ascending or descending long or short name.
 
-Since the [`parse()`][parse()_0] method overloads that take a [`usage_writer`][] will show usage help on error, if
-you have a lot of arguments it may be necessary for the user to scroll up past the argument
-description list to see the error message to determine what was wrong with the command line. Since
-this may be inconvenient, you can choose to omit the argument description list, or the usage help
-entirely, when an error occurs, using the [`parser_builder::show_usage_on_error()`][] method. In this
-case, the user will have to use the `-Help` argument to see the full help.
+Since the [`parse()`][parse()_0] method overloads that take a [`usage_writer`][] will show usage
+help on error, if you have a lot of arguments it may be necessary for the user to scroll up past the
+argument description list to see the error message to determine what was wrong with the command
+line. Since this may be inconvenient, you can choose to omit the argument description list, or the
+usage help entirely, when an error occurs, using the [`parser_builder::show_usage_on_error()`][]
+method. In this case, the user will have to use the `-Help` argument to see the full help.
 
 ## Color output
 

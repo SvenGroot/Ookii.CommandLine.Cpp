@@ -138,7 +138,7 @@ namespace ookii
         //! \brief Gets the short name of the argument, or a NULL character if it doesn't have one.
         //!
         //! The argument's short name is set using the
-        //! basic_parser_builder::argument_builder::short_name() method.
+        //! basic_parser_builder::argument_builder_common::short_name() method.
         //!
         //! If not using parsing_mode::long_short, this is always `false`.
         CharType short_name() const noexcept
@@ -196,7 +196,7 @@ namespace ookii
         //!
         //! An argument may have zero or more aliases.
         //! 
-        //! Aliases can be added using the basic_parser_builder::argument_builder::alias() method.
+        //! Aliases can be added using the basic_parser_builder::argument_builder_common::alias() method.
         const std::vector<string_type> &aliases() const noexcept
         {
             return _storage.aliases;
@@ -209,7 +209,7 @@ namespace ookii
         //! If not using parsing_mode::long_short, this is always an empty collection.
         //! 
         //! Short aliases can be added using the
-        //! basic_parser_builder::argument_builder::short_alias() method.
+        //! basic_parser_builder::argument_builder_common::short_alias() method.
         const std::vector<CharType> &short_aliases() const noexcept
         {
             return _storage.short_aliases;
@@ -223,7 +223,7 @@ namespace ookii
         //! This value defaults to the short type name (excluding namespace names) of the argument's type. The exact
         //! value may depend on your compiler.
         //! 
-        //! This value can be changed using the basic_parser_builder::argument_builder::value_description() method.
+        //! This value can be changed using the basic_parser_builder::argument_builder_common::value_description() method.
         const string_type &value_description() const noexcept
         {
             return _storage.value_description;
@@ -237,7 +237,7 @@ namespace ookii
         //! An argument without a description will not be included in the list of descriptions
         //! (but will still be included in the syntax).
         //! 
-        //! This value can be changed using the basic_parser_builder::argument_builder::description() method.
+        //! This value can be changed using the basic_parser_builder::argument_builder_common::description() method.
         const string_type &description() const noexcept
         {
             return _storage.description;
@@ -250,7 +250,7 @@ namespace ookii
         //! A positional argument can be specified without supplying `-Name` before the value.
         //! Note that a positional argument can still be specified by name, as well as by position.
         //! 
-        //! An argument can be made positional using the basic_parser_builder::argument_builder::positional() method.
+        //! An argument can be made positional using the basic_parser_builder::argument_builder_common::positional() method.
         std::optional<size_t> position() const noexcept
         {
             return _storage.position;
@@ -260,7 +260,7 @@ namespace ookii
         //!
         //! A required argument must be provided, otherwise parsing is not successful.
         //! 
-        //! An argument can be made required using the basic_parser_builder::argument_builder::required() method.
+        //! An argument can be made required using the basic_parser_builder::argument_builder_common::required() method.
         bool is_required() const noexcept
         {
             return _storage.is_required;
@@ -275,7 +275,7 @@ namespace ookii
         //! This can be used, for example, to implement a `-Help` argument where usage help should
         //! be shown when supplied even if the rest of the command line is valid.
         //! 
-        //! This value can be changed using the basic_parser_builder::argument_builder::cancel_parsing()
+        //! This value can be changed using the basic_parser_builder::argument_builder_common::cancel_parsing()
         //! method.
         bool cancel_parsing() const noexcept
         {
@@ -338,7 +338,7 @@ namespace ookii
         //! For a multi-value argument, the default value will be added as the only value in the
         //! container if no values were supplied on the command line.
         //! 
-        //! The default value for an argument can be specified using basic_parser_builder::argument_builder::default_value().
+        //! The default value for an argument can be specified using basic_parser_builder::typed_argument_builder::default_value().
         virtual void apply_default_value() = 0;
 
         //! \brief Applies the implicit value for a switch argument.
@@ -354,7 +354,7 @@ namespace ookii
 
         //! \brief Writes the default value to the specified stream.
         //!
-        //! The default value for an argument can be specified using basic_parser_builder::argument_builder::default_value().
+        //! The default value for an argument can be specified using basic_parser_builder::typed_argument_builder::default_value().
         //!
         //! \param stream The stream to write to.
         //! \return The stream.

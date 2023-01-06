@@ -245,7 +245,7 @@ don't need values, you either supply them or you don't.
 
 Now, let's update `read_file` to use the new arguments:
 
-```csharp
+```c++
 void read_file(const arguments &args)
 {
     auto support = ookii::vt::virtual_terminal_support::enable_color(ookii::standard_stream::output);
@@ -616,7 +616,7 @@ Let's change the example we've built so far to use subcommands. I'm going to con
 POSIX-like long/short mode, but if you prefer the defaults, you can go back to that version too.
 
 To do this, we'll rename arguments.h to read_command.h (and make the appropriate change in
-CMakeLists.txt and main.cpp), and change the [`arguments`][] struct to a `read_command` class. We'll
+CMakeLists.txt and main.cpp), and change the `arguments` struct to a `read_command` class. We'll
 turn the `parse()` method into a public constructor that takes a [`parser_builder`][] as an argument.
 
 ```c++
@@ -691,7 +691,7 @@ And that's it: we've now defined a command. However, we still need to change the
 use commands instead of just parsing arguments from a single class. Fortunately, this is very
 simple. Update your `main()` method as follows:
 
-```csharp
+```c++
 int main(int argc, char *argv[])
 {
     auto name = ookii::command_line_parser::get_executable_name(argc, argv);
@@ -1220,7 +1220,6 @@ following resources:
 [`OOKII_GENERATED_METHODS`]: https://www.ookii.org/docs/commandline-cpp-2.0/command__line__generated_8h.html#a53b626c1994f1addfd297da8072c76f4
 [`add_version_argument()`]: https://www.ookii.org/docs/commandline-cpp-2.0/classookii_1_1basic__parser__builder.html#a9abfabd3ea77bdda6b8c9c53010c6f9d
 [`alias()`]: https://www.ookii.org/docs/commandline-cpp-2.0/classookii_1_1basic__parser__builder_1_1argument__builder__common.html#a44d77984b1cd12b04764f7f2741269d4
-[`arguments`]: https://www.ookii.org/docs/commandline-cpp-2.0/classookii_1_1basic__command__line__parser.html#ab29d6b51c259b4c868f52501614c76ad
 [`automatic_help_argument(false)`]: https://www.ookii.org/docs/commandline-cpp-2.0/classookii_1_1basic__parser__builder.html#acf3a2fe08de1bdef7a69cf26cf94ba12
 [`build()`]: https://www.ookii.org/docs/commandline-cpp-2.0/classookii_1_1basic__parser__builder.html#af66361855468fde2eb545fbe1631e042
 [`command_line_parser`]: https://www.ookii.org/docs/commandline-cpp-2.0/classookii_1_1basic__command__line__parser.html

@@ -15,7 +15,7 @@ namespace ookii
         //! \brief No error occurred.
         none,
 
-        //! \brief Parsing was cancelled by an argument using basic_parser_builder::argument_builder::cancel_parsing(),
+        //! \brief Parsing was cancelled by an argument using basic_parser_builder::argument_builder_common::cancel_parsing(),
         //!        or the by the basic_command_line_parser::on_parsed() callback.
         //! 
         //! While this is treated as a parsing failure, this is not technically an error, and no

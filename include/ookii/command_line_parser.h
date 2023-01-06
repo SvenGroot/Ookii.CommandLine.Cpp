@@ -385,7 +385,7 @@ namespace ookii
 
         //! \brief Gets the number of positional arguments.
         //!
-        //! Positional arguments are created using basic_parser_builder::argument_builder::positional().
+        //! Positional arguments are created using basic_parser_builder::argument_builder_common::positional().
         size_t positional_argument_count() const
         {
             return _positional_argument_count;
@@ -397,7 +397,7 @@ namespace ookii
         //!
         //! Only positional arguments can be retrieved using this method.
         //! 
-        //! Positional arguments are created using basic_parser_builder::argument_builder::positional().
+        //! Positional arguments are created using basic_parser_builder::argument_builder_common::positional().
         //! 
         //! \exception std::out_of_range There is no argument at the specified position.
         const argument_base_type &get_argument(size_t pos) const
@@ -416,7 +416,7 @@ namespace ookii
         //!
         //! Only positional arguments can be retrieved using this method.
         //! 
-        //! Positional arguments are created using basic_parser_builder::argument_builder::positional().
+        //! Positional arguments are created using basic_parser_builder::argument_builder_common::positional().
         //! 
         //! \exception std::out_of_range There is no argument at the specified position.
         argument_base_type &get_argument(size_t pos)

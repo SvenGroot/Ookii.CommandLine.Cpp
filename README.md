@@ -260,9 +260,9 @@ the character type, so they can support both `char` and `wchar_t`. The `ookii::c
 class is actually a typedef for `ookii::basic_command_line_parser<char>`, and there is a similar
 typedef `ookii::wcommand_line_parser` that translates to `ookii::basic_command_line_parser<wchar_t>`.
 
-The same is true of `ookii::parser_builder`, `ookii::usage_options`, `ookii::command`,
-`ookii::command_manager`, and `ookii::shell_command_usage_options` which all have wide character
-versions starting with `w`.
+The same is true of `ookii::parser_builder`, `ookii::usage_writer`, `ookii::command`,
+`ookii::command_manager`, `ookii::localized_string_provider`, and `ookii::line_wrapping_ostream`,
+which all have wide character versions starting with `w`.
 
 If you wish to test out Unicode support on Windows, you can compile the unit tests for Unicode by
 passing `-DOOKIICL_UNICODE=1` to CMake. This has no effect on platforms other than Windows, and only
