@@ -83,6 +83,14 @@ namespace ookii
         basic_line_wrapping_streambuf(basic_line_wrapping_streambuf &) = delete;
         basic_line_wrapping_streambuf &operator=(basic_line_wrapping_streambuf &) = delete;
 
+        //! \brief Destructor for the basic_line_wrapping_streambuf class.
+        //!
+        //! This destructor will flush all contents, including the last line.
+        ~basic_line_wrapping_streambuf()
+        {
+            sync(true);
+        }
+
         //! \brief Initializes this basic_line_wrapping_streambuf instance with the specified
         //!        underlying stream buffer and maximum line length.
         //! 

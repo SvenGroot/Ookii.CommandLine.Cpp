@@ -120,6 +120,17 @@ public:
         VERIFY_EQUAL(c_blankLineIndentResult, stream.str());
     }
 
+    TEST_METHOD(TestDestructor)
+    {
+        tstringstream inner;
+        {
+            tline_wrapping_stream stream{inner, 40};
+            stream << c_input;
+        }
+
+        VERIFY_EQUAL(c_wrapResult, inner.str());
+    }
+
 private:
     void TestWrite(tstring_view input, tstring_view expected, size_t max_length, size_t indent)
     {
