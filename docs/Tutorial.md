@@ -1239,7 +1239,7 @@ following resources:
 [`std::optional<T>`]: https://en.cppreference.com/w/cpp/utility/optional
 [`std::vector<string>`]: https://en.cppreference.com/w/cpp/container/vector
 [`usage_writer`]: https://www.ookii.org/docs/commandline-cpp-2.0/classookii_1_1basic__usage__writer.html
-[`virtual_terminal_support`]: https://www.ookii.org/docs/commandline-cpp-2.0/classookii_1_1vt_1_1virtual__terminal__support.html#af9d2adc67cfa52c358a70864f75efb92
+[`virtual_terminal_support`]: https://www.ookii.org/docs/commandline-cpp-2.0/classookii_1_1vt_1_1virtual__terminal__support.html
 [add_argument()_1]: https://www.ookii.org/docs/commandline-cpp-2.0/classookii_1_1basic__parser__builder.html#a16b69672a4dd924cf5a402c419be3d05
 [add_multi_value_argument()_1]: https://www.ookii.org/docs/commandline-cpp-2.0/classookii_1_1basic__parser__builder.html#a35953740728918a4d3daa0f69d052e16
 [case_sensitive_1]: https://www.ookii.org/docs/commandline-cpp-2.0/classookii_1_1basic__parser__builder.html#a47a0c39a17d1dcca8b99455dab68dbb0

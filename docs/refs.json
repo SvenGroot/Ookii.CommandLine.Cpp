@@ -294,6 +294,7 @@
     }
   ],
   "dumb": null,
+  "dynamic_cast": null,
   "error": [
     {
       "name": "ookii::parse_result::error",
@@ -329,9 +330,21 @@
     "name": "ookii::basic_line_wrapping_ostream",
     "path": "classookii_1_1basic__line__wrapping__ostream.html"
   },
+  "line_wrapping_ostream::for_cerr()": {
+    "name": "ookii::basic_line_wrapping_ostream::for_cerr(short default_width=80)",
+    "path": "classookii_1_1basic__line__wrapping__ostream.html#a1d262bb9c49c15f857a0a36ae4937391"
+  },
+  "line_wrapping_ostream::for_cout()": {
+    "name": "ookii::basic_line_wrapping_ostream::for_cout(short default_width=80)",
+    "path": "classookii_1_1basic__line__wrapping__ostream.html#a1c0dede173071449bdb27954ae218982"
+  },
   "line_wrapping_ostringstream": {
     "path": "classookii_1_1basic__line__wrapping__ostringstream.html",
     "name": "ookii::basic_line_wrapping_ostringstream"
+  },
+  "line_wrapping_streambuf": {
+    "name": "ookii::basic_line_wrapping_streambuf",
+    "path": "classookii_1_1basic__line__wrapping__streambuf.html"
   },
   "locale()": [
     {
@@ -403,7 +416,19 @@
     "name": "ookii::basic_command::run()=0",
     "path": "classookii_1_1basic__command.html#a1f14c66512418948c9cafc81fd7b881b"
   },
+  "ookii::get_console_width()": {
+    "name": "console_helper.h::get_console_width(short default_width=80) noexcept",
+    "path": "namespaceookii.html#af3f2688d9c2aa0f3f97e04764255b781"
+  },
   "ookii::lexical_convert": "structookii_1_1lexical__convert.html",
+  "ookii::line_wrapping_ostream": {
+    "name": "ookii::basic_line_wrapping_ostream",
+    "path": "classookii_1_1basic__line__wrapping__ostream.html"
+  },
+  "ookii::line_wrapping_streambuf": {
+    "name": "ookii::basic_line_wrapping_streambuf",
+    "path": "classookii_1_1basic__line__wrapping__streambuf.html"
+  },
   "ookii::parser_builder": {
     "name": "ookii::basic_parser_builder",
     "path": "classookii_1_1basic__parser__builder.html"
@@ -416,11 +441,27 @@
     "name": "command_line_generated.h::register_commands(std::basic_string< details::default_char_type > application_name, basic_localized_string_provider< details::default_char_type > *string_provider=nullptr, const std::locale &locale={})",
     "path": "namespaceookii.html#ac514246d38c58d21cc168406737b4865"
   },
+  "ookii::reset_indent": {
+    "name": "line_wrapping_stream.h::reset_indent(std::basic_ostream< CharType, Traits > &stream)",
+    "path": "namespaceookii.html#a4161788af0f4b7625c3f360d3616ae0f"
+  },
+  "ookii::set_indent()": {
+    "name": "line_wrapping_stream.h::set_indent(size_t indent)",
+    "path": "namespaceookii.html#ad0749ddf0a46498f5a5fa7632e32616b"
+  },
   "ookii::usage_writer": {
     "name": "ookii::basic_usage_writer",
     "path": "classookii_1_1basic__usage__writer.html"
   },
+  "ookii::use_console_width": {
+    "name": "line_wrapping_stream.h::use_console_width",
+    "path": "namespaceookii.html#a528c26473e9aac931b836633605cd4a6"
+  },
   "ookii::value_description": "structookii_1_1value__description.html",
+  "ookii::vt": {
+    "name": "ookii::vt",
+    "path": "namespaceookii_1_1vt.html"
+  },
   "ookii::vt::text_format": null,
   "operator<<": "#io/basic_ostream/operator_ltlt2",
   "operator>>": "#io/basic_istream/operator_gtgt",
@@ -631,6 +672,12 @@
   "read_command": null,
   "read_file": null,
   "read_file()": null,
+  "reset_indent": [
+    {
+      "name": "line_wrapping_stream.h::reset_indent(std::basic_ostream< CharType, Traits > &stream)",
+      "path": "namespaceookii.html#a4161788af0f4b7625c3f360d3616ae0f"
+    }
+  ],
   "run_command()": [
     {
       "name": "ookii::basic_command_manager::run_command(const string_type &name, std::span< const CharType *const > args, usage_writer_type *usage=nullptr) const",
@@ -648,6 +695,10 @@
   "run()": {
     "name": "ookii::basic_command::run()=0",
     "path": "classookii_1_1basic__command.html#a1f14c66512418948c9cafc81fd7b881b"
+  },
+  "set_indent": {
+    "name": "line_wrapping_stream.h::set_indent(size_t indent)",
+    "path": "namespaceookii.html#ad0749ddf0a46498f5a5fa7632e32616b"
   },
   "short_alias()": {
     "name": "ookii::basic_parser_builder::argument_builder_common::short_alias(CharType alias)",
@@ -687,11 +738,40 @@
   "std::optional::value_or()": "#utility/optional/value_or",
   "std::optional<bool>": "#utility/optional",
   "std::optional<T>": "#utility/optional",
+  "std::ostream": "#io/basic_ostream",
+  "std::ostringstream": "#io/basic_ostringstream",
+  "std::streambuf": "#io/basic_streambuf",
   "std::vector<bool>": "#container/vector",
   "std::vector<int>": "#container/vector",
   "std::vector<string>": "#container/vector",
   "std::vector<T>": "#container/vector",
   "std::wstring_view": "#string/basic_string_view",
+  "str()": [
+    {
+      "name": "ookii::basic_line_wrapping_ostringstream::str() &&",
+      "path": "classookii_1_1basic__line__wrapping__ostringstream.html#a955339ed337fd43a19f1e60d9a751bd1"
+    },
+    {
+      "name": "ookii::basic_line_wrapping_ostringstream::str(const std::basic_string< CharType, Traits, SAlloc > &s)",
+      "path": "classookii_1_1basic__line__wrapping__ostringstream.html#a0655d47b9ec166eead3108a8765ad463"
+    },
+    {
+      "name": "ookii::basic_line_wrapping_ostringstream::str(const string_type &s)",
+      "path": "classookii_1_1basic__line__wrapping__ostringstream.html#a55a4791260d00164ad3b40fcd3a43dcc"
+    },
+    {
+      "name": "ookii::basic_line_wrapping_ostringstream::str() const &",
+      "path": "classookii_1_1basic__line__wrapping__ostringstream.html#abab4a10e243a60c8653c65c34b554bac"
+    },
+    {
+      "name": "ookii::basic_line_wrapping_ostringstream::str(string_type &&s)",
+      "path": "classookii_1_1basic__line__wrapping__ostringstream.html#a6181612d01c5a426141b0ef5b48099b8"
+    },
+    {
+      "name": "ookii::basic_line_wrapping_ostringstream::str(const SAlloc &alloc) const",
+      "path": "classookii_1_1basic__line__wrapping__ostringstream.html#a084c31b3a715dc7936977f62b9c6a903"
+    }
+  ],
   "string": "#string/basic_string",
   "syntax_only": null,
   "this": null,
@@ -750,12 +830,18 @@
   "value1": null,
   "version": null,
   "virtual": null,
-  "virtual_terminal_support": [
-    {
-      "name": "ookii::vt::virtual_terminal_support::virtual_terminal_support()=default",
-      "path": "classookii_1_1vt_1_1virtual__terminal__support.html#af9d2adc67cfa52c358a70864f75efb92"
-    }
-  ],
+  "virtual_terminal_support": {
+    "name": "ookii::vt::virtual_terminal_support",
+    "path": "classookii_1_1vt_1_1virtual__terminal__support.html"
+  },
+  "virtual_terminal_support::enable_color()": {
+    "name": "ookii::vt::virtual_terminal_support::enable_color(standard_stream stream)",
+    "path": "classookii_1_1vt_1_1virtual__terminal__support.html#a195fb521ef04f28111b7db82adf11fc4"
+  },
+  "virtual_terminal_support::enable()": {
+    "name": "ookii::vt::virtual_terminal_support::enable(standard_stream stream)",
+    "path": "classookii_1_1vt_1_1virtual__terminal__support.html#a548121a6bab1145e24b051311bf2f8bd"
+  },
   "wchar_t": null,
   "wmain()": null,
   "write_argument_description()": [

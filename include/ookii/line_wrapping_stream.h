@@ -859,9 +859,9 @@ namespace ookii
     };
 
     //! \brief A line wrapping stream for use with the `char` type.
-    using line_wrapping_ostream = ookii::basic_line_wrapping_ostream<char>;
+    using line_wrapping_ostream = basic_line_wrapping_ostream<char>;
     //! \brief A line wrapping stream for use with the `wchar_t` type.
-    using wline_wrapping_ostream = ookii::basic_line_wrapping_ostream<wchar_t>;
+    using wline_wrapping_ostream = basic_line_wrapping_ostream<wchar_t>;
 
     namespace details
     {
@@ -986,7 +986,7 @@ namespace ookii
     };
 
     //! \brief A line wrapping string stream for use with the `char` type.
-    using line_wrapping_ostringstream = ookii::basic_line_wrapping_ostringstream<char>;
+    using line_wrapping_ostringstream = basic_line_wrapping_ostringstream<char>;
     //! \brief A line wrapping string stream for use with the `wchar_t` type.
-    using wline_wrapping_ostringstream = ookii::basic_line_wrapping_ostringstream<wchar_t>;
+    using wline_wrapping_ostringstream = basic_line_wrapping_ostringstream<wchar_t>;
 }
