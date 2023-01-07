@@ -7,6 +7,7 @@
 
 #include "console_helper.h"
 #include "scope_helper.h"
+#include "format_helper.h"
 #include <string_view>
 #include <locale>
 
