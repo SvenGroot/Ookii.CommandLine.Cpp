@@ -21,7 +21,7 @@ into a set of strongly-typed, named values. You can easily define the accepted a
 parse the command line supplied to your application for those arguments. In addition, you can
 generate usage help that can be displayed to the user.
 
-Ookii.CommandLine can be used with any kind of .Net application, whether console or GUI. Some
+Ookii.CommandLine can be used with any kind of C++ application, whether console or GUI. Some
 functions, such as creating usage help, are primarily designed for console applications, but even
 those can be easily adapted for use with other styles of applications.
 
@@ -142,8 +142,8 @@ each with their own arguments.
 Ookii.CommandLine for C++ requires the following:
 
 - A compiler supporting C++20 (tested with Visual C++ 2022, g++ 11, and Clang 14 and 15).
-- A standard C++ library supporting the \<format> header, or;
-  - [libfmt](https://github.com/fmtlib/fmt) if \<format> is not available.
+- A standard C++ library supporting the `<format>` header, or;
+  - [libfmt](https://github.com/fmtlib/fmt) if `<format>` is not available.
 - [`line_wrapping_ostream`](docs/Utilities.md), used to generate usage help, relies on
   `dynamic_cast` and will require RTTI to be enabled to function correctly.
 
@@ -158,64 +158,13 @@ to your include path. Since Ookii.CommandLine is entirely implemented in the hea
 linking requirements.
 
 Although Ookii.CommandLine is split out into several header files, you typically want to include
-the following:
+just the following:
 
 ```c++
 #include <ookii/command_line.h>
 ```
 
-This gets you all the core functionality, including subcommands.
-
-## Building and running tests and samples
-
-Building the tests and samples requires the following:
-
-- CMake 3.15 or later.
-- (optional) [PowerShell 6](https://github.com/powershell/powershell) or later for the samples and
-  tests using the [code-generation scripts](docs/Scripts.md) (tested using PowerShell 7.3 on both
-  Windows and Linux).
-  - The [Pester](https://pester.dev/) module is required to run the script tests.
-
-To build the included tests and samples, clone the repository to a local directory, create a folder
-to hold the build output, and run CMake to configure the project:
-
-```sh
-mkdir build
-cd build
-cmake ..
-cmake --build .
-```
-
-A script is provided to aid building on Linux: `scripts/build.sh`. You can use the `--compiler`
-argument to use a C++ compiler other than the default on your system (specify only the binary name,
-e.g "clang++"), the `--clean` argument to reconfigure and rebuild, and the `--docs` argument to
-build documentation instead of the tests and samples (requires [doxygen](https://doxygen.nl/) and
-[dot](https://graphviz.org/))
-
-### Running tests
-
-The unit tests require the existence of the `nl_NL.UTF-8` locale. If this locale does not exist,
-you will see one test failure. In Linux, you can generate this locale using the following command:
-
-```sh
-sudo locale-gen nl_NL.UTF-8
-```
-
-To run the tests, use the following command:
-
-```sh
-ctest --output-on-failure
-```
-
-If everything passes, your environment is supported. If you want to see more detailed output, you
-can run the unittests binary directly.
-
-You can also use `scripts/build.sh --test` to build and run the tests.
-
-### Running samples
-
-After building, you will find several samples in the output. These samples are described in detail,
-with samples of their usage help output, in the [samples documentation](samples).
+This gets you all the library functionality, including subcommands.
 
 ## CMake usage
 
@@ -286,6 +235,57 @@ Macro                       | Description
 `OOKII_PLATFORM_NOT_INLINE` | Do not provide an inline definition of platform-specific functionality. This avoids the need to include platform headers such as `<windows.h>` in every file that uses the `<ookii/command_line.h>` header. You must have exactly one C++ file where both `OOKII_PLATFORM_NOT_INLINE` and `OOKII_PLATFORM_DEFINITION` are defined prior to including `<ookii/command_line.h>`, to provide a definition to the linker. See the [unit tests project](unittests) for an example how to do this. Implies `OOKII_NO_PLATFORM_HEADERS` unless `OOKII_PLATFORM_DEFINITION` is defined.
 `OOKII_FORCE_LIBFMT`        | Use the libfmt library even if the `<format>` header is available.
 `OOKII_NO_PLATFORM_HEADERS` | Do not include platform headers such as `<windows.h>`. Use this if you have already included them manually with different settings than the `<ookii/platform_helper.h>` header uses. If you want to avoid including them at all, use `OOKII_PLATFORM_NOT_INLINE`.
+
+## Building and running tests and samples
+
+Building the tests and samples requires the following:
+
+- CMake 3.15 or later.
+- (optional) [PowerShell 6](https://github.com/powershell/powershell) or later for the samples and
+  tests using the [code-generation scripts](docs/Scripts.md) (tested using PowerShell 7.3 on both
+  Windows and Linux).
+  - The [Pester](https://pester.dev/) module is required to run the script tests.
+
+To build the included tests and samples, clone the repository to a local directory, create a folder
+to hold the build output, and run CMake to configure the project:
+
+```sh
+mkdir build
+cd build
+cmake ..
+cmake --build .
+```
+
+A script is provided to aid building on Linux: `scripts/build.sh`. You can use the `--compiler`
+argument to use a C++ compiler other than the default on your system (specify only the binary name,
+e.g "clang++"), the `--clean` argument to reconfigure and rebuild, and the `--docs` argument to
+build documentation instead of the tests and samples (requires [doxygen](https://doxygen.nl/) and
+[dot](https://graphviz.org/))
+
+### Running tests
+
+The unit tests require the existence of the `nl_NL.UTF-8` locale. If this locale does not exist,
+you will see one test failure. In Linux, you can generate this locale using the following command:
+
+```sh
+sudo locale-gen nl_NL.UTF-8
+```
+
+To run the tests, use the following command:
+
+```sh
+ctest --output-on-failure
+```
+
+If everything passes, your environment is supported. If you want to see more detailed output, you
+can run the unittests binary directly.
+
+You can also use `scripts/build.sh --test` to build and run the tests.
+
+### Running samples
+
+After building, you will find several samples in the output. These samples are described in detail,
+with samples of their usage help output, in the [samples documentation](samples).
 
 ## More information
 
