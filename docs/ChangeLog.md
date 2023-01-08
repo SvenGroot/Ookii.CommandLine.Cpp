@@ -8,7 +8,7 @@
     name using the `-` prefix. This allows you to use a parsing style that's similar to POSIX
     conventions.
   - You can use [functions to define arguments](DefiningArguments.md#action-arguments).
-  - [Automatically](DefiningArguments.md#automatic-arguments) add `-Help` argument if not defined,
+  - [Automatically](DefiningArguments.md#automatic-arguments) add a `-Help` argument if not defined,
     and support easily adding a `-Version` argument.
   - Added the ability to customize error messages and other strings.
 - Subcommands
@@ -26,8 +26,7 @@
     with the new [`usage_writer`][] class, including abbreviated syntax, description
     list ordering and filtering, the ability to override any string or format, and more.
   - Arguments that have no description but that have other information not shown in the usage syntax
-    (like aliases, a default value, or validators) will be included in the description list by
-    default.
+    (like aliases or a default value) will be included in the description list by default.
 - [`line_wrapping_ostream`][] has an option to flush all content, including the last unfinished line.
 - Added [`line_wrapping_ostringstream`][] class.
 - [Code generation](Scripts.md) supports the new functionality.
