@@ -353,7 +353,7 @@ and `-Version` argument have standard descriptions (these can be changed with th
 [`localized_string_provider`][] class).
 
 > Don't like the way the usage help looks? It can be fully customized! Check out the
-> [custom usage sample](../samples/custom_usage) for an example of hwo to do that.
+> [custom usage sample](../samples/custom_usage) for an example of how to do that.
 
 Now that we have a `-Version` argument, let's try to use it by running `./tutorial -Version`:
 
@@ -485,7 +485,7 @@ struct arguments
     // [argument, short_name]
     // [alias: max]
     // [default: 50]
-    // he maximum number of lines to output.
+    // The maximum number of lines to output.
     int max_lines;
 
     // [argument, short_name]
@@ -529,9 +529,9 @@ similar to the one we used above, but with a few extra optional parameters. Most
 `parse()` method is what you will call to parse your generated arguments.
 
 Of course, we need to run the script and add the generated output file to the build. You could do
-this manually, but it's much better to add this to the build. When using CMake, this can be done
-using the `find_program` and `add_custom_command` commands. Remove the existing `add_executable`
-command, and add the following to your CMakeLists.txt file:
+this manually, but it's much better to do this as part of the build. When using CMake, this can be
+done using the `find_program` and `add_custom_command` commands. Remove the existing
+`add_executable` command, and add the following to your CMakeLists.txt file:
 
 ```cmake
 find_program(POWERSHELL_PATH NAMES pwsh NO_PACKAGE_ROOT_PATH NO_CMAKE_PATH NO_CMAKE_ENVIRONMENT_PATH NO_CMAKE_SYSTEM_PATH NO_CMAKE_FIND_ROOT_PATH)
@@ -846,7 +846,7 @@ private:
 ```
 
 There's one thing here that we haven't seen before, and that's a multi-value argument. The `--text`
-argument has an container type ([`std::vector<string>`][]) and is added with the
+argument has a container type ([`std::vector<string>`][]) and is added with the
 [`add_multi_value_argument()`][add_multi_value_argument()_1] method, which means it can have multiple values by supplying it
 multiple times. We could, for example, use `--text foo --text bar` to assign the values "foo" and
 "bar" to it. Because it's also a positional argument, we can also simply use `foo bar` to do the
@@ -952,7 +952,7 @@ the "read" command.
 As with the regular parser, there is also a code-generation script for subcommands, `New-Subcommand.ps1`.
 This script works in a similar way to the `New-Parser.ps1` script, except it will generate the
 constructor, rather than a `parse()` method for your commands. It will also generate a function
-to create [`command_manager`][] with all your commands.
+to create a [`command_manager`][] with all your commands.
 
 So, let's change this sample to use code generation once again. In this case, for both `read_command`
 and `write_command`, we will remove the constructor definition, and add the necessary annotations.
@@ -989,7 +989,7 @@ private:
 
 This is essentially the same as we did when generating a regular parser, except instead of
 `[arguments]`, subcommands need to start with the `[command]` attribute. The argument to that
-attribute specified the name of the command, and any comment lines after the attributes are the
+attribute specifies the name of the command, and any comment lines after the attributes are the
 description of the command.
 
 We also didn't declare a `parse()` method; we just need to declare (but not define) the constructor.
@@ -1023,7 +1023,9 @@ private:
 };
 ```
 
-Note that the `--text` argument has to have an explicit `[multi_value]` attribute.
+Note that the `--text` argument has to have an explicit `[multi_value]` attribute. This tells the
+script to use the [`add_multi_value_argument()`][add_multi_value_argument()_1] method. This is
+necessary for all multi-value arguments when using code generation.
 
 What about all the other settings, like the parsing mode, case sensitivity, or things like the
 version command? We can set those with a comment block marked `[global]`. Add the following to
@@ -1164,7 +1166,7 @@ it's an abstract class (the [`run()`][] method is still pure virtual), so trying
 [`command_manager`][] would cause compilation errors.
 
 If you apply other options to the [`parser_builder`][] in the base class constructor, this is another
-way to share them between commands without having to use the [`configure_parser()`][] method, a
+way to share them between commands without having to use the [`configure_parser()`][] method, or a
 `[global]` block when using code generation.
 
 If using the code generation script, the common base class would look like this:
