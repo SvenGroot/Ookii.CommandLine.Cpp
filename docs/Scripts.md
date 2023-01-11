@@ -11,13 +11,15 @@ or later, which is available for Windows and other platforms such as Linux. Note
 the new cross-platform PowerShell is required; the scripts use features not available in Windows
 PowerShell. The scripts were tested with PowerShell 7.3.
 
-These scripts generate code that creates a [`parser_builder`][] and adds arguments to it. It doesn't
-offer any features that manually writing code doesn't, it's just a more convenient way to do it.
+These scripts generate code that use the [`parser_builder`][] and [`command_manager`][] class to
+define arguments and subcommands. They do not offer any features that manually writing code doesn't;
+they're just a convenient alternative.
 
 This article first describes the attributes used to annotate your code, before explaining how each
 script must be used.
 
-For information on how to include code generation as part of your build process, [see here](#including-the-scripts-in-your-build-process).
+For information on how to include code generation as part of your build process,
+[see here](#including-the-scripts-in-your-build-process).
 
 ## Argument attributes
 
@@ -52,7 +54,8 @@ value, unless it's the last attribute. For example, `[positional, default: 5]` i
 
 If there are any lines of comments after the annotations, these specify the description for that
 item. They will be concatenated into a single line, though if you have a blank line this will be
-preserved in the output.
+preserved in the output (avoid using blank lines in argument descriptions, as they do not get
+indented correctly with the default usage help format).
 
 For example, the following creates an argument named "ArgumentName" whose value will be stored in
 the `arg` field. The argument is required, positional, and has a description:
@@ -77,7 +80,7 @@ bool action_arg2(argument_type value, ookii::command_line_parser &parser);
 ```
 
 A static method will be invoked directly. For an instance method, the script will generate a lambda
-capturing the `this` pointer to invoke the argument.
+capturing the `this` pointer to invoke the method.
 
 ### Attributes for arguments types
 
@@ -108,8 +111,8 @@ Attribute                     | Description                                     
 The following attributes can be applied to the fields that define arguments.
 
 Attribute             | Description                                                                                                                                                                                                                               | Value
-----------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-**argument**          | Indicates the following field is a command line argument. This must always be the first attribute on an argument field.                                                                                                                   | **(optional)** The name of the argument; if omitted, it defaults to the field name, possibly modified according to the name transformation in use. If using [long/short mode](Arguments.md#longshort-mode), this is the long name.
+----------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+**argument**          | Indicates the following member is a command line argument. This must always be the first attribute on an argument field.                                                                                                                  | **(optional)** The name of the argument; if omitted, it defaults to the member name, possibly modified according to the name transformation in use. If using [long/short mode](Arguments.md#longshort-mode), this is the long name.
 **alias**             | Specifies the [aliases](DefiningArguments.md#aliases) of an argument. If using  [long/short mode](Arguments.md#longshort-mode), these are the long aliases, and are ignored if the argument has no long name.                             | A comma-separated list of aliases.
 **cancel_parsing**    | Indicates the argument, when supplied, will [cancel parsing](DefiningArguments.md#arguments-that-cancel-parsing).                                                                                                                         | **(none)**
 **default**           | Specifies the [default value](DefiningArguments.md#default-values) of an argument.                                                                                                                                                        | The default value. This is copied into the generated code verbatim, so it must be a valid C++ expression or literal; if the value is a string, this must have quotes.
@@ -191,7 +194,7 @@ struct arguments
 };
 ```
 
-These are the arguments used by the [included sample application](../samples/generated_parser).
+These are the arguments used by the [generated parser sample](../samples/generated_parser).
 
 ## New-Parser.ps1
 
@@ -243,7 +246,7 @@ int main(int argc, char *argv[])
     }
 
     // Run your application.
-    do_something(args);
+    do_something(*args);
     return 0;
 }
 ```
@@ -269,7 +272,7 @@ input as well, so it's available when the generated file is compiled.
 
 The `-WideChar` argument can be used on Windows to generate code that uses wide characters (`wchar_t`)
 for the arguments. Make sure to define `_UNICODE` if you use `<ookii/command_line_generated.h>` so
-the `OOKII_GENERATED_METHODS` macro will declare a method using `wchar_t` as well. When combined
+the [`OOKII_GENERATED_METHODS`][] macro will declare a method using `wchar_t` as well. When combined
 with `-EntryPoint`, this will generate a `wmain()` function instead of `main()`.
 
 The generated source file will include the headers for Ookii.CommandLine, as well as the header(s)
@@ -300,7 +303,7 @@ It takes as input one or more C++ headers, which contain declarations of the sub
 generates argument parsers for them. It also generates a function called
 [`ookii::register_commands()`][], which registers all the generated subcommands and returns a
 [`command_manager`][] instance. To use this function in your code, include
-`<ookii/command_line_generated.h>` _after_ you include `<ookii/command_line.h>`
+`<ookii/command_line_generated.h>`.
 
 For the purposes of the code-generation scripts, the major differences between a subcommand class
 and a regular arguments struct or class are that:
@@ -353,10 +356,10 @@ command.
 A `[name_transform]` attribute in the `[global]` block will cause this name transformation to be
 used for every generated command, for every header file.
 
-In addition, if the `[global]` block can contains `[version_info]` or `[win32_version]` attribute,
-these are used to generate a `version` command instead of an argument. The `[common_help_argument]`
+In addition, if the `[global]` block contains `[version_info]` or `[win32_version]` attribute, these
+are used to generate a `version` command instead of an argument. The `[common_help_argument]`
 attribute is used to specify the name (including prefix) of a help argument shared by every command,
-which will be used in the usage help.
+which will be used in the command list usage help.
 
 If the `[global]` block is followed by any comment lines not containing attributes, these specify
 the application description to include before the command list usage help.
@@ -372,20 +375,21 @@ affects the auto-generated names of arguments, but does not affect the names of 
 not explicitly specified, are determined at runtime and not by the script).
 
 Use the `-GenerateMain` argument to include a `main()` function in the generated output file. This
-main method will call [`ookii::register_commands()`][], and then use [`command_manager::run_command()`][command_manager::run_command()_1]
-to run one of the commands. You don't need to define an entry point at all when using this; just the
-commands. If `-WideChar` is present, this generates a `wmain()` function instead.
+`main()` function will call [`ookii::register_commands()`][], and then use
+[`command_manager::run_command()`][command_manager::run_command()_1] to run one of the commands. You
+don't need to define an entry point at all when using this; just the commands. If `-WideChar` is
+present, this generates a `wmain()` function instead.
 
 For more information on how to use the script, run `Get-Help ./New-Subcommand.ps1`.
 
-A [full sample](../samples/generated_subcommand) is included, which also demonstrates how to
-incorporate the code generation as a build step in CMake.
+The [generated subcommand sample](../samples/generated_subcommand) shows a full example of how to
+use this script, including how to incorporate the code generation as a build step in CMake.
 
 ### Subcommand base classes
 
 If you wish to create a [common base class](Subcommands.md#multiple-commands-with-common-arguments)
 for some or all of your commands, you can do so using code generation as well. The `New-Subcommand.ps1`
-script will invoke your base classes constructor automatically.
+script will invoke your base class constructor automatically.
 
 If the base class itself is generated as well, you should add the `[no_register]` attribute to the
 class to prevent it from being treated as a command.
@@ -429,8 +433,8 @@ class, as well as mixing generated and hand-written commands.
 
 The code-generation scripts don't use a full-fledged C++ parser to interpret your code. Instead,
 they use a simple parser using regular expressions to identify the annotations and the struct and
-member definitions. As such, you must use the following conventions when declaring your argument
-struct or class.
+member definitions. As such, you must use the following conventions when declaring your arguments
+struct or class, or subcommand.
 
 - Annotation comments, including the descriptions, must use single-line comments (`//`). Comment
   blocks like `/* ... */` are not recognized. You can use any number of slashes to start the comment.

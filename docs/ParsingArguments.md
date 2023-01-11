@@ -47,7 +47,7 @@ See [here](DefiningArguments.md) for information about the omitted code to build
 
 The [`parse()`][parse()_0] method returns an instance of the [`parse_result`][] class, which can be implicitly
 converted to a boolean for testing. If parsing is successful, the result will use
-[`parse_error::success`][], which evaluates as `true`. At that point, all the variables you used for
+[`parse_error::none`][], which evaluates as `true`. At that point, all the variables you used for
 your arguments will be set to the values specified on the command line.
 
 Argument parsing can fail for a number of reason, including:
@@ -63,9 +63,9 @@ See the [`parse_error`][] enumeration for all possible error categories. In addi
 have been canceled by an argument using the [`parser_builder::argument_builder_common::cancel_parsing()`][]
 method, an action argument, or the automatic `-Help` or `-Version` argument.
 
-If an error does occur, this overload of the [`parse()`][parse()_0] method will handle it by print an error
-message, and displaying the usage help if requested. This is done according to the passed
-[`usage_writer`][].
+If an error does occur, this overload of the [`parse()`][parse()_0] method will handle it by
+printing an error message, and displaying the usage help if requested. This is done according to the
+passed [`usage_writer`][].
 
 If you pass `nullptr` for the [`usage_writer`][], as in this example, it means the default
 [`usage_writer`][] will be used. The default instance will write usage help to the standard output,
@@ -173,7 +173,6 @@ Speaking of usage help, let's take [a detailed look at how that works next](Usag
 [`ookii::usage_writer`]: https://www.ookii.org/docs/commandline-cpp-2.0/classookii_1_1basic__usage__writer.html
 [`parse_error::none`]: https://www.ookii.org/docs/commandline-cpp-2.0/namespaceookii.html#afae8f4d80dbe46a2344bb46c522982ef
 [`parse_error::parsing_cancelled`]: https://www.ookii.org/docs/commandline-cpp-2.0/namespaceookii.html#afae8f4d80dbe46a2344bb46c522982ef
-[`parse_error::success`]: https://www.ookii.org/docs/commandline-cpp-2.0/namespaceookii.html#afae8f4d80dbe46a2344bb46c522982ef
 [`parse_error`]: https://www.ookii.org/docs/commandline-cpp-2.0/namespaceookii.html#afae8f4d80dbe46a2344bb46c522982ef
 [`parse_result::error_arg_name`]: https://www.ookii.org/docs/commandline-cpp-2.0/structookii_1_1parse__result.html#a741b2fc17a449ebfc15b262e16540a84
 [`parse_result::error`]: https://www.ookii.org/docs/commandline-cpp-2.0/structookii_1_1parse__result.html#a53281013c6ddafd091ba2d2ebb3ae0c3

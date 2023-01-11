@@ -46,8 +46,8 @@ auto parser = ookii::parser_builder{name}
 
 ### Long/short mode
 
-To enable [long/short mode](Arguments.md#longshort-mode), you typically want to do three things
-if you want to mimic typical POSIX conventions: enable mode itself, enable case sensitive argument
+To enable [long/short mode](Arguments.md#longshort-mode), you typically want to do three things if
+you want to mimic typical POSIX conventions: enable the mode itself, enable case sensitive argument
 names, and give all your arguments dash-case names.
 
 When using long/short mode, the string passed to [`add_argument()`][add_argument()_0] and similar methods is the long
@@ -114,8 +114,9 @@ auto parser = ookii::parser_builder{name}
     .build();
 ```
 
-This variable will be null if the argument was not supplied, true if the argument was present or
-explicitly set to true with `-Switch:true`, and false only if the user supplied `-Switch:false`.
+This variable will be `std::nullopt` if the argument was not supplied, true if the argument was
+present or explicitly set to true with `-Switch:true`, and false only if the user supplied
+`-Switch:false`.
 
 ### Multi-value arguments
 
@@ -137,8 +138,9 @@ A multi-value switch argument can be created with a container of `bool` (e.g. [`
 
 ### Default values
 
-Default argument values set by the [`parser_builder::typed_argument_builder::default_value()`][] method
-are applied only if the argument is not required, and it was not supplied on the command line.
+You can set a default value for an argument using the [`parser_builder::typed_argument_builder::default_value()`][]
+method. Default values are applied only if the argument is not required, and it was not supplied on
+the command line.
 
 ```c++
 int some_argument{};
@@ -230,12 +232,15 @@ and "false".
 
 ### Arguments that cancel parsing
 
-You can indicate that argument parsing should stop and immediately print usage help when an argument
-is supplied by using the [`parser_builder::argument_builder_common::cancel_parsing()`][] method.
+You can indicate that argument parsing should stop, and usage help should be printed immediately,
+when an argument is supplied by using the
+[`parser_builder::argument_builder_common::cancel_parsing()`][] method.
 
-When this method is called, parsing is stopped when the argument is encountered. The rest of the
-command line is not processed, and [`command_line_parser::parse()`][command_line_parser::parse()_0] will a [`parse_result`][] with
-[`parse_error::parsing_cancelled`][]. The [`command_line_parser::parse()`][command_line_parser::parse()_0] overloads that take a
+Arguments that use this method cause parsing to stop when the argument is encountered. The rest of
+the command line is not processed, and
+[`command_line_parser::parse()`][command_line_parser::parse()_0] will return a [`parse_result`][]
+with [`parse_error::parsing_cancelled`][]. The
+[`command_line_parser::parse()`][command_line_parser::parse()_0] overloads that take a
 [`usage_writer`][] will automatically print usage help.
 
 This can be used to implement a custom `-Help` argument, if you don't wish to use the
@@ -357,8 +362,8 @@ You can also customize the name, aliases, and descriptions of the automatic argu
 ## Using the code generation script
 
 You can also create a parser by writing a specially-annotated struct or class, and using one of the
-code generation scripts to generate a parser. This script can also be used to generate a
-main method for your application which parses arguments. For more information, see the documentation
+code generation scripts to generate a parser. This script can also be used to generate a `main()`
+function for your application which parses arguments. For more information, see the documentation
 for the [code generation scripts](Scripts.md).
 
 Next, we'll take a look at how to [parse the arguments we've defined](ParsingArguments.md)

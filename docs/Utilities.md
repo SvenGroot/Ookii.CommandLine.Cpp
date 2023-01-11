@@ -13,10 +13,11 @@ supporting hanging indents.
 Ookii.CommandLine uses this class to wrap and indent error messages and usage help when writing to
 the console.
 
-The [`line_wrapping_ostream`][] can be created to wrap any [`std::ostream`][] and with any line length, using
-its constructor. If you use a line length of less than 1 or greater than 65536, this is
-treated as an infinite length, and lines will not be wrapped. The [`line_wrapping_ostream`][] can still
-be used to create indented text if you use an unrestricted line length.
+The [`line_wrapping_ostream`][] class can be created to wrap any [`std::ostream`][] and with any
+line length, using its constructor. If you use a line length of less than 1 or greater than 65536,
+this is treated as an infinite length, and lines will not be wrapped. The
+[`line_wrapping_ostream`][] can still be used to create indented text if you use an unrestricted
+line length.
 
 When writing to the console, you can pass the [`ookii::use_console_width`][] constant as the line length
 to use the console width. You can also manually call the [`ookii::get_console_width()`][] function to
@@ -100,7 +101,7 @@ so will require RTTI to be enabled.
 
 ## Virtual terminal support
 
-Virtual terminal (VT) sequences are a method to manipulate the console utilized, supported by many
+Virtual terminal (VT) sequences are a method to manipulate the console, supported by many
 console applications on many operating systems. It is supported by the console host on recent
 versions of Windows, by [Windows Terminal](https://learn.microsoft.com/windows/terminal/install),
 and many console applications on other platforms.
@@ -117,7 +118,7 @@ The [`virtual_terminal_support`][] class allows you to determine whether virtual
 supported, and to enable them. The [`usage_writer`][] class uses this internally to enable color output
 when possible.
 
-The `ookii::vt::text_format` namespace provides a number of constants for the predefined background
+The [`ookii::vt::text_format`][] namespace provides a number of constants for the predefined background
 and foreground colors and formats supported by the console, as well as a method to create a VT
 sequence for any 24-bit color. These can be used to change the default usage help colors, or to
 apply color to your own text.
@@ -158,6 +159,7 @@ other platforms, it only checks for support and destructing the returned instanc
 [`ookii::set_indent()`]: https://www.ookii.org/docs/commandline-cpp-2.0/namespaceookii.html#ad0749ddf0a46498f5a5fa7632e32616b
 [`ookii::use_console_width`]: https://www.ookii.org/docs/commandline-cpp-2.0/namespaceookii.html#a528c26473e9aac931b836633605cd4a6
 [`ookii::vt`]: https://www.ookii.org/docs/commandline-cpp-2.0/namespaceookii_1_1vt.html
+[`ookii::vt::text_format`]: http://www.ookii.org/docs/commandline-cpp-2.0/namespaceookii_1_1vt_1_1text__format.html
 [`reset_indent`]: https://www.ookii.org/docs/commandline-cpp-2.0/namespaceookii.html#a4161788af0f4b7625c3f360d3616ae0f
 [`set_indent`]: https://www.ookii.org/docs/commandline-cpp-2.0/namespaceookii.html#ad0749ddf0a46498f5a5fa7632e32616b
 [`std::ostream`]: https://en.cppreference.com/w/cpp/io/basic_ostream

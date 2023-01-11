@@ -6,7 +6,7 @@ commands like `git pull` and `git cherry-pick`.
 
 Ookii.CommandLine makes it trivial to define and use subcommands, using the same techniques we've
 already seen for defining and parsing arguments. Subcommand specific functionality is all in the
-`<subcommands.h>` header, which is automatically included if you include `<command_line.h>`.
+`<subcommand.h>` header, which is automatically included if you include `<command_line.h>`.
 
 In an application using subcommands, the first argument to the application is the name of the
 command. The remaining arguments are arguments to that command. You cannot have arguments that are
@@ -27,9 +27,9 @@ command.
 To create a command for your application, you define a class that derives from [`ookii::command`][].
 
 This class must have a constructor that takes a reference to a [`parser_builder`][], which you must
-use to specify the arguments for your command. This [`parser_builder`][] will have been initialized with
-the name and description of your command, and a [`case_sensitive()`][case_sensitive()_1] value and and [`locale()`][locale()_2] value
-that match the [`command_manager`][]'s (see below).
+use to specify the arguments for your command. This [`parser_builder`][] will have been initialized
+with the name and description of your command, and a [`case_sensitive()`][case_sensitive()_1] value
+and and [`locale()`][locale()_2] value that match the [`command_manager`][]'s (see below).
 
 > Note: do not call [`parser_builder::build()`][]; [`command_manager`][] will do that for you.
 
@@ -137,13 +137,13 @@ derived classes with the [`command_manager`][].
 
 ### Custom parsing
 
-In some cases, you may want to create commands that do not use the [`command_line_parser`][] class to
-parse their arguments. For this purpose, you can derive from the
+In some cases, you may want to create commands that do not use the [`command_line_parser`][] class
+to parse their arguments. For this purpose, you can derive from the
 [`ookii::command_with_custom_parsing`][] class instead.
 
-This cklass must have a constructor with no parameters, and implement the
-[`command_with_custom_parsing::parse()`][] method, which will be called before [`command::run()`][] to allow
-you to parse the command line arguments.
+This class must have a constructor with no parameters, and implement the
+[`command_with_custom_parsing::parse()`][] method, which will be called before [`command::run()`][]
+to allow you to parse the command line arguments.
 
 In this case, it is up to the command to handle argument parsing, and handle errors and display
 usage help if appropriate.
@@ -227,10 +227,6 @@ This code does the following:
       overloads that take a [`usage_writer`][], and return [`std::nullopt`][].
 3. If [`run_command()`][run_command()_2] returned [`std::nullopt`][], it returns an error exit code using
    [`std::optional::value_or()`][].
-
-The [`command_manager::add_command()`][] method takes two arguments: the first is the name of the command,
-which is used to invoke it from the command line, and the second is the description of the command,
-used in the usage help.
 
 Check out the [tutorial](Tutorial.md) and the [subcommand sample](../samples/subcommand) for
 more detailed examples of how to create and use commands.
@@ -363,8 +359,16 @@ int main(int argc, char *argv[])
     if (!result)
     {
         // This still uses the console, but it's for demonstration purposes.
-        std::cerr << error.str() << std::endl;
-        std::cout << output.str() << std::endl;
+        if (!error.str().empty())
+        {
+            std::cerr << error.str() << std::endl;
+        }
+
+        if (!output.str().empty())
+        {
+            std::cout << output.str() << std::endl;
+        }
+
         return 1;
     }
 
@@ -374,7 +378,7 @@ int main(int argc, char *argv[])
 
 Finally, if you really need fine-grained control, you can manually handle creating a command class
 and parsing arguments. This means you have to handle things such as commands with custom parsing
-manually (unless your application does not use tha), which can get somewhat complex. Below is an
+manually (unless your application does not use that), which can get rather complex. Below is an
 example of what this would look like.
 
 ```c++
@@ -464,8 +468,8 @@ Run 'subcommand <command> -Help' for more information about a command.
 ```
 
 Usage help for a [`command_manager`][] is also created using the [`usage_writer`][], and can be
-customized by setting the subcommand-specific properties of that class. In addition, you can set
-a few options on the [`command_manager`][] itself.
+customized by setting the subcommand-specific fields of that class. In addition, you can set a few
+options on the [`command_manager`][] itself.
 
 The [`command_manager::description()`][command_manager::description()_1] method sets an application description which will be included
 before the command list usage. The [`command_manager::common_help_argument()`][command_manager::common_help_argument()_1] method sets the name
@@ -500,8 +504,8 @@ manager
         });
 ```
 
-On Windows only, you can call the [`add_win32_version_command()`][] method to add a `-Version`
-argument that reads information from your executable's `VERSIONINFO` resource, and displays it on the
+On Windows only, you can call the [`add_win32_version_command()`][] method to add a `version`
+command that reads information from your executable's `VERSIONINFO` resource, and displays it on the
 console. It will print the product name, version, and copyright information if it's present.
 
 ## Nested subcommands

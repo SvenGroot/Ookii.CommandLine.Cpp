@@ -34,7 +34,7 @@ a dash (`-`) on other platforms such as Linux or MacOS.
 Argument names are case insensitive by default, though this can be customized using the
 [`parser_builder::case_sensitive()`][] method.
 
-The argument's value follow the name, separated by either white space (as a separate argument token),
+The argument's value follows the name, separated by either white space (as a separate argument token),
 or by the argument name/value separator, which is a colon (`:`) by default. The following is
 identical to the previous example:
 

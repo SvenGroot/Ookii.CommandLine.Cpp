@@ -85,7 +85,7 @@ multiple values.
 The order of the arguments in the usage syntax is as follows:
 
 1. The positional arguments, in their defined order.
-2. Required positional arguments, in alphabetical order.
+2. Required non-positional arguments, in alphabetical order.
 3. The remaining arguments, in alphabetical order.
 
 The syntax for a single argument has the following default format:
@@ -142,9 +142,9 @@ names, for arguments that have a short name, in the usage syntax.
 ### Value descriptions
 
 Arguments are followed by a short description of the type of value they support, in angle brackets.
-This is called the _value description_. It's a short, typically one-word description that describes
-the kind of value the argument expects. It should _not_ be used for the longer description of the
-argument's purpose.
+This is called the _value description_. It's a short, typically one-word description of the kind of
+value the argument expects. It should _not_ be used for the longer description of the argument's
+purpose.
 
 The value description defaults to the type of the argument (e.g. `int` or [`string`][]), stripping off
 any namespace prefixes. For multi-value arguments or arguments using [`std::optional<T>`][], the name
@@ -252,17 +252,18 @@ The below is an example of the usage help with the default colors.
 ## Customizing the usage help
 
 The usage help can be heavily customized. We've already seen how it can be customized using things
-such as custom value descriptions, or various fields of the [`usage_writer`][] class. These can
-also be used to control the indentation of the text, what elements to include, and various small
+such as custom value descriptions, or various fields of the [`usage_writer`][] class. These can also
+be used to control the indentation of the text, what elements to include, and various small
 formatting changes such as whether to use white space or the custom name/value separator.
 
 To customize the usage even further, you can derive a class from the [`usage_writer`][] class. The
 [`usage_writer`][] class has protected virtual methods for every part of the usage. These range from
 top-level methods like [`write_parser_usage_core()`][] which drives the entire process, methods
-responsible for a section such as [`write_parser_usage_syntax()`][] or [`write_argument_descriptions()`][],
-methods responsible for a single argument like [`write_argument_syntax()`][] or
-[`write_argument_description()`][write_argument_description()_1], down to methods that write single piece of text like
-[`write_argument_name()`][] or [`write_value_description()`][].
+responsible for a section such as [`write_parser_usage_syntax()`][] or
+[`write_argument_descriptions()`][], methods responsible for a single argument like
+[`write_argument_syntax()`][] or [`write_argument_description()`][write_argument_description()_1],
+down to methods that write a single piece of text like [`write_argument_name()`][] or
+[`write_value_description()`][].
 
 > The [`usage_writer`][] class has several fields and methods that apply only to
 > [subcommands](Subcommands.md#subcommand-usage-help), so setting or overriding these will have no

@@ -507,7 +507,6 @@
   },
   "parse_error::none": "namespaceookii.html#afae8f4d80dbe46a2344bb46c522982ef",
   "parse_error::parsing_cancelled": "namespaceookii.html#afae8f4d80dbe46a2344bb46c522982ef",
-  "parse_error::success": "namespaceookii.html#afae8f4d80dbe46a2344bb46c522982ef",
   "parse_result": {
     "name": "ookii::parse_result",
     "path": "structookii_1_1parse__result.html"
