@@ -7,7 +7,12 @@
 
 // A top-level command that lists all the values in the database. Since it inherits from
 // base_command, it has a Path argument even though no arguments are defined here.
-// [command]
+//
+// This is the only command that we'll register with the generated register_commands function, so
+// it's the only one that can use the attributes for its name and description.
+//
+// [command: list]
+// Lists all students and courses.
 class list_command : public base_command
 {
 public:
@@ -56,18 +61,6 @@ public:
 
         return 0;
     }
-
-    static std::string name()
-    {
-        return "list";
-    }
-
-    static std::string description()
-    {
-        return "Lists all students and courses.";
-    }
-
-private:
 };
 
 #endif

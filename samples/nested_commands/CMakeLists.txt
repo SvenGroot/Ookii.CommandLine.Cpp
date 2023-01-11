@@ -23,7 +23,13 @@ make_directory("${OOKII_GENERATED_DIR}")
 # We have to use -Command to be able to pass an array
 add_custom_command(
     OUTPUT ${OOKII_GENERATED_OUTPUT}
-    COMMAND ${POWERSHELL_PATH} -ExecutionPolicy Bypass -Command "&{ ${CMAKE_CURRENT_LIST_DIR}/../../scripts/New-Subcommand.ps1 -Path ${OOKII_GENERATED_INPUT_LIST} -OutputPath ${OOKII_GENERATED_OUTPUT} -NameTransform PascalCase }"
+    COMMAND ${POWERSHELL_PATH}
+        -ExecutionPolicy Bypass
+        -Command "&{ \
+            ${Ookii.CommandLine.Cpp_SOURCE_DIR}/scripts/New-Subcommand.ps1 \
+            -Path ${OOKII_GENERATED_INPUT_LIST} \
+            -OutputPath ${OOKII_GENERATED_OUTPUT} \
+        }"
     DEPENDS ${OOKII_GENERATED_INPUT}
     VERBATIM
 )

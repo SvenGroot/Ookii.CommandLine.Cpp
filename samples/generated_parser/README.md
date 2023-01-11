@@ -15,8 +15,8 @@ sample are defined.
 See [CMakeLists.txt](CMakeLists.txt) to see how PowerShell is invoked and the generated code added
 to the build.
 
-We pass the `-EntryPoint` argument to the script to have it generate a main() function, which calls
-the function we specified after the arguments have been parsed.
+We pass the `-EntryPoint` argument to the script to have it generate a `main()` function, which
+calls the function we specified (`ookii_main()`, in this case) after the arguments have been parsed.
 
 After running the build, you can find the file `generated/parser_generated.cpp` in the CMake build
 output, if you want to see what the generated code looks like (it will be very similar to the

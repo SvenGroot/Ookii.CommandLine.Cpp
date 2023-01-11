@@ -3,14 +3,13 @@
 While Ookii.CommandLine has no built-in way to nest subcommands, such functionality is easy to
 implement using commands with custom parsing.
 
-Commands that have children derive from the `parent_command` class, which derives from the
-`basic_command_with_custom_parsing` class so it can do its own parsing, rather than relying on the
-`basic_command_line_parser`. This allows it to create a new `basic_command_manager` with the
-children of that command, and pass the remaining arguments to that. Check the
-[parent_command.h](parent_command.h) file to see how this works.
+Commands that have children derive from the [`parent_command`](parent_command.h) class defined in
+this sample, which derives from the [`command_with_custom_parsing`][] class so it can do its own
+parsing, rather than relying on the [`command_line_parser`][]. This allows it to create a new
+[`command_manager`][] with the children of that command, and pass the remaining arguments to that.
 
-Child commands are just regular commands using the `basic_command_line_parser`, and don't need to do
-anything special.
+The other commands are just regular commands using the [`command_line_parser`][], and don't need to
+do anything special.
 
 This sample uses this framework to create a simple "database" application that lets your add and
 remove students and courses to a json file. It has top-level commands `student` and `course`, which
@@ -45,7 +44,7 @@ Run 'nested_commands <command> -Help' for more information about a command.
 
 This is completely ordinary help for any application with subcommands.
 
-Now, if we run `./NestedCommands student`, we see the following:
+Now, if we run `./nested_commands student`, we see the following:
 
 ```text
 Add or remove a student.
@@ -71,11 +70,11 @@ You can see the sample has customized the usage help to:
 - Show the command description at the top, rather than the application description.
 - Include the top-level command name in the usage syntax.
 
-If we run `./NestedCommand student -Help`, we get the same output. While the `student` command
-doesn't have a help argument (since it uses custom parsing, and not the `basic_command_line_parser`),
+If we run `./nested_commands student -Help`, we get the same output. While the `student` command
+doesn't have a help argument (since it uses custom parsing, and not the [`command_line_parser`][]),
 there is no command named `-Help` so it still just shows the command list.
 
-If we run `./NestedCommand student add -Help`, we get the help for the command's arguments as
+If we run `./nested_commands student add -Help`, we get the help for the command's arguments as
 usual:
 
 ```text
@@ -104,3 +103,7 @@ We can see the usage syntax shows both command names before the arguments.
 
 This sample uses the [JSON for modern C++](https://github.com/nlohmann/json) library to read and
 write JSON files.
+
+[`command_line_parser`]: https://www.ookii.org/docs/commandline-cpp-2.0/classookii_1_1basic__command__line__parser.html
+[`command_manager`]: https://www.ookii.org/docs/commandline-cpp-2.0/classookii_1_1basic__command__manager.html
+[`command_with_custom_parsing`]: https://www.ookii.org/docs/commandline-cpp-2.0/classookii_1_1basic__command__with__custom__parsing.html

@@ -11,7 +11,7 @@
 //
 // The attributes can't be used to set the name and description of the command, since that's only
 // used if you call the generated register_commands function, which we don't use in this sample.
-// [command]
+// [command, no_register]
 class add_student_command : public base_command
 {
 public:
@@ -54,7 +54,7 @@ private:
 
 // Command to remove students. Since it inherits from base_command, it has a Path argument in
 // addition to the arguments created here.
-// [command]
+// [command, no_register]
 class remove_student_command : public base_command
 {
 public:
@@ -95,7 +95,7 @@ private:
 
 // Command to add a course to a student. Since it inherits from base_command, it has a Path argument
 // in addition to the arguments created here.
-// [command]
+// [command, no_register]
 class add_student_course_command : public base_command
 {
 public:

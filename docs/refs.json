@@ -73,6 +73,10 @@
     "name": "ookii::basic_parser_builder",
     "path": "classookii_1_1basic__parser__builder.html"
   },
+  "basic_parser_builder::show_usage_on_error()": {
+    "name": "ookii::basic_parser_builder::show_usage_on_error(usage_help_request request)",
+    "path": "classookii_1_1basic__parser__builder.html#a7800405f547e6632939c64cb2d227a77"
+  },
   "bool": null,
   "build()": [
     {
@@ -261,6 +265,10 @@
       "name": "ookii::basic_command_manager::run_command(std::span< const CharType *const > args, usage_writer_type *usage=nullptr) const"
     }
   ],
+  "command_with_custom_parsing": {
+    "path": "classookii_1_1basic__command__with__custom__parsing.html",
+    "name": "ookii::basic_command_with_custom_parsing"
+  },
   "command_with_custom_parsing::parse()": [
     {
       "path": "classookii_1_1basic__command__with__custom__parsing.html#a870de32c0335e9c4dfc84141a9ae56c2",
@@ -817,6 +825,7 @@
   "this": null,
   "trim": null,
   "true": null,
+  "usage_help_request::syntax_only": "namespaceookii.html#a32435c16d0e9fd932bb7bdec3595b294",
   "usage_writer": {
     "name": "ookii::basic_usage_writer",
     "path": "classookii_1_1basic__usage__writer.html"

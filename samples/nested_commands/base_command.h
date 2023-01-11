@@ -7,11 +7,18 @@
 #include <nlohmann/json.hpp>
 #include <fstream>
 
+// This block defines attributes for the command manager created with the generated
+// register_commands() function.
+//
+// [global]
+// [name_transform: PascalCase]
+// [version_info: Ookii.CommandLine Nested Commands Sample 2.0]
+// [common_help_argument: -Help]
+// Nested subcommands sample for Ookii.CommandLine.
+
 // This is a base class that adds an argument and some functionality that is common to all the
 // commands in this application.
-// Although we won't call the generated register_commands() function, we must still use [no_register],
-// because this class is abstract, and would therefore cause compile errors if that function tried
-// to add it to a command_manager.
+//
 // [command, no_register]
 class base_command : public ookii::command
 {

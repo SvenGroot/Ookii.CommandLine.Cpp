@@ -5,12 +5,13 @@ command line arguments. To do this, it enables the alternate long/short parsing 
 transformation to make all the argument names lower case with dashes between the words, and uses
 case-sensitive argument names.
 
-This sample uses the same arguments as the [parser Sample](../parser), so see that sample's source
+This sample uses the same arguments as the [parser sample](../parser), so see that sample's source
 for more details about each argument.
 
 This sample uses the [code generation scripts](../../docs/Scripts.md), so to build this sample, you
 must install [PowerShell 6 or later](https://github.com/PowerShell/PowerShell) for your platform
-(including Windows; the built-in Windows PowerShell cannot be used).
+(including Windows; the built-in Windows PowerShell cannot be used). Everything shown in this sample
+can also be accomplished without the use of the scripts.
 
 After running the build, you can find the file `generated/long_short_generated.cpp` in the CMake
 build output, if you want to see what the generated code looks like.

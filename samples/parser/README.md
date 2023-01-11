@@ -43,7 +43,7 @@ Usage: parser [-Source] <string> [-Destination] <string> [[-OperationIndex] <int
 ```
 
 This is the default usage help format used by Ookii.CommandLine, with no modifications. It can be
-customized using the `usage_writer` class.
+customized using the [`usage_writer`][] class.
 
 You can see, for example, how the text is neatly white-space wrapped and indented, how the `-Count`
 argument's custom value description is used, how the `-OperationIndex` argument shows the default
@@ -65,11 +65,15 @@ Run 'parser -Help' for more information.
 ```
 
 Here, it only shows the usage syntax and a message indicating how to get more help. This is because
-the sample sets the `basic_parser_builder::show_usage_on_error()` option to
-`usage_help_request::syntax_only`.
+the sample sets the [`basic_parser_builder::show_usage_on_error()`][] option to
+[`usage_help_request::syntax_only`][].
 
 You can also use the automatic `-Version` argument:
 
 ```text
 Ookii.CommandLine Sample 2.0
 ```
+
+[`basic_parser_builder::show_usage_on_error()`]: https://www.ookii.org/docs/commandline-cpp-2.0/classookii_1_1basic__parser__builder.html#a7800405f547e6632939c64cb2d227a77
+[`usage_help_request::syntax_only`]: https://www.ookii.org/docs/commandline-cpp-2.0/namespaceookii.html#a32435c16d0e9fd932bb7bdec3595b294
+[`usage_writer`]: https://www.ookii.org/docs/commandline-cpp-2.0/classookii_1_1basic__usage__writer.html

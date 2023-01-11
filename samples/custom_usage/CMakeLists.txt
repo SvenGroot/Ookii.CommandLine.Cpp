@@ -12,7 +12,11 @@ make_directory("${OOKII_GENERATED_DIR}")
 # POWERSHELL_PATH is determined by the top-level CMakeLists.txt
 add_custom_command(
     OUTPUT ${OOKII_GENERATED_OUTPUT}
-    COMMAND ${POWERSHELL_PATH} -ExecutionPolicy Bypass "${CMAKE_CURRENT_LIST_DIR}/../../scripts/New-Parser.ps1" -Path "${OOKII_GENERATED_INPUT}" -OutputPath "${OOKII_GENERATED_OUTPUT}"
+    COMMAND ${POWERSHELL_PATH}
+        -ExecutionPolicy Bypass
+        "${Ookii.CommandLine.Cpp_SOURCE_DIR}/scripts/New-Parser.ps1"
+        -Path "${OOKII_GENERATED_INPUT}"
+        -OutputPath "${OOKII_GENERATED_OUTPUT}"
     DEPENDS ${OOKII_GENERATED_INPUT}
     VERBATIM
 )
