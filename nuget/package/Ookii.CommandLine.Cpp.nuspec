@@ -19,6 +19,7 @@
     <releaseNotes>This version contains breaking changes compared to version 1.x. For details, please view: https://www.ookii.org/Link/CommandLineCppVersionHistory</releaseNotes>
     <copyright>Copyright © Sven Groot (Ookii.org)</copyright>
     <tags>command line arguments parsing parser parse argument args subcommand subcommands cmd console native C++</tags>
+    <icon>images/icon.png</icon>
     <repository type="git" url="https://github.com/SvenGroot/Ookii.CommandLine.Cpp" />
   </metadata>
 </package>
