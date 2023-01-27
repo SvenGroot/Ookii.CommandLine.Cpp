@@ -33,7 +33,7 @@ jobs:
         apt: libfmt-dev
     - name: Create locale required for tests
       if: runner.os == 'Linux'
-      run: locale-gen nl_NL.UTF-8
+      run: sudo locale-gen nl_NL.UTF-8
     - name: Configure CMake
       # Configure CMake in a 'build' subdirectory. `CMAKE_BUILD_TYPE` is only required if you are using a single-configuration generator such as make.
       # See https://cmake.org/cmake/help/latest/variable/CMAKE_BUILD_TYPE.html?highlight=cmake_build_type
