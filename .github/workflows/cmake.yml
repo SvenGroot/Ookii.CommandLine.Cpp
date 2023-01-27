@@ -24,6 +24,15 @@ jobs:
     steps:
     - uses: actions/checkout@v3
 
+    - name: Install Package
+      # You may pin to the exact commit or the version.
+      # uses: ConorMacBride/install-package@3e7ad059e07782ee54fa35f827df52aae0626f30
+      uses: ConorMacBride/install-package@v1.1.0
+      with:
+        # Packages to install with brew on macOS
+        brew: fmt
+        # Packages to install with apt on Linux
+        apt: libfmt-dev
     - name: Configure CMake
       # Configure CMake in a 'build' subdirectory. `CMAKE_BUILD_TYPE` is only required if you are using a single-configuration generator such as make.
       # See https://cmake.org/cmake/help/latest/variable/CMAKE_BUILD_TYPE.html?highlight=cmake_build_type
