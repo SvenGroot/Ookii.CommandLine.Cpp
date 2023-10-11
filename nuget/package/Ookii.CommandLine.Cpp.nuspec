@@ -2,7 +2,7 @@
 <package xmlns="http://schemas.microsoft.com/packaging/2011/08/nuspec.xsd">
   <metadata>
     <id>Ookii.CommandLine.Cpp</id>
-    <version>2.0.0</version>
+    <version>2.0.1</version>
     <title>Ookii.CommandLine for C++</title>
     <authors>Sven Groot</authors>
     <owners>Sven Groot</owners>
@@ -10,7 +10,7 @@
     <license type="expression">MIT</license>
     <licenseUrl>https://licenses.nuget.org/MIT</licenseUrl>
     <projectUrl>https://github.com/SvenGroot/Ookii.CommandLine.Cpp</projectUrl>
-    <description>Ookii.CommandLine is a powerful command line parsing library for .Net applications.
+    <description>Ookii.CommandLine is a powerful command line parsing library for C++ applications.
 
 - Easily define arguments by creating a class with properties.
 - Create applications with multiple subcommands.
@@ -20,6 +20,6 @@
     <copyright>Copyright © Sven Groot (Ookii.org)</copyright>
     <tags>command line arguments parsing parser parse argument args subcommand subcommands cmd console native C++</tags>
     <icon>images/icon.png</icon>
-    <repository type="git" url="https://github.com/SvenGroot/Ookii.CommandLine.Cpp" />
+    <repository type="git" url="https://github.com/SvenGroot/Ookii.CommandLine.Cpp" commit="%COMMIT%" />
   </metadata>
 </package>

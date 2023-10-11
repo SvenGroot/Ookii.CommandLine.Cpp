@@ -1,5 +1,11 @@
 # What's new in Ookii.CommandLine for C++
 
+## Ookii.CommandLine for C++ 2.0.1
+
+- Fix the description of the NuGet package.
+- This release is NuGet-only and does not contain any other changes. The project version number has
+  not changed; only the NuGet package version.
+
 ## Ookii.CommandLine for C++ 2.0
 
 - Argument parsing

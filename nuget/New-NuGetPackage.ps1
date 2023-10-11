@@ -18,5 +18,14 @@ $scriptDest = Join-Path $packageDest "tools"
 New-Item -ItemType Directory $scriptDest -Force | Out-Null
 Copy-Item $scriptSource $scriptDest -Force
 
+$commit = git rev-parse HEAD
+$nuspec = "Ookii.CommandLine.Cpp.nuspec"
+$nuspecSource = Join-Path $packageSource $nuspec
+$nuspecDest = Join-Path $packageDest $nuspec
+Get-Content $nuspecSource | ForEach-Object {
+    $_.Replace("%COMMIT%", $commit)
+    
+} | Set-Content $nuspecDest
+
 # Included scripts are not intended to be run during package installation so suppress that warning.
-&$NuGetPath pack (Join-Path $packageDest "Ookii.CommandLine.Cpp.nuspec") -OutputDirectory $OutputPath -Properties "NoWarn=NU5111"
+&$NuGetPath pack $nuspecDest -OutputDirectory $OutputPath -Properties "NoWarn=NU5111"
