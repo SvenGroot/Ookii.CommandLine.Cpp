@@ -68,7 +68,7 @@ namespace ookii::format
     template<typename... Args>
     std::wstring ncformat(const std::locale &loc, std::wstring_view format, Args&... args)
     {
-        return OOKII_FMT_NS vformat(loc, format, OOKII_FMT_NS make_format_args<OOKII_FMT_NS wformat_context>(std::forward<Args>(args)...));
+        return OOKII_FMT_NS vformat(loc, format, OOKII_FMT_NS make_format_args<OOKII_FMT_NS wformat_context>(args...));
     }
 }
 
