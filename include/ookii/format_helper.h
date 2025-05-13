@@ -52,9 +52,9 @@ namespace ookii::format
     //! \param args The arguments
     //! \return The formatted string.
     template<typename... Args>
-    std::string ncformat(const std::locale &loc, std::string_view format, Args&&... args)
+    std::string ncformat(const std::locale &loc, std::string_view format, Args&... args)
     {
-        return OOKII_FMT_NS vformat(loc, format, OOKII_FMT_NS make_format_args(std::forward<Args>(args)...));
+        return OOKII_FMT_NS vformat(loc, format, OOKII_FMT_NS make_format_args(args...));
     }
 
     //! \brief Helper to format using a non-const format wide string without needing to explicitly
@@ -66,9 +66,9 @@ namespace ookii::format
     //! \param args The arguments
     //! \return The formatted string.
     template<typename... Args>
-    std::wstring ncformat(const std::locale &loc, std::wstring_view format, Args&&... args)
+    std::wstring ncformat(const std::locale &loc, std::wstring_view format, Args&... args)
     {
-        return OOKII_FMT_NS vformat(loc, format, OOKII_FMT_NS make_format_args<OOKII_FMT_NS wformat_context>(std::forward<Args>(args)...));
+        return OOKII_FMT_NS vformat(loc, format, OOKII_FMT_NS make_format_args<OOKII_FMT_NS wformat_context>(args...));
     }
 }
 

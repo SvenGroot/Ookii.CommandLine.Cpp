@@ -10,6 +10,7 @@
 #include "format_helper.h"
 #include <string_view>
 #include <locale>
+#include <cstring>
 
 //! \brief Namespace containing functions and types for working with virtual terminal sequences.
 namespace ookii::vt
@@ -307,7 +308,7 @@ namespace ookii::vt
 #endif
 
             // If "TERM=dumb" is set, assume no support.
-            if (has_term && strcmp(term, "dumb") == 0)
+            if (has_term && std::strcmp(term, "dumb") == 0)
             {
                 return {};
             }

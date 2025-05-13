@@ -966,7 +966,8 @@ private:
     {
         if (expected_error != result.error)
         {
-            test::LogMessage(test::LogMessageType::Error, TEXT("{}"), result.get_error_message());
+            auto message = result.get_error_message();
+            test::LogMessage(test::LogMessageType::Error, TEXT("{}"), message);
         }
 
         VERIFY_EQUAL((int)expected_error, (int)result.error);
