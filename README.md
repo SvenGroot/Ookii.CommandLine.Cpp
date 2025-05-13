@@ -189,7 +189,7 @@ set(CMAKE_CXX_STANDARD 20)
 
 FetchContent_Declare(OOKIICL
     GIT_REPOSITORY "https:://github.com/SvenGroot/Ookii.CommandLine.Cpp"
-    GIT_TAG "v2.0")
+    GIT_TAG "v2.0.2")
 
 FetchContent_MakeAvailable(OOKIICL)
 
