@@ -52,7 +52,7 @@ namespace details
     // https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2022/p2508r1.html. The type is available
     // in libfmt.
     template<typename... Args>
-    void LogMessagePart(LogMessageType type, const std::basic_string_view<tchar_t> format, Args&&... args)
+    void LogMessagePart(LogMessageType type, const std::basic_string_view<tchar_t> format, Args&... args)
     {
         switch (type)
         {
@@ -81,16 +81,16 @@ namespace details
             break;
         }
 
-        tcout << format::ncformat({}, format, std::forward<Args>(args)...);
+        tcout << format::ncformat({}, format, args...);
     }
 
 }
 
 template<typename... Args>
-void LogMessage(LogMessageType type, const std::basic_string_view<tchar_t> format, Args&&... args)
+void LogMessage(LogMessageType type, const std::basic_string_view<tchar_t> format, Args&... args)
 {
     std::lock_guard<std::mutex> lock{details::g_logMutex};
-    details::LogMessagePart(type, format, std::forward<Args>(args)...);
+    details::LogMessagePart(type, format, args...);
     tcout << std::endl;
 }
 
@@ -246,7 +246,9 @@ private:
         }
         catch (const std::exception &ex)
         {
-            LogMessage(LogMessageType::Error, TEXT("Unexpected exception of type {}: {}"), get_type_name<tchar_t>(typeid(ex)), string_convert<tchar_t>::from_bytes(ex.what()));
+            auto type = get_type_name<tchar_t>(typeid(ex));
+            auto what = string_convert<tchar_t>::from_bytes(ex.what());
+            LogMessage(LogMessageType::Error, TEXT("Unexpected exception of type {}: {}"), type, what);
         }
         catch (...)
         {
@@ -348,22 +350,26 @@ namespace details
 #define OOKII_TEST_THROW_FAILED_IF(condition) if (condition) { OOKII_TEST_THROW_FAILED(); }
 
     template<typename... Args>
-    void LogVerify(const VerifyInfo &info, bool success, std::basic_string_view<tchar_t> format, Args... args)
+    void LogVerify(const VerifyInfo &info, bool success, std::basic_string_view<tchar_t> format, Args&... args)
     {
         auto olderrno = errno;
         std::lock_guard<std::mutex> lock{g_logMutex};
         if (success)
         {
             if (g_verbose)
-                LogMessagePart(LogMessageType::Info, TEXT("{}:{}: Verify: "), string_convert<tchar_t>::from_bytes(info.FunctionName), info.Line);
+            {
+                auto functionName = string_convert<tchar_t>::from_bytes(info.FunctionName);
+                LogMessagePart(LogMessageType::Info, TEXT("{}:{}: Verify: "), functionName, info.Line);
+            }
         }
         else
         {
-            LogMessagePart(LogMessageType::Error, TEXT("{}:{}: Failed: "), string_convert<tchar_t>::from_bytes(info.FunctionName), info.Line);
+            auto functionName = string_convert<tchar_t>::from_bytes(info.FunctionName);
+            LogMessagePart(LogMessageType::Error, TEXT("{}:{}: Failed: "), functionName, info.Line);
         }
 
         if (!success || g_verbose)
-            tcout << format::ncformat({}, format, std::forward<Args>(args)...) << std::endl;
+            tcout << format::ncformat({}, format, args...) << std::endl;
 
         errno = olderrno;
     }
@@ -471,9 +477,11 @@ namespace details
         using std::begin;
         using std::end;
         using std::size;
-        if (size(expected) != size(actual))
+        auto expectedSize = size(expected);
+        auto actualSize = size(actual);
+        if (expectedSize != actualSize)
         {
-            LogVerify(info, false, TEXT("Range: {} == {} (size differs: {} != {})"), expectedName, actualName, size(expected), size(actual));
+            LogVerify(info, false, TEXT("Range: {} == {} (size differs: {} != {})"), expectedName, actualName, expectedSize, actualSize);
             OOKII_TEST_THROW_FAILED();
         }
 
@@ -482,14 +490,16 @@ namespace details
         {
             if (*item1 != *item2)
             {
+                const auto& item1Ref = *item1;
+                const auto& item2Ref = *item2;
                 LogVerify(info, false, TEXT("Range: {} == {} (items at index {} differ: <{}> != <{}>)"), expectedName, actualName,
-                          index, *item1, *item2);
+                          index, item1Ref, item2Ref);
 
                 OOKII_TEST_THROW_FAILED();
             }
         }
 
-        LogVerify(info, true, TEXT("Range: {} == {} (size {})"), expectedName, actualName, size(expected));
+        LogVerify(info, true, TEXT("Range: {} == {} (size {})"), expectedName, actualName, expectedSize);
     }
 
     inline void VerifyUnexpectedException(const tchar_t *operation, const VerifyInfo &info)
@@ -504,8 +514,9 @@ namespace details
         }
         catch (const std::exception &ex)
         {
-            LogVerify(info, false, TEXT("Operation {} threw unexpected exception {}: {}"), operation,
-                      get_type_name<tchar_t>(typeid(ex)), string_convert<tchar_t>::from_bytes(ex.what()));
+            auto what = string_convert<tchar_t>::from_bytes(ex.what());
+            auto type = get_type_name<tchar_t>(typeid(ex));
+            LogVerify(info, false, TEXT("Operation {} threw unexpected exception {}: {}"), operation, type, what);
         }
         catch (...)
         {
