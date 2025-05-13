@@ -1,12 +1,19 @@
 # What's new in Ookii.CommandLine for C++
 
-## Ookii.CommandLine for C++ 2.0.1
+## Ookii.CommandLine for C++ 2.0.2 (2025-05-13)
+
+- Fix compilation errors affecting the unit tests with recent versions of Visual Studio 2022.
+  - There is a small chance this could affect your code if you were using certain helper functions
+    defined in the `format_helper.h` header directly (they are otherwise not used outside the unit
+    tests).
+
+## Ookii.CommandLine for C++ 2.0.1 (2023-10-11)
 
 - Fix the description of the NuGet package.
 - This release is NuGet-only and does not contain any other changes. The project version number has
   not changed; only the NuGet package version.
 
-## Ookii.CommandLine for C++ 2.0
+## Ookii.CommandLine for C++ 2.0 (2023-01-12)
 
 - Argument parsing
   - Added support for a [new parsing mode](Arguments.md#longshort-mode) where arguments can have a
@@ -33,7 +40,8 @@
     list ordering and filtering, the ability to override any string or format, and more.
   - Arguments that have no description but that have other information not shown in the usage syntax
     (like aliases or a default value) will be included in the description list by default.
-- [`line_wrapping_ostream`][] has an option to flush all content, including the last unfinished line.
+- [`line_wrapping_ostream`][] has an option to flush all content, including the last unfinished
+  line.
 - Added [`line_wrapping_ostringstream`][] class.
 - [Code generation](Scripts.md) supports the new functionality.
 - Updated and improved documentation.
@@ -45,24 +53,26 @@ There are a number of breaking API changes from version 1.0:
 
 - The callback used by [`command_line_parser::on_parsed()`][] takes an [`std::optional<std::string_view>`][]
   for the value, instead of just [`std::string_view`][].
-- The [`command_line_parser::get_argument()`][command_line_parser::get_argument()_0] method returns `nullptr` instead of throwing an
-  exception for a non-existent argument.
+- The [`command_line_parser::get_argument()`][command_line_parser::get_argument()_0] method returns
+  `nullptr` instead of throwing an exception for a non-existent argument.
 - Default values for arguments are now displayed with stream insertion ([`operator<<`][]), so custom
   types must define that instead of a formatter.
-- The `for_each_argument_in_usage_order()` method has been removed; the [`arguments()`][] method returns
-  the arguments in that order.
+- The `for_each_argument_in_usage_order()` method has been removed; the [`arguments()`][] method
+  returns the arguments in that order.
 - The `<shell_command.h>` header was renamed to `<subcommand.h>`.
   - Recommended: include `<command_line.h>` instead; it now includes subcommands.
 - The `shell_command` class was renamed to [`command`][].
 - The `shell_command_manager` class was renamed to [`command_manager`][].
-- Several overloads of the [`create_command()`][create_command()_0] and [`run_command()`][run_command()_2] methods have been removed. This
-  was necessary to support commands with custom argument parsing.
-- The [`command_manager::run_command()`][command_manager::run_command()_1] method returns an [`std::optional<int>`][].
+- Several overloads of the [`create_command()`][create_command()_0] and
+  [`run_command()`][run_command()_2] methods have been removed. This was necessary to support
+  commands with custom argument parsing.
+- The [`command_manager::run_command()`][command_manager::run_command()_1] method returns an
+  [`std::optional<int>`][].
 - Several changes to the code generation scripts mean that any generated files must be regenerated.
-- The `OOKII_DECLARE_PARSE_METHOD()` macro has been replaced with the [`OOKII_GENERATED_METHODS()`][]
-  macro.
+- The `OOKII_DECLARE_PARSE_METHOD()` macro has been replaced with the
+  [`OOKII_GENERATED_METHODS()`][] macro.
 
-## Ookii.CommandLine for C++ 1.0
+## Ookii.CommandLine for C++ 1.0 (2022-10-23)
 
 - Initial release
 - Feature parity with [Ookii.CommandLine 2.4 for .Net](https://github.com/SvenGroot/Ookii.CommandLine),
